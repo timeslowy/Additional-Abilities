@@ -1,0 +1,11 @@
+{
+
+"dragon_ability.dragonsurvival.outfire_breath": "Outfire Breath",
+"dragon_ability.dragonsurvival.outfire_breath.desc": "■ Breathe a deluge of water vapur that extinguishing fire(include burning mobs).\n\n■ Its §fRange§r§7 depends on the age,and the §fdurration of effect§r§7 depends on the experience level.\n\n■ §8Cannot be used §4under lava.§r\n\n§7(Can not extinguish candles)" ,
+"dragon_ability.dragonsurvival.piercing_eye": "Piercing Eye",
+"dragon_ability.dragonsurvival.piercing_eye.desc": "■ the life in lava that make you can have innate§2 immunity the blindness.\n\n§7Of course,this ability cannot immune the darkness,because cave dragon has never had any relationship with Warden",
+"dragon_ability.dragonsurvival.smoke_breath": "Smoke Breath",
+"dragon_ability.dragonsurvival.smoke_breath.desc": "■ Breathe a deluge of fire and smoke,blinding the enemy.\n\n■ Its §fRange§r§7 depends on the age,and the §fdurration of effect§r§7 depends on the experience level.\n\n■ §8Cannot be used under water, and during rain.§r"
+
+
+}
