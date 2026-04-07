@@ -3,7 +3,6 @@ package by.timeslowly.additional_abilities.common.item;
 import by.dragonsurvivalteam.dragonsurvival.common.codecs.DragonAbilityHolder;
 import by.dragonsurvivalteam.dragonsurvival.registry.data_components.DSDataComponents;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Rarity;
 
 import java.util.List;
