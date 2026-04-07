@@ -19,7 +19,7 @@ public class AACreativeTabs {
     @SubscribeEvent
     public static void addItems(@NotNull BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == DSCreativeTabs.DS_TAB.getKey()) {
-            event.accept(AAItems.theWayElixir);
+            event.accept(AAItems.theWayElixir_EMPTY::value);
         }
     }
     public static void register(IEventBus eventBus) {
