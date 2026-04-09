@@ -30,9 +30,13 @@ public class TheWayElixirItem extends Item {
                     if (!stack.is(AAItems.theWayElixir_CAVE)) {
                         player.getInventory().setItem(slotId, new ItemStack(AAItems.theWayElixir_CAVE));
                     }
+                } else if (species.is(DragonSurvival.res("wing_kirin"))) {
+                    if (!stack.is(AAItems.theWayElixir_WING_KIRIN)) {
+                        player.getInventory().setItem(slotId, new ItemStack(AAItems.theWayElixir_WING_KIRIN));
+                    }
                 } else if (!stack.is(AAItems.theWayElixir_EMPTY)) {
                     player.getInventory().setItem(slotId, new ItemStack(AAItems.theWayElixir_EMPTY));
-                }
+                    }
             } else if (!stack.is(AAItems.theWayElixir_EMPTY)) {
                 player.getInventory().setItem(slotId, new ItemStack(AAItems.theWayElixir_EMPTY));
             }

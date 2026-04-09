@@ -49,12 +49,34 @@ public class AAItems {
                                     List.of(
                                             new DragonAbilityHolder.AbilityPair(
                                                     List.of(
-                                                            "additional_abilities:smoke_breath"
+                                                            "additional_abilities:smoke_breath",
+                                                            "additional_abilities:piercing_eye"
                                                     ), List.of(), false
                                             )
                                     ),
                                     Optional.empty(),
                                     List.of("dragonsurvival:cave_dragon")
+                            )
+                    )
+    ));
+
+    public static final Holder<Item> theWayElixir_WING_KIRIN = ITEMS.register("the_way_elixir_wing_kirin", () -> new TheWayElixirItem(
+            new Item.Properties()
+                    .stacksTo(1)
+                    .rarity(Rarity.EPIC)
+                    .component(
+                            DSDataComponents.DRAGON_ABILITIES,
+                            new DragonAbilityHolder(
+                                    List.of(
+                                            new DragonAbilityHolder.AbilityPair(
+                                                    List.of(
+                                                            "wing_kirin:explosion_arrow",
+                                                            "wing_kirin:entity_marker"
+                                                    ), List.of(), false
+                                            )
+                                    ),
+                                    Optional.empty(),
+                                    List.of("dragonsurvival:wing_kirin")
                             )
                     )
     ));
