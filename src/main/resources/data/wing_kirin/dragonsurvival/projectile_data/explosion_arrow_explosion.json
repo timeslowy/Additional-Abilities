@@ -1,0 +1,54 @@
+{
+    "general_data": { 
+        "block_hit_effects": [], 
+        "common_hit_effects": [], 
+        "entity_hit_condition": {
+            "condition": "entity_properties",
+            "entity": "this",
+            "predicate": {
+                "type_specific": {
+                    "type": "dragonsurvival:entity_check_predicate",
+                    "check_for": "living_entity"
+                }
+            }
+        }, 
+        "entity_hit_effects": [], 
+        "name": "wing_kirin:explosion_arrow_explosion", 
+        "ticking_effects": [] 
+    }, 
+    "type_data": { 
+        "behaviour_data": { 
+            "height": 0.0, 
+            "max_lifespan": 0.0, 
+            "max_movement_distance": 0.0, 
+            "width": 0.0 
+        }, 
+        "on_destroy_effects": [ 
+            { 
+                "general_data": { 
+                    "effects": [ 
+                        { 
+                            "effect": { 
+                                "break_blocks": false, 
+                                "can_damage_self": true, 
+                                "damage_type": "minecraft:explosion", 
+                                "explosion_power": 4, 
+                                "fire": false, 
+                                "world_effect": "dragonsurvival:explosion" 
+                            } 
+                        } 
+                    ] 
+                }, 
+                "target_type": "dragonsurvival:point" 
+            } 
+        ], 
+        "resources": { 
+            "texture_entries": [ 
+                { 
+                    "from_level": 0,
+                    "texture_resource":"dragonsurvival:empty" 
+                } 
+            ] 
+        } 
+    }
+}

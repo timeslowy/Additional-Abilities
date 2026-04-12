@@ -1,0 +1,116 @@
+{
+    "actions": [
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:projectile",
+                            "number_of_projectiles": 3,
+                            "projectile_data": "wing_kirin:explosion_arrow",
+                            "speed": 2,
+                            "projectile_spread": 4.0,
+                            "target_direction": {
+                                "direction": "looking_at"
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:run_function",
+                            "function": "wing_kirin:dragon_ability/explosion_arrow/on_arrow_shoot/explosion_countdown"
+                        },
+                        {
+                            "effect_type": "dragonsurvival:projectile",
+                            "projectile_data": "wing_kirin:explosion_arrow_explosion",
+                            "speed": 0,
+                            "number_of_projectiles": 0,
+                            "target_direction": {
+                                "direction": "looking_at"
+                            }
+                        }
+                    ],
+                    "targeting_mode": "all"
+                },
+                "target_type": "dragonsurvival:self"
+            }
+        }
+    ],
+    "activation": {
+        "activation_type": "dragonsurvival:simple",
+        "animations": {
+            "start_and_charging": {
+                "animation_key": "spell_charge",
+                "layer": "BREATH",
+                "locks_neck": false,
+                "locks_tail": false,
+                "transition_length": 5
+            }
+        },
+        "can_move_while_casting": true,
+        "cast_time": 20,
+        "cooldown": 300,
+        "initial_mana_cost": 5,
+        "sound": {
+            "end": "entity.arrow.shoot"
+        }
+    },
+    "icon": {
+        "texture_entries": [
+            {
+                "from_level": 0,
+                "texture_resource": "dragonsurvival:abilities/wing_kirin/explosion_arrow/explosion_arrow_0"
+            },
+            {
+                "from_level": 1,
+                "texture_resource": "dragonsurvival:abilities/wing_kirin/explosion_arrow/explosion_arrow_1"
+            }
+        ]
+    },
+    "upgrade": {
+        "upgrade_type": "dragonsurvival:condition_based",
+        "conditions": [
+            {
+                "condition": "entity_properties",
+                "entity": "this",
+                "predicate": {
+                    "type_specific": {
+                        "type": "player",
+                        "advancements": {
+                            "nether/return_to_sender": true
+                        }
+                    }
+                }
+            }
+        ],
+        "require_previous": false
+    },
+    "can_be_manually_disabled": true,
+    "usage_blocked": {
+        "condition": "any_of",
+        "terms": [
+            {
+                "condition": "entity_properties",
+                "entity": "this",
+                "predicate": {
+                    "type_specific": {
+                        "type": "dragonsurvival:custom_predicates",
+                        "eye_in_fluid": "minecraft:water",
+                        "weather_predicate": {}
+                    }
+                }
+            },
+            {
+                "condition": "inverted",
+                "term": {
+                    "condition": "entity_properties",
+                    "entity":"this",
+                    "predicate": {
+                        "type_specific": {
+                            "type": "dragonsurvival:dragon_predicate",
+                            "dragon_species": "dragonsurvival:wing_kirin"
+                        }
+                    } 
+                }
+            }
+        ]
+    }
+}

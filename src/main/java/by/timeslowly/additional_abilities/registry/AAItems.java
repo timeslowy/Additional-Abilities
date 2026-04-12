@@ -70,8 +70,8 @@ public class AAItems {
                                     List.of(
                                             new DragonAbilityHolder.AbilityPair(
                                                     List.of(
-                                                            "wing_kirin:explosion_arrow",
-                                                            "wing_kirin:entity_marker"
+                                                            "additional_abilities:explosion_arrow",
+                                                            "additional_abilities:entity_marker"
                                                     ), List.of(), false
                                             )
                                     ),

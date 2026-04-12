@@ -1,0 +1,115 @@
+{
+    "general_data": {
+        "is_impact_projectile": true,
+        "name": "wing_kirin:explosion_arrow",
+        "entity_hit_effects": [
+            {
+                "entity_effect": "dragonsurvival:run_function",
+                "function": "wing_kirin:dragon_ability/explosion_arrow/on_entity_hit/entity_hit"
+            },
+            {
+                "entity_effect": "dragonsurvival:potion",
+                "potion": {
+                    "effects": "slowness",
+                    "amplifier": 2,
+                    "duration": 40,
+                    "probability": 1,
+                    "show_icon": true
+                }
+            }
+        ],
+        "block_hit_effects": [],
+        "entity_hit_condition": {
+            "condition": "entity_properties",
+            "entity": "this",
+            "predicate": {
+                "type_specific": {
+                    "type": "dragonsurvival:entity_check_predicate",
+                    "check_for": "living_entity"
+                }
+            }
+        },
+        "common_hit_effects": [
+            {
+                "general_data": {
+                    "effects": [
+                        {
+                            "effect": {
+                                "world_effect": "dragonsurvival:run_function",
+                                "function": "wing_kirin:dragon_ability/explosion_arrow/hit_anything/hit_anything"
+                            }
+                        },
+                        {
+                            "effect": {
+                                "world_effect": "dragonsurvival:particle",
+                                "particle_count": 10,
+                                "particle_data": {
+                                    "particle": {
+                                        "type": "trial_spawner_detection"
+                                    },
+                                    "horizontal_position": {
+                                        "type": "in_bounding_box"
+                                    },
+                                    "vertical_position": {
+                                        "type": "in_bounding_box"
+                                    },
+                                    "horizontal_velocity": {
+                                        "base": 1
+                                    },
+                                    "vertical_velocity": {
+                                        "base": 1
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "chance": 1.0
+                },
+                "target_type": "dragonsurvival:point"
+            }
+        ],
+        "ticking_effects": [
+            {
+                "general_data": {
+                    "effects": [
+                        {
+                            "effect": {
+                                "world_effect": "dragonsurvival:particle",
+                                "particle_count": 10,
+                                "particle_data": {
+                                    "particle": {
+                                        "type": "flame"
+                                    },
+                                    "horizontal_position": {
+                                        "type": "in_bounding_box"
+                                    },
+                                    "vertical_position": {
+                                        "type": "in_bounding_box"
+                                    },
+                                    "horizontal_velocity": {
+                                        "base": 0
+                                    },
+                                    "vertical_velocity": {
+                                        "base": 0
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                "target_type": "dragonsurvival:point"
+            }
+        ]
+    },
+    "type_data": {
+        "piercing_level": 10,
+        "texture": {
+            "texture_entries": [
+                {
+                    "from_level": 1,
+                    "texture_resource": "wing_kirin:ding_arrow"
+                }
+            ]
+        }
+    }
+}

@@ -5,6 +5,14 @@
 "dragon_ability.additional_abilities.piercing_eye": "火眼金睛",
 "dragon_ability.additional_abilities.piercing_eye.desc": "■在熔岩里的生活使你练就了一双§c火眼金睛§r，让目光能穿过迷雾§2（免疫失明）§r。\n\n■§7当然，此效果不能免疫§4黑暗§r，毕竟洞穴龙和坚守者没有打过“半毛钱”交道",
 "dragon_ability.additional_abilities.smoke_breath": "障目之息",
-"dragon_ability.additional_abilities.smoke_breath.desc": "■喷吐大量烟气，蒙蔽敌人的双眼。\n\n■§f射程§r§7取决于年龄，施加的§f失明时间§r§7则取决于经验等级。\n\n■§7也有些许伤害，但远远低于§c炽焰之息§7。\n\n■§8无法在水下或雨间使用§r。"
+"dragon_ability.additional_abilities.smoke_breath.desc": "■喷吐大量烟气，蒙蔽敌人的双眼。\n\n■§f射程§r§7取决于年龄，施加的§f失明时间§r§7则取决于经验等级。\n\n■§7也有些许伤害，但远远低于§c炽焰之息§7。\n\n■§8无法在水下或雨间使用§r。",
+
+"dragon_ability.additional_abilities.explosion_arrow": "三连箭雷",
+"dragon_ability.additional_abilities.explosion_arrow.desc": "§7■完成§6「见鬼去吧」§r§7挑战进度以解锁。\n\n§6§o“捂好耳朵，要打雷了！”",
+"dragon_ability.additional_abilities.entity_marker": "无所遁形",
+"dragon_ability.additional_abilities.entity_marker.desc": "§7■完成§6「眼前一亮！」§r§7进度以解锁。\n\n§6§o“发现敌人位置！§m（标记敌人+10分）”",
+
+
+"projectile.wing_kirin.explosion_arrow": "箭雷"
 
 }
