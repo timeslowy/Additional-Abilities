@@ -12,6 +12,9 @@
 "dragon_ability.additional_abilities.entity_marker": "无所遁形",
 "dragon_ability.additional_abilities.entity_marker.desc": "§7■完成§6「眼前一亮！」§r§7进度以解锁。\n\n§6§o“发现敌人位置！§m（标记敌人+10分）”",
 
+"item.additional_abilities.the_way_elixir": "丹",
+"item.additional_abilities.the_way_elixir.desc": "仅测试用，无实际意义",
+
 
 "projectile.wing_kirin.explosion_arrow": "箭雷"
 

@@ -10,7 +10,10 @@
 "dragon_ability.additional_abilities.explosion_arrow": "Explosion Arrow",
 "dragon_ability.additional_abilities.explosion_arrow.desc": "§7■ Shoot three branchs of §6「Explosion Arrow」§7.\n\n■ Unlock it with the advancement:§6「Return to Sender」§r§7.\n\n■ The countdown of explosion will §estart instantly§7 when shoot completion.",
 "dragon_ability.additional_abilities.entity_marker": "Entity Marker",
-"dragon_ability.additional_abilities.entity_marker.desc": "■ Simple ability:marker any entity with your mouse §nright click§r§7 just.\n\n■ Unlock it with the advancement:§6「Glow and Bhhold!」."
+"dragon_ability.additional_abilities.entity_marker.desc": "■ Simple ability:marker any entity with your mouse §nright click§r§7 just.\n\n■ Unlock it with the advancement:§6「Glow and Bhhold!」.",
+
+"item.additional_abilities.the_way_elixir": "Elixir",
+"item.additional_abilities.the_way_elixir.desc": "Test Item."
 
 
 }

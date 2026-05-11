@@ -1,6 +1,5 @@
 package by.timeslowly.additional_abilities;
 
-import by.timeslowly.additional_abilities.registry.AACreativeTabs;
 import by.timeslowly.additional_abilities.registry.AAItems;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
@@ -23,7 +22,6 @@ public class Additional_abilities {
     public Additional_abilities(IEventBus modEventBus, @NotNull ModContainer modContainer) {
         // Register the commonSetup method for modloading
         AAItems.register(modEventBus);
-        AACreativeTabs.register(modEventBus);
 
 
     }
