@@ -20,6 +20,13 @@
 "damage_type.additional_abilities.counter_shock": "Counter Shock",
 "death.attack.additional_abilities.counter_shock": "%1$s was counter-shocked to death.",
 
+"additional_abilities.ability.simple_screen_vision.description": "§6■ Causes the target's screen to %s§r for %s seconds (strength %s)%s",
+"additional_abilities.ability.simple_screen_vision.chance": " with a %s chance",
+"additional_abilities.ability.simple_screen_vision.type.screen_shake": "shake",
+
+"additional_abilities.ability.block_quake.description": "§6■ Causes affected blocks to hop %s blocks into the air (%s)%s",
+"additional_abilities.ability.block_quake.chance": " with a %s chance",
+
 "item.additional_abilities.the_way_elixir": "Elixir",
 "item.additional_abilities.the_way_elixir.desc": "Test Item."
 

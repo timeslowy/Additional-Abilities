@@ -29,5 +29,10 @@ public class AAAbilityEntityEffects {
         event.register(AbilityEntityEffect.REGISTRY_KEY,
                 ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "percentaged_damage"),
                 () -> PercentagedDamageEffect.CODEC);
+
+        // 简单屏幕视觉：additional_abilities:simple_screen_vision
+        event.register(AbilityEntityEffect.REGISTRY_KEY,
+                ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "simple_screen_vision"),
+                () -> SimpleScreenVisionEffect.CODEC);
     }
 }

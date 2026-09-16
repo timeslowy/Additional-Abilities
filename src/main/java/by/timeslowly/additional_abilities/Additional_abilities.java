@@ -1,6 +1,8 @@
 package by.timeslowly.additional_abilities;
 
+import by.timeslowly.additional_abilities.common.network.AANetwork;
 import by.timeslowly.additional_abilities.registry.*;
+import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityBlockEffects;
 import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityEntityEffects;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
@@ -27,6 +29,10 @@ public class Additional_abilities {
         AADamageTypes.register(modEventBus);
         // 注册龙之技能自定义实体效果类型（DragonSurvival ability_entity_effect 注册表）
         AAAbilityEntityEffects.register(modEventBus);
+        // 注册龙之技能自定义方块效果类型（DragonSurvival ability_block_effect 注册表）
+        AAAbilityBlockEffects.register(modEventBus);
+        // 注册网络通道（屏幕视觉 / 方块震动 的服务端 → 客户端同步）
+        modEventBus.addListener(AANetwork::register);
     }
 
 }
