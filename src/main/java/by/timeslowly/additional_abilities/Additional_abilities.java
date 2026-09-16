@@ -13,17 +13,19 @@ import net.neoforged.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/neoforge.mods.toml file
+// 必须匹配 META-INF/neoforge.mods.toml file
+// TODO：写使用文档
+// TODO：尝试注册自定义目标选择器（Target Type）
+// TODO：给测试技能补上描述与简单图标
 @Mod(Additional_abilities.MOD_ID)
 public class Additional_abilities {
-    // Define mod id in a common place for everything to reference
+    // 定义模组ID以供他处调用
     public static final String MOD_ID = "additional_abilities";
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
 
 
-    // The constructor for the mod class is the first code that is run when your mod is loaded.
-    // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
+    // 注册模组加载的通用内容设置（部分需要顺序）
     public Additional_abilities(IEventBus modEventBus, @NotNull ModContainer modContainer) {
         // 注册实体附加数据（伤害反震参数载体）
         AAAttachments.register(modEventBus);

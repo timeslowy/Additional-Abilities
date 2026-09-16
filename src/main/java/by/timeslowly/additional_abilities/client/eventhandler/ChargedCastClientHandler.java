@@ -1,6 +1,7 @@
 package by.timeslowly.additional_abilities.client.eventhandler;
 
 import by.dragonsurvivalteam.dragonsurvival.common.capability.DragonStateProvider;
+import by.dragonsurvivalteam.dragonsurvival.common.handlers.magic.ManaHandler;
 import by.dragonsurvivalteam.dragonsurvival.config.ClientConfig;
 import by.dragonsurvivalteam.dragonsurvival.input.Keybind;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
@@ -39,6 +40,16 @@ import org.jetbrains.annotations.NotNull;
  * {@code StopAbilityAnimation}，把刚播上的结束动画立刻掐掉。不发这个包就没有这个问题。
  * <p>
  * 两类包走的是同一条连接，按发送先后到达，因此顺序确定（先发先到）。
+ *
+ * <h2>为什么还要在这里扣一次法力</h2>
+ * DS 会在"读条完成瞬间"（{@code tickActions} 里 {@code currentTick == castTime} 那段）执行
+ * 「起始音效 + 扣初始魔力」，而那段代码<b>两端都会跑</b>（不像动作那样只跑服务端）。
+ * 我们的提前释放绕过了它，于是必须自己补 —— 且必须<b>两端都补</b>：
+ * {@code MagicData} 是数据附件，客户端与服务端各持一份副本，而 DS <b>不逐刻同步法力</b>
+ * （源码里就留着 {@code FIXME :: Mana may still be out of sync by about ~0.03} 的注释）。
+ * 只扣服务端那份的话，客户端始终是"满蓝" —— HUD 上法力永远不下降，而且因为一直满蓝连回蓝都不触发，
+ * 永远追不回来（只有指令/升级等偶发全量同步时才会突然掉一截）。
+ * 服务端那份由 {@code ChargedCasts#fire} 扣，这里负责客户端这份。
  *
  * <h2>不拦截的情形</h2>
  * <ul>
@@ -121,11 +132,22 @@ public final class ChargedCastClientHandler {
         PacketDistributor.sendToServer(new ChargedReleasePayload(casting.key(), chargeTicks));
 
         // 再本地收尾。这里刻意复用 DS 的原生路径，而不是自己拼冷却与动画：
-        // 把等级临时换成档位，release 内部的 getCooldown(level) 才会算出与服务端一致的冷却
+        // 把等级临时换成档位，release 内部的 getCooldown(level) 与服务端的初始魔力消耗
+        // 才会算出与服务端一致的数值
         int realLevel = casting.level();
         casting.setLevel(chargedLevel);
 
         try {
+            // 这两件事是 DS「读条完成瞬间」（tickActions 里 currentTick == castTime 那段）两端都会执行的，
+            // 我们的提前释放绕过了那段代码，必须自己补上：
+            // ① 起始音效 —— 服务端那一路 playSound 会排除施法者本人，所以本地的这一次不会与它重复
+            casting.value().activation().playStartAndLoopingSound(player, casting);
+
+            // ② 扣初始魔力 —— consumeMana 只改本端 MagicData 的 currentMana，而 DS 不逐刻同步法力，
+            //    若只在服务端扣，玩家 HUD 上的法力将永远不下降（且因始终"满蓝"连回蓝都不触发，
+            //    永远追不回来），表现就是"施法不消耗法力"
+            ManaHandler.consumeMana(player, charged.getInitialManaCost(chargedLevel));
+
             // withCooldown = true -> 结束音效 + 结束动画 + 按档位的冷却 + isCasting 置 false
             magic.stopCasting(player, casting, true);
         } finally {

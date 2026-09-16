@@ -96,6 +96,7 @@ sourceSets {
             include 'assets/**'
             include 'data/**'
             include 'META-INF/**' // 必须包含，否则模组元数据会缺失
+            include '*.mixins.json' // Mixin 配置必须位于 jar 根目录，否则 FML 找不到它
             // 2. 图标和数据参数
             include 'pack.png'
             include 'pack.mcmeta'

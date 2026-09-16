@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "by.timeslowly.additional_abilities.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "DragonAbilityInstanceMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -109,9 +109,18 @@ public final class ChargedCasts {
         instance.setLevel(chargedLevel);
 
         try {
+            // 下面三件事刻意与 DS「读条完成瞬间」（tickActions 里 currentTick == castTime 那段）保持一致，
+            // 因为我们的提前释放绕过了那段代码，必须自己补齐：
+            // ① 起始音效 —— 服务端这一路 playSound 会把施法者本人排除在外，
+            //    本人由客户端本地播放，因此两端都调不会重复出声
+            charged.playStartAndLoopingSound(player, instance);
+
+            // ② 扣初始魔力 —— consumeMana 只改本端 MagicData 的 currentMana，
+            //    且 DS 不逐刻同步法力，所以客户端那份由 ChargedCastClientHandler 同步扣一次，
+            //    这里负责服务端的权威值
             ManaHandler.consumeMana(player, charged.getInitialManaCost(chargedLevel));
 
-            // currentTick 必须传 getCastTime(档位)：
+            // ③ 执行动作。currentTick 必须传 getCastTime(档位)：
             // ActionContainer 内部按 actualTick = currentTick - getCastTime(level) 对 trigger_rate 取模，
             // 传该值才能得到 actualTick == 0，从而保证 trigger_rate > 1 的动作不被吞掉
             instance.value().tickDefaultActions(player, instance, charged.getCastTime(chargedLevel));

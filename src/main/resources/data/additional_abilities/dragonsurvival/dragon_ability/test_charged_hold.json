@@ -37,15 +37,24 @@
   ],
   "activation": {
     "activation_type": "additional_abilities:charged",
+    "can_charge_exceed_cast_time": true,
     "can_move_while_casting": false,
-    "cast_time": 50.0,
+    "cast_time": 60,
     "charged_duration_per_level": {
       "type": "minecraft:linear",
       "base": 10.0,
       "per_level_above_first": 10.0
     },
-    "cooldown": 60.0,
-    "initial_mana_cost": 1.0,
+    "cooldown": {
+      "type": "minecraft:linear",
+      "base": 60.0,
+      "per_level_above_first": 60.0
+    },
+    "initial_mana_cost": {
+      "type": "minecraft:linear",
+      "base": 1,
+      "per_level_above_first": 1
+    },
     "animations": {
       "start_and_charging": {
         "animation_key": "cast_mass_buff",
@@ -76,22 +85,8 @@
     ]
   },
   "upgrade": {
-    "level_requirement": {
-      "type": "minecraft:lookup",
-      "fallback": {
-        "type": "minecraft:linear",
-        "base": 15.0,
-        "per_level_above_first": 15.0
-      },
-      "values": [
-        10,
-        20,
-        30,
-        40,
-        50
-      ]
-    },
+    "experience_cost":1,
     "maximum_level": 5,
-    "upgrade_type": "dragonsurvival:experience_levels"
+    "upgrade_type": "dragonsurvival:experience_points"
   }
 }
