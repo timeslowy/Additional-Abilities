@@ -31,6 +31,7 @@
 "item.additional_abilities.the_way_elixir.desc": "仅测试用，无实际意义",
 
 
-"projectile.wing_kirin.explosion_arrow": "箭雷"
-
+"projectile.wing_kirin.explosion_arrow": "箭雷",
+"dragon_ability.additional_abilities.test_charged": "蓄力测试",
+"dragon_ability.additional_abilities.test_charged.desc": "§7■ 用于测试§6「蓄力」§7激活类型的技能。\n\n■ §f按住§7技能键蓄力，按得越久，效果实际生效的§f等级§7越高。\n\n■ 蓄力§f达到最低时长后松手§7，按已蓄到的档位释放；§f更早松手§7则取消施法。\n\n■ 一直按到 §fcast_time（总蓄力时长）§7 会直接以自身最高档位自动释放。"
 }

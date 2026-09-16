@@ -43,6 +43,7 @@ public record SimpleScreenVisionEffect(ScreenVisionType type, LevelBasedValue du
     private static final float DEFAULT_PROBABILITY = 1.0F;
 
     public static final MapCodec<SimpleScreenVisionEffect> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            // TODO：增加模糊选项
             ScreenVisionType.CODEC.fieldOf("type").forGetter(SimpleScreenVisionEffect::type),
             LevelBasedValue.CODEC.fieldOf("duration").forGetter(SimpleScreenVisionEffect::duration),
             LevelBasedValue.CODEC.optionalFieldOf("amplifier", LevelBasedValue.constant(DEFAULT_AMPLIFIER)).forGetter(SimpleScreenVisionEffect::amplifier),

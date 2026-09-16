@@ -28,7 +28,7 @@
 "additional_abilities.ability.block_quake.chance": " with a %s chance",
 
 "item.additional_abilities.the_way_elixir": "Elixir",
-"item.additional_abilities.the_way_elixir.desc": "Test Item."
-
-
+"item.additional_abilities.the_way_elixir.desc": "Test Item.",
+"dragon_ability.additional_abilities.test_charged": "Charged Test",
+"dragon_ability.additional_abilities.test_charged.desc": "§7■ A test ability for the §6「Charged」§7 activation type.\n\n■ §fHold§7 the ability key to charge — the longer you hold, the higher the §flevel§7 actually used by the effect.\n\n■ Release §fafter the minimum charge§7 to cast at the level you reached; releasing §fearlier§7 cancels the cast.\n\n■ Holding all the way to the §fcast time§7 releases automatically at your highest level."
 }

@@ -1,7 +1,9 @@
 package by.timeslowly.additional_abilities;
 
+import by.timeslowly.additional_abilities.common.AAClientSetup;
 import by.timeslowly.additional_abilities.common.network.AANetwork;
 import by.timeslowly.additional_abilities.registry.*;
+import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityActivations;
 import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityBlockEffects;
 import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityEntityEffects;
 import com.mojang.logging.LogUtils;
@@ -31,8 +33,12 @@ public class Additional_abilities {
         AAAbilityEntityEffects.register(modEventBus);
         // 注册龙之技能自定义方块效果类型（DragonSurvival ability_block_effect 注册表）
         AAAbilityBlockEffects.register(modEventBus);
+        // 注册龙之技能自定义激活类型（DragonSurvival activation 注册表）
+        AAAbilityActivations.register(modEventBus);
         // 注册网络通道（屏幕视觉 / 方块震动 的服务端 → 客户端同步）
         modEventBus.addListener(AANetwork::register);
+        // 注册客户端专属内容（蓄力档位 HUD 图层；内部自带物理端判定，服务端不会加载客户端类型）
+        AAClientSetup.register(modEventBus);
     }
 
 }

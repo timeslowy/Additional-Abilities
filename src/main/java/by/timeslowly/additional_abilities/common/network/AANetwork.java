@@ -16,7 +16,7 @@ public class AANetwork {
      * 协议版本。两端版本不一致时 NeoForge 会拒绝连接，
      * 因此改动 payload 字段结构、或增删 payload 种类时必须同步递增。
      */
-    private static final String PROTOCOL_VERSION = "2";
+    private static final String PROTOCOL_VERSION = "3";
 
     @SubscribeEvent
     public static void register(final @NotNull RegisterPayloadHandlersEvent event) {
@@ -27,5 +27,8 @@ public class AANetwork {
 
         // 方块震动：仅服务端 → 客户端
         registrar.playToClient(BlockQuakePayload.TYPE, BlockQuakePayload.STREAM_CODEC, BlockQuakePayload::handleClient);
+
+        // 蓄力释放：仅客户端 → 服务端
+        registrar.playToServer(ChargedReleasePayload.TYPE, ChargedReleasePayload.STREAM_CODEC, ChargedReleasePayload::handleServer);
     }
 }
