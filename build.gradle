@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'idea'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'net.neoforged.moddev' version '2.0.143'
 }
 
 version = mod_version
@@ -116,9 +116,9 @@ repositories {
 
 dependencies {
     // 龙之生存
-    implementation "curse.maven:dragons-survival-420799:8010249"
+    implementation "curse.maven:dragons-survival-420799:8871661"
     // 壁虎库
-    implementation "curse.maven:geckolib-388172:7707149"
+    implementation "curse.maven:geckolib-388172:8350073"
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

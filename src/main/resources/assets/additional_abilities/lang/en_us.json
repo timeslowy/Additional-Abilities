@@ -12,6 +12,14 @@
 "dragon_ability.additional_abilities.entity_marker": "Entity Marker",
 "dragon_ability.additional_abilities.entity_marker.desc": "■ Simple ability:marker any entity with your mouse §nright click§r§7 just.\n\n■ Unlock it with the advancement:§6「Glow and Bhhold!」.",
 
+"additional_abilities.ability.damage_reflection.description": "Reflects %s of damage taken back to enemies within %s blocks",
+"additional_abilities.ability.percentaged_damage.description": "Based on the target's %2$s, deals %1$s as damage",
+"additional_abilities.ability.percentaged_damage.type.max_health": "maximum health",
+"additional_abilities.ability.percentaged_damage.type.current_health": "current health",
+
+"damage_type.additional_abilities.counter_shock": "Counter Shock",
+"death.attack.additional_abilities.counter_shock": "%1$s was counter-shocked to death.",
+
 "item.additional_abilities.the_way_elixir": "Elixir",
 "item.additional_abilities.the_way_elixir.desc": "Test Item."
 

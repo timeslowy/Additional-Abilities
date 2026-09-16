@@ -21,3 +21,6 @@ hs_err_pid*
 run
 /src/main/resources/additional_abilities.code-workspace
 /src/main/resources/spyglass.json
+
+# Other
+.workbuddy

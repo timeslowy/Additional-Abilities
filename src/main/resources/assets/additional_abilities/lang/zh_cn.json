@@ -12,6 +12,14 @@
 "dragon_ability.additional_abilities.entity_marker": "无所遁形",
 "dragon_ability.additional_abilities.entity_marker.desc": "§7■完成§6「眼前一亮！」§r§7进度以解锁。\n\n§6§o“发现敌人位置！§m（标记敌人+10分）”",
 
+"additional_abilities.ability.damage_reflection.description": "将所受伤害的 %s 反震回 %s 格内的敌对实体",
+"additional_abilities.ability.percentaged_damage.description": "以目标%2$s为基数，造成%1$s的伤害",
+"additional_abilities.ability.percentaged_damage.type.max_health": "最大生命值",
+"additional_abilities.ability.percentaged_damage.type.current_health": "当前生命值",
+
+"damage_type.additional_abilities.counter_shock": "震伤",
+"death.attack.additional_abilities.counter_shock": "%1$s被反震震碎五脏六腑",
+
 "item.additional_abilities.the_way_elixir": "丹",
 "item.additional_abilities.the_way_elixir.desc": "仅测试用，无实际意义",
 
