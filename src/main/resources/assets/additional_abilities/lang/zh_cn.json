@@ -37,5 +37,9 @@
 "dragon_ability.additional_abilities.test_charged.desc": "§7■ 用于测试§6「蓄力」§7激活类型的技能。\n\n■ §f按住§7技能键蓄力，按得越久，效果实际生效的§f等级§7越高。\n\n■ 蓄力§f达到最低时长后松手§7，按已蓄到的档位释放；§f更早松手§7则取消施法。\n\n■ 一直按到 §fcast_time（总蓄力时长）§7 会直接以自身最高档位自动释放。",
 "dragon_ability.additional_abilities.test_charged_hold": "蓄力超上限测试",
 "dragon_ability.additional_abilities.test_charged_hold.desc": "§7■ 与§6「蓄力测试」§7相同，但开启了 §fcan_charge_exceed_cast_time§7。\n\n■ 蓄力可以§f按过总蓄力时长而不释放§7，档位停在自身最高档不再上升，提示会一直保持。\n\n■ 只有§f松手§7才会释放，不会自动释放。",
-"commands.additional_abilities.simple_screen_vision.clear.success": "已清除 %s 名玩家身上的简单视觉效果"
+"commands.additional_abilities.simple_screen_vision.clear.success": "已清除 %s 名玩家身上的简单视觉效果",
+"additional_abilities.gui.ability_target.reverse_cone_target.block": "影响身后 %s 格锥形范围内的方块",
+"additional_abilities.gui.ability_target.reverse_cone_target.entity": "影响身后 %s 格锥形范围内的%s",
+"dragon_ability.additional_abilities.test_anti_dragon_breath": "反向龙息测试",
+"dragon_ability.additional_abilities.test_anti_dragon_breath.desc": "§7■ 用于测试§6「反向龙息锥形」§7目标选择器（§fadditional_abilities:anti_dragon_breath§7）的测试技能。\n\n■ 其余表现与§f龙息锥形§7相同，但选择箱体§f朝施法者身后§7延伸。\n\n■ 命中的实体会§f发光§7，箱体内还会浮现白色粒子§2（便于肉眼确认范围方向）§r。\n\n■ §8未挂在任何龙种下，需用指令自行授予。"
 }

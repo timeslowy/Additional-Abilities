@@ -6,6 +6,7 @@ import by.timeslowly.additional_abilities.registry.*;
 import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityActivations;
 import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityBlockEffects;
 import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityEntityEffects;
+import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityTargets;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 
 // 必须匹配 META-INF/neoforge.mods.toml file
 // TODO：写使用文档
-// TODO：尝试注册自定义目标选择器（Target Type）
 // TODO：给测试技能补上描述与简单图标
 @Mod(Additional_abilities.MOD_ID)
 public class Additional_abilities {
@@ -37,6 +37,8 @@ public class Additional_abilities {
         AAAbilityBlockEffects.register(modEventBus);
         // 注册龙之技能自定义激活类型（DragonSurvival activation 注册表）
         AAAbilityActivations.register(modEventBus);
+        // 注册龙之技能自定义目标选择器类型（DragonSurvival ability_targeting 注册表，target_type）
+        AAAbilityTargets.register(modEventBus);
         // 注册网络通道（屏幕视觉 / 方块震动 的服务端 → 客户端同步）
         modEventBus.addListener(AANetwork::register);
         // 注册客户端专属内容（蓄力档位 HUD 图层；内部自带物理端判定，服务端不会加载客户端类型）

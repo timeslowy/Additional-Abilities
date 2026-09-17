@@ -1,0 +1,116 @@
+{
+  "actions": [
+    {
+      "target_selection": {
+        "applied_effects": {
+          "entity_effect": [
+            {
+              "effect_type": "dragonsurvival:potion",
+              "potion": {
+                "amplifier": 0.0,
+                "duration": 60.0,
+                "effects": "minecraft:glowing",
+                "probability": 1.0
+              }
+            }
+          ],
+          "target_conditions": {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type_specific": {
+                "type": "dragonsurvival:entity_check_predicate",
+                "check_for": "living_entity"
+              }
+            }
+          },
+          "targeting_mode": "non_allies"
+        },
+        "range_multiplier": 1.0,
+        "target_type": "additional_abilities:anti_dragon_breath"
+      },
+      "trigger_rate": 10.0
+    },
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "duration": 40.0,
+              "effect_type": "dragonsurvival:area_cloud",
+              "particle": {
+                "type": "minecraft:end_rod"
+              },
+              "potion": {
+                "amplifier": 0.0,
+                "duration": 60.0,
+                "effects": "minecraft:glowing"
+              },
+              "probability": 0.15
+            }
+          ]
+        },
+        "range_multiplier": 1.0,
+        "target_type": "additional_abilities:anti_dragon_breath"
+      },
+      "trigger_rate": 5.0
+    }
+  ],
+  "activation": {
+    "activation_type": "dragonsurvival:channeled",
+    "animations": {
+      "looping": {
+        "animation_key": "breath",
+        "layer": "BREATH",
+        "locks_neck": false,
+        "locks_tail": false,
+        "transition_length": 5
+      },
+      "start_and_charging": {
+        "animation_key": "spell_charge",
+        "layer": "BREATH",
+        "locks_neck": false,
+        "locks_tail": false,
+        "transition_length": 5
+      }
+    },
+    "cast_time": 5.0,
+    "continuous_mana_cost": {
+      "type": "ticking",
+      "amount": 0.02
+    },
+    "cooldown": 20.0,
+    "sound": {
+      "end": "dragonsurvival:fire_breath_end",
+      "looping": "dragonsurvival:fire_breath_loop",
+      "start": "dragonsurvival:fire_breath_start"
+    }
+  },
+  "icon": {
+    "texture_entries": [
+      {
+        "from_level": 0,
+        "texture_resource": "additional_abilities:test"
+      }
+    ]
+  },
+  "upgrade": {
+    "level_requirement": {
+      "type": "minecraft:lookup",
+      "fallback": {
+        "type": "minecraft:linear",
+        "base": 15.0,
+        "per_level_above_first": 15.0
+      },
+      "values": [
+        10,
+        20,
+        30,
+        40,
+        50
+      ]
+    },
+    "maximum_level": 5,
+    "upgrade_type": "dragonsurvival:experience_levels"
+  }
+}

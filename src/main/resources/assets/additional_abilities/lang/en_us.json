@@ -34,5 +34,9 @@
 "dragon_ability.additional_abilities.test_charged.desc": "§7■ A test ability for the §6「Charged」§7 activation type.\n\n■ §fHold§7 the ability key to charge — the longer you hold, the higher the §flevel§7 actually used by the effect.\n\n■ Release §fafter the minimum charge§7 to cast at the level you reached; releasing §fearlier§7 cancels the cast.\n\n■ Holding all the way to the §fcast time§7 releases automatically at your highest level.",
 "dragon_ability.additional_abilities.test_charged_hold": "Charged Hold Test",
 "dragon_ability.additional_abilities.test_charged_hold.desc": "§7■ Same as §6「Charged Test」§7, but with §fcan_charge_exceed_cast_time§7 enabled.\n\n■ Hold §fpast the cast time§7 without releasing — the charge stays at your highest level and the indicator keeps showing it.\n\n■ The ability only fires on §frelease§7; nothing is released automatically.",
-"commands.additional_abilities.simple_screen_vision.clear.success": "Cleared simple screen vision from %s player(s)"
+"commands.additional_abilities.simple_screen_vision.clear.success": "Cleared simple screen vision from %s player(s)",
+"additional_abilities.gui.ability_target.reverse_cone_target.block": "Targets a %s block cone behind you",
+"additional_abilities.gui.ability_target.reverse_cone_target.entity": "Targets %s in a %s block cone behind you",
+"dragon_ability.additional_abilities.test_anti_dragon_breath": "Anti-Dragon-Breath Test",
+"dragon_ability.additional_abilities.test_anti_dragon_breath.desc": "§7■ A test ability for the §6「Reverse Cone」§7 target type (§fadditional_abilities:anti_dragon_breath§7).\n\n■ Everything behaves like the §fDragon Breath§7 cone, except the selection box extends §fbehind the caster§7.\n\n■ Affected entities §fglow§7, and white particles fill the box §2(so the reversed volume is visible to the eye)§r.\n\n■ §8Not attached to any species — grant it with a command."
 }
