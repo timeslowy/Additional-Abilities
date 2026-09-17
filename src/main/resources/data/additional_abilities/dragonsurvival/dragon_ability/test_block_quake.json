@@ -40,7 +40,14 @@
                 "speed": 0
               }
             }
-          ]
+          ],
+          "target_conditions": {
+            "condition": "minecraft:inverted",
+            "term": {
+              "condition": "block_state_property",
+              "block": "air"
+            }
+          }
         },
         "target_type": "dragonsurvival:disc",
         "radius": 8,
@@ -133,5 +140,14 @@
     },
     "maximum_level": 5,
     "upgrade_type": "dragonsurvival:experience_levels"
+  },
+  "usage_blocked": {
+    "condition": "entity_properties",
+    "entity": "this",
+    "predicate": {
+      "flags": {
+        "is_on_ground": false
+      }
+    }
   }
 }

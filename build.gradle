@@ -38,6 +38,10 @@ neoForge {
         server {
             server()
             programArgument '--nogui'
+            // 独立游戏目录：专用服务端不会按物理端过滤 mods 文件夹，
+            // 若与客户端共用 run/mods，Sodium 等客户端模组会在 modlauncher 早期阶段
+            // 触碰 org.lwjgl.Version 导致服务端秒退（且不生成 crash-report）。
+            gameDirectory = project.file('run-server')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 

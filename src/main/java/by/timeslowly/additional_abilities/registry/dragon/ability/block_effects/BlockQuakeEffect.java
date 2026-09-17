@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Locale;
@@ -81,7 +82,7 @@ public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probab
     ).apply(instance, BlockQuakeEffect::new));
 
     @Override
-    public void apply(final ServerPlayer dragon, final DragonAbilityInstance ability,
+    public void apply(final ServerPlayer dragon, final @NotNull DragonAbilityInstance ability,
                       final @NotNull BlockPos position, final @Nullable Direction direction) {
         int abilityLevel = ability.level();
         float probability = Math.max(0.0F, this.probability.calculate(abilityLevel));
@@ -136,7 +137,7 @@ public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probab
     }
 
     @Override
-    public @NotNull List<MutableComponent> getDescription(final Player dragon, final @NotNull DragonAbilityInstance ability) {
+    public @NotNull @Unmodifiable List<MutableComponent> getDescription(final Player dragon, final @NotNull DragonAbilityInstance ability) {
         int abilityLevel = ability.level();
         float height = heightFor(abilityLevel);
         float probability = Math.max(0.0F, this.probability.calculate(abilityLevel));

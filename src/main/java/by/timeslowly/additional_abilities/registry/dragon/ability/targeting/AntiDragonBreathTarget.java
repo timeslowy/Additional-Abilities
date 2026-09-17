@@ -103,7 +103,7 @@ public record AntiDragonBreathTarget(Either<AbilityTargeting.BlockTargeting, Abi
      * 反向龙息选择箱体：算式与 DS {@code DragonBreathTarget#calculateBreathArea} 逐行一致，
      * 仅把视线向量 {@code L} 替换为 {@code L' = -L}。
      */
-    public AABB calculateReverseBreathArea(final Player dragon, final DragonAbilityInstance ability) {
+    public @NotNull AABB calculateReverseBreathArea(final @NotNull Player dragon, final @NotNull DragonAbilityInstance ability) {
         // ★ 唯一差异：视线取负 → 箱体朝施法者身后延伸
         Vec3 reversedLook = dragon.getLookAngle().scale(-1.0);
         Vec3 viewVector = reversedLook.scale(rangeMultiplier.calculate(ability.level()) * dragon.getAttributeValue(DSAttributes.DRAGON_BREATH_RANGE));
@@ -130,7 +130,7 @@ public record AntiDragonBreathTarget(Either<AbilityTargeting.BlockTargeting, Abi
     }
 
     @Override
-    public MutableComponent getDescription(final Player dragon, final @NotNull DragonAbilityInstance ability) {
+    public @NotNull MutableComponent getDescription(final Player dragon, final @NotNull DragonAbilityInstance ability) {
         Component targetingComponent = target.map(block -> null, entity -> entity.targetingMode().translation());
         MutableComponent range = DSColors.dynamicValue(FORMAT.format(getDistance(dragon, ability)));
 
@@ -142,7 +142,7 @@ public record AntiDragonBreathTarget(Either<AbilityTargeting.BlockTargeting, Abi
     }
 
     @Override
-    public float getDistance(final Player dragon, final @NotNull DragonAbilityInstance instance) {
+    public float getDistance(final @NotNull Player dragon, final @NotNull DragonAbilityInstance instance) {
         return (float) (rangeMultiplier.calculate(instance.level()) * dragon.getAttributeValue(DSAttributes.DRAGON_BREATH_RANGE));
     }
 

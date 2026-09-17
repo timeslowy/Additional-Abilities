@@ -116,7 +116,7 @@ public final class ClientScreenVisionState {
         return SLOTS[type.ordinal()];
     }
 
-    private static @NotNull Slot[] createSlots() {
+    private static @NotNull Slot @NotNull [] createSlots() {
         ScreenVisionType[] types = ScreenVisionType.values();
         Slot[] slots = new Slot[types.length];
 

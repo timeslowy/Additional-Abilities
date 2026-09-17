@@ -70,7 +70,7 @@ public final class ScreenVisionSender {
      * 各类型的初始记录：tick = 0、强度 = 0。
      * 因为调用方已保证 {@code amplitude > 0}，所以"强度没提升"必然不成立 → 首次下发一定放行。
      */
-    private static @NotNull LastSend[] createSlots() {
+    private static @NotNull LastSend @NotNull [] createSlots() {
         LastSend[] slots = new LastSend[ScreenVisionType.values().length];
 
         for (int i = 0; i < slots.length; i++) {

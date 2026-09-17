@@ -42,5 +42,8 @@
 "dragon_ability.additional_abilities.test_block_quake": "Block Quake Test",
 "dragon_ability.additional_abilities.test_block_quake.desc": "§7■ A test ability for the §6「Block Quake」§7 block effect (§fadditional_abilities:block_quake§7).\n\n■ §fIts exact behaviour and numbers change while the effect is being tuned§7, so this description stays vague.\n\n■ §8Not attached to any species — grant it with a command.",
 "dragon_ability.additional_abilities.test_screen_vision": "Screen Vision Test",
-"dragon_ability.additional_abilities.test_screen_vision.desc": "§7■ A test ability for the §6「Screen Vision」§7 entity effect (§fadditional_abilities:simple_screen_vision§7).\n\n■ §fIts exact behaviour and numbers change while the effect is being tuned§7, so this description stays vague.\n\n■ §8Not attached to any species — grant it with a command."
+"dragon_ability.additional_abilities.test_screen_vision.desc": "§7■ A test ability for the §6「Screen Vision」§7 entity effect (§fadditional_abilities:simple_screen_vision§7).\n\n■ §fIts exact behaviour and numbers change while the effect is being tuned§7, so this description stays vague.\n\n■ §8Not attached to any species — grant it with a command.",
+
+"datapack.additional_abilities.innovative_wingkirin_abilities":"Innovative WingKirin's Abilities",
+"datapack.additional_abilities.innovative_wingkirin_abilities.desc":"Some Wing Kirin's abilities have used new ability compoments from `Additional Abilities`to create new effects."
 }

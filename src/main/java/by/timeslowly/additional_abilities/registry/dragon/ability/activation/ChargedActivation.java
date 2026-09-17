@@ -249,7 +249,7 @@ public record ChargedActivation(
      * @param chargeTicks 已蓄力的游戏刻数
      * @return 达成的最高档位；类型不匹配、未达最低蓄力时长或玩家等级为 0 时为 {@link #NO_CHARGED_LEVEL}
      */
-    public static int getChargedLevelOf(final DragonAbilityInstance instance, final int chargeTicks) {
+    public static int getChargedLevelOf(final @NotNull DragonAbilityInstance instance, final int chargeTicks) {
         return instance.value().activation() instanceof ChargedActivation charged
                 ? charged.getChargedLevel(chargeTicks, instance.level())
                 : NO_CHARGED_LEVEL;

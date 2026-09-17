@@ -19,6 +19,8 @@ hs_err_pid*
 
 # Common working directory
 run
+run-server
+plan
 /src/main/resources/additional_abilities.code-workspace
 /src/main/resources/spyglass.json
 

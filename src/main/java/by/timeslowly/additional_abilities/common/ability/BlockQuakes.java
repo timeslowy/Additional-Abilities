@@ -13,6 +13,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -181,7 +182,8 @@ public final class BlockQuakes {
     }
 
     /** 一批方块的几何中心（各取方块中心，即整数坐标 +0.5） */
-    private static double[] center(final @NotNull List<Long> positions) {
+    @Contract("_ -> new")
+    private static double @NotNull [] center(final @NotNull List<Long> positions) {
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;

@@ -1,0 +1,258 @@
+{
+    "activation": {
+        "activation_type": "additional_abilities:charged",
+        "can_charge_exceed_cast_time": false,
+        "can_move_while_casting": true,
+        "cast_time": {
+            "type": "minecraft:linear",
+            "base": 10,
+            "per_level_above_first": 10
+        },
+        "charged_duration_per_level": {
+            "type": "minecraft:linear",
+            "base": 10.0,
+            "per_level_above_first": 10.0
+        },
+        "cooldown": {
+            "type": "linear",
+            "base": 2400,
+            "per_level_above_first": 800
+        },
+        "animations": {
+            "end": {
+                "animation_key": "magic_alt",
+                "layer": "BASE",
+                "locks_neck": true,
+                "locks_tail": true
+            },
+            "start_and_charging": {
+                "animation_key": "cast_magic_alt",
+                "layer": "BASE",
+                "locks_neck": true,
+                "locks_tail": true,
+                "transition_length": 2
+            }
+        },
+        "initial_mana_cost": {
+            "type": "minecraft:linear",
+            "base": 4,
+            "per_level_above_first": 4
+        },
+        "sound": {
+            "charging": "block.amethyst_block.break",
+            "end": "block.respawn_anchor.deplete"
+        }
+    },
+    "actions": [
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:run_function",
+                            "function": "wing_kirin:dragon_ability/spell_binder/main"
+                        },
+                        {
+                            "effect_type": "dragonsurvival:effect_removal"
+                        },
+                        {
+                            "effect_type": "dragonsurvival:modifier",
+                            "modifiers": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:spell_binder",
+                                        "should_remove_automatically": false,
+                                        "custom_icon": "wing_kirin:textures/ability_effect/spell_binder.png",
+                                        "is_hidden": false,
+                                        "duration": {
+                                            "type": "linear",
+                                            "base": 1200,
+                                            "per_level_above_first": 600
+                                        }
+                                    },
+                                    "modifiers": [
+                                        {
+                                            "attribute": "generic.attack_damage",
+                                            "amount": {
+                                                "type": "linear",
+                                                "base": 0.5,
+                                                "per_level_above_first": 0.5
+                                            },
+                                            "operation": "add_multiplied_total"
+                                        },
+                                        {
+                                            "attribute": "minecraft:generic.attack_speed",
+                                            "amount": {
+                                                "type": "linear",
+                                                "base": 0.2,
+                                                "per_level_above_first": 0.2
+                                            },
+                                            "operation": "add_multiplied_total"
+                                        },
+                                        {
+                                            "attribute": "minecraft:generic.movement_speed",
+                                            "amount": 1.0,
+                                            "operation": "add_multiplied_total"
+                                        },
+                                        {
+                                            "attribute": "generic.armor",
+                                            "amount": {
+                                                "type": "linear",
+                                                "base": 0.025,
+                                                "per_level_above_first": 0.025
+                                            },
+                                            "operation": "add_multiplied_total"
+                                        },
+                                        {
+                                            "attribute": "generic.armor_toughness",
+                                            "amount": {
+                                                "type": "linear",
+                                                "base": 0.0125,
+                                                "per_level_above_first": 0.0125
+                                            },
+                                            "operation": "add_multiplied_total"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": "dragonsurvival:magic_disabled",
+                                "duration": {
+                                    "type": "linear",
+                                    "base": 1200,
+                                    "per_level_above_first": 600
+                                },
+                                "amplifier": 0
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": "dragonsurvival:exhausted_soul",
+                                "amplifier": 0,
+                                "duration": {
+                                    "type": "linear",
+                                    "base": 1200,
+                                    "per_level_above_first": 600
+                                }
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:particle",
+                            "particle_data": {
+                                "particle": {
+                                    "type": "gust"
+                                },
+                                "horizontal_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "vertical_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "horizontal_velocity": {
+                                    "base": 1.0
+                                },
+                                "vertical_velocity": {
+                                    "base": 1.0
+                                }
+                            },
+                            "particle_count": 20
+                        },
+                        {
+                            "effect_type": "dragonsurvival:glow",
+                            "glows": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:last_stand_glowing",
+                                        "duration": 20,
+                                        "is_hidden": true
+                                    },
+                                    "color": "#fbdc92"
+                                }
+                            ]
+                        }
+                    ],
+                    "targeting_mode": "allies_and_self"
+                },
+                "target_type": "dragonsurvival:self"
+            }
+        }
+    ],
+    "can_be_manually_disabled": true,
+    "icon": {
+        "texture_entries": [
+            {
+                "from_level": 0,
+                "texture_resource": "wing_kirin:abilities/spell_binder/spell_binder_0"
+            },
+            {
+                "from_level": 1,
+                "texture_resource": "wing_kirin:abilities/spell_binder/spell_binder_1"
+            },
+            {
+                "from_level": 2,
+                "texture_resource": "wing_kirin:abilities/spell_binder/spell_binder_2"
+            },
+            {
+                "from_level": 3,
+                "texture_resource": "wing_kirin:abilities/spell_binder/spell_binder_3"
+            },
+            {
+                "from_level": 4,
+                "texture_resource": "wing_kirin:abilities/spell_binder/spell_binder_4"
+            },
+            {
+                "from_level": 5,
+                "texture_resource": "wing_kirin:abilities/spell_binder/spell_binder_5"
+            },
+            {
+                "from_level": 6,
+                "texture_resource": "wing_kirin:abilities/spell_binder/spell_binder_6"
+            }
+        ]
+    },
+    "upgrade": {
+        "upgrade_type": "dragonsurvival:experience_levels",
+        "maximum_level": 6,
+        "level_requirement": {
+            "type": "minecraft:lookup",
+            "fallback": 10,
+            "values": [
+                50,
+                60,
+                70,
+                80,
+                90,
+                100
+            ]
+        }
+    },
+    "usage_blocked": {
+        "condition": "any_of",
+        "terms": [
+            {
+                "condition": "entity_scores",
+                "entity": "this",
+                "scores": {
+                    "wk.last_stand.death_check": 1
+                }
+            },
+            {
+                "condition": "inverted",
+                "term": {
+                    "condition": "entity_properties",
+                    "entity": "this",
+                    "predicate": {
+                        "type_specific": {
+                            "type": "dragonsurvival:dragon_predicate",
+                            "dragon_species": "dragonsurvival:wing_kirin"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

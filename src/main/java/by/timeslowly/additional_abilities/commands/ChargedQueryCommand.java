@@ -25,6 +25,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * 扩展现有查询指令：{@code /dragon-ability query <target> <dragon_ability> current_charged_level}。
@@ -79,7 +80,7 @@ public final class ChargedQueryCommand {
     }
 
     /** 沿 {@code dragon-ability → query → target → dragon_ability} 找到要挂子命令的节点。 */
-    private static CommandNode<CommandSourceStack> findAbilityNode(final @NotNull RegisterCommandsEvent event) {
+    private static @Nullable CommandNode<CommandSourceStack> findAbilityNode(final @NotNull RegisterCommandsEvent event) {
         CommandNode<CommandSourceStack> node = event.getDispatcher().getRoot().getChild(DRAGON_ABILITY);
 
         if (node != null) {

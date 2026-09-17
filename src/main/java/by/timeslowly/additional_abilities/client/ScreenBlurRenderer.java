@@ -65,9 +65,6 @@ public final class ScreenBlurRenderer {
         }
 
         RenderTarget mainTarget = minecraft.getMainRenderTarget();
-        if (mainTarget == null) {
-            return;
-        }
 
         PostChain postChain = getOrCreate(minecraft, mainTarget);
         if (postChain == null) {

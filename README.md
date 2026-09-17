@@ -6,7 +6,7 @@
   ============================================================
 -->
 
-**语言 / Language**：[中文](#lang-zh)（第 15 行起） · [English](#lang-en)（第 128 行起）
+**语言 / Language**：[中文](#lang-zh)（第 15 行起） · [English](#lang-en)（第 138 行起）
 
 ---
 
@@ -53,6 +53,15 @@
 |---|---|---|
 | `/simple-screen-vision clear <targets>` | 清空目标玩家身上的屏幕视觉 | [06](doc/中文/06-调试与查询指令.md) |
 | `/dragon-ability query <目标> <技能> current_charged_level` | 查询蓄力档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
+
+### 内置数据包（默认不启用）
+
+| 包名 | 显示名 | 作用 | 文档 |
+|---|---|---|---|
+| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 | 用本模组的自定义组件重做 Wing Kirin 的「咒印」与「雷霆怒吼」 | [07](doc/中文/07-内置数据包.md) |
+
+> 启用时**不要**加 `first`（会变成最低优先级、静默失效），且启用后要**退出世界重进**。
+> 详见 [07](doc/中文/07-内置数据包.md)。
 
 ---
 
@@ -116,6 +125,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 | [04-激活类型.md](doc/中文/04-激活类型.md) | `charged`（含蓄力档位换算、HUD 表现、查询指令） |
 | [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 5 个技能、所属龙种、解锁方式 |
 | [06-调试与查询指令.md](doc/中文/06-调试与查询指令.md) | 两条调试 / 查询指令的用法 |
+| [07-内置数据包.md](doc/中文/07-内置数据包.md) | 内置的可选数据包、启用方法与改动明细 |
 
 > 想直接抄一份能跑的技能，看 `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/`
 > 下的 `test_*.json` —— 每个自定义类型都有对应的测试技能。
@@ -167,6 +177,15 @@ The values added by this mod are:
 |---|---|---|
 | `/simple-screen-vision clear <targets>` | Clear screen vision from the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/dragon-ability query <target> <ability> current_charged_level` | Query the charge tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
+
+### Bundled datapacks (off by default)
+
+| Pack | Display name | Purpose | Doc |
+|---|---|---|---|
+| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 (Innovative WingKirin's Abilities) | Reworks Wing Kirin's "Spell Binder" and "Thunderous Shout" with this mod's custom components | [07](doc/English/07-Bundled-Datapacks.md) |
+
+> When enabling it, do **not** add `first` (that makes it the lowest priority and fails silently), and you
+> must **leave and re-enter the world** afterwards. See [07](doc/English/07-Bundled-Datapacks.md).
 
 ---
 
@@ -233,6 +252,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 | [04-Activation-Type.md](doc/English/04-Activation-Type.md) | `charged` (tier conversion, HUD behaviour, query command) |
 | [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 5 bundled abilities, their species and unlock conditions |
 | [06-Debug-and-Query-Commands.md](doc/English/06-Debug-and-Query-Commands.md) | Usage of the two debug / query commands |
+| [07-Bundled-Datapacks.md](doc/English/07-Bundled-Datapacks.md) | The bundled optional datapack, how to enable it, and what it changes |
 
 > For a runnable ability to copy from, look at the `test_*.json` files under
 > `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/` —
