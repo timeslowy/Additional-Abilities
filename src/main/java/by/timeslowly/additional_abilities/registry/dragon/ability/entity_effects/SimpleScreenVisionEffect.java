@@ -32,18 +32,23 @@ import java.util.Locale;
  * <p>
  * JSON 字段（与 effect_type 平级）：
  * <pre>
- * "type":        "screen_shake"                                                       // 必填，视觉选项（当前仅此一项）
+ * "type":        "shake"                                                              // 必填，视觉选项
  * "duration":    { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 10.0 }  // 必填，时长（单位 tick）
  * "amplifier":   { "type": "minecraft:linear", "base": 1.0,  "per_level_above_first": 0.0  }  // 可选，默认 1.0，强度倍率
  * "probability": 0.5                                                                  // 可选，默认 1.0，每次触发独立判定
  * </pre>
+ * 可用的视觉选项（见 {@link ScreenVisionType}，新增类型只需在那里加枚举值）：
+ * <ul>
+ *     <li>{@code shake} —— 镜头抖动，amplifier 1.0 ≈ 1.5° 的 roll 偏移；</li>
+ *     <li>{@code blur} —— 画面模糊（近似近视），amplifier 1.0 ≈ 1 像素的模糊半径，
+ *         界面不受影响；换算常量在 {@code client.ClientScreenVisionState}。</li>
+ * </ul>
  */
 public record SimpleScreenVisionEffect(ScreenVisionType type, LevelBasedValue duration, LevelBasedValue amplifier, LevelBasedValue probability) implements AbilityEntityEffect {
     private static final float DEFAULT_AMPLIFIER = 1.0F;
     private static final float DEFAULT_PROBABILITY = 1.0F;
 
     public static final MapCodec<SimpleScreenVisionEffect> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            // TODO：增加模糊选项
             ScreenVisionType.CODEC.fieldOf("type").forGetter(SimpleScreenVisionEffect::type),
             LevelBasedValue.CODEC.fieldOf("duration").forGetter(SimpleScreenVisionEffect::duration),
             LevelBasedValue.CODEC.optionalFieldOf("amplifier", LevelBasedValue.constant(DEFAULT_AMPLIFIER)).forGetter(SimpleScreenVisionEffect::amplifier),

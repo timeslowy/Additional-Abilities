@@ -10,13 +10,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * 屏幕视觉效果的选项枚举，与效果 JSON 的 {@code "type"} 字段一一对应。
  * <p>
- * 扩展方式：在此新增枚举值，再在客户端渲染处
- * （{@code client.ClientScreenVisionState}）补一条对应分支即可，
+ * 扩展方式：在此新增枚举值，再在客户端补上对应的渲染分支
+ * （状态与淡入淡出缓动在 {@code client.ClientScreenVisionState}，
+ * 具体绘制在各类型的渲染入口，如模糊的 {@code client.ScreenBlurRenderer}），
  * JSON 与网络层无需改动。
  */
 public enum ScreenVisionType implements StringRepresentable {
     /** 画面抖动：按强度对镜头 roll 施加不规则偏移 */
-    SCREEN_SHAKE("screen_shake");
+    SHAKE("shake"),
+    /** 画面模糊（近似近视）：按强度对世界画面做可分离盒式模糊，界面不受影响 */
+    BLUR("blur");
 
     public static final Codec<ScreenVisionType> CODEC = StringRepresentable.fromEnum(ScreenVisionType::values);
 

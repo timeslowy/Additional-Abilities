@@ -49,7 +49,7 @@ import java.util.Locale;
  * </pre>
  * 跃起高度 = {@code min(MAX_JUMP_HEIGHT, BASE_JUMP_HEIGHT × amplifier)}。
  */
-// TODO:增加粒子、声音选项？
+// TODO:声音选项？
 public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probability, BlockPredicate validBlocks) implements AbilityBlockEffect {
     /** amplifier = 1.0 时的跃起高度（方块） */
     public static final float BASE_JUMP_HEIGHT = 0.5F;

@@ -46,7 +46,7 @@ public abstract class DragonAbilityInstanceMixin {
      * @param castTime {@code tickActions} 里的完成判定阈值（局部量序号 0）
      * @return 撑开后的阈值：{@code Integer.MAX_VALUE} 表示"永远不完成"
      */
-    @ModifyVariable(method = "tickActions", at = @At("STORE"), ordinal = 0)
+    @ModifyVariable(method = "tickActions", at = @At("STORE"), name = "castTime")
     private int additional_abilities$holdChargePastCastTime(final int castTime) {
         DragonAbilityInstance self = (DragonAbilityInstance) (Object) this;
 

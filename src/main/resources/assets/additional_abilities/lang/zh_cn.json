@@ -22,7 +22,8 @@
 
 "additional_abilities.ability.simple_screen_vision.description": "§6■ 使目标屏幕%s§r，持续 %s 秒，强度 %s%s",
 "additional_abilities.ability.simple_screen_vision.chance": "，生效概率 %s",
-"additional_abilities.ability.simple_screen_vision.type.screen_shake": "抖动",
+"additional_abilities.ability.simple_screen_vision.type.shake": "抖动",
+"additional_abilities.ability.simple_screen_vision.type.blur": "模糊",
 
 "additional_abilities.ability.block_quake.description": "§6■ 使所及方块跃起 %s 格（%s）%s",
 "additional_abilities.ability.block_quake.chance": "，生效概率 %s",
@@ -35,5 +36,6 @@
 "dragon_ability.additional_abilities.test_charged": "蓄力测试",
 "dragon_ability.additional_abilities.test_charged.desc": "§7■ 用于测试§6「蓄力」§7激活类型的技能。\n\n■ §f按住§7技能键蓄力，按得越久，效果实际生效的§f等级§7越高。\n\n■ 蓄力§f达到最低时长后松手§7，按已蓄到的档位释放；§f更早松手§7则取消施法。\n\n■ 一直按到 §fcast_time（总蓄力时长）§7 会直接以自身最高档位自动释放。",
 "dragon_ability.additional_abilities.test_charged_hold": "蓄力超上限测试",
-"dragon_ability.additional_abilities.test_charged_hold.desc": "§7■ 与§6「蓄力测试」§7相同，但开启了 §fcan_charge_exceed_cast_time§7。\n\n■ 蓄力可以§f按过总蓄力时长而不释放§7，档位停在自身最高档不再上升，提示会一直保持。\n\n■ 只有§f松手§7才会释放，不会自动释放。"
+"dragon_ability.additional_abilities.test_charged_hold.desc": "§7■ 与§6「蓄力测试」§7相同，但开启了 §fcan_charge_exceed_cast_time§7。\n\n■ 蓄力可以§f按过总蓄力时长而不释放§7，档位停在自身最高档不再上升，提示会一直保持。\n\n■ 只有§f松手§7才会释放，不会自动释放。",
+"commands.additional_abilities.simple_screen_vision.clear.success": "已清除 %s 名玩家身上的简单视觉效果"
 }

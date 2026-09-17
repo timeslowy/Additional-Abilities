@@ -14,9 +14,10 @@ import org.jetbrains.annotations.NotNull;
 public class AANetwork {
     /**
      * 协议版本。两端版本不一致时 NeoForge 会拒绝连接，
-     * 因此改动 payload 字段结构、或增删 payload 种类时必须同步递增。
+     * 因此改动 payload 字段结构、增删 payload 种类、或改动随包传输的
+     * 枚举序列名取值时，必须同步递增。
      */
-    private static final String PROTOCOL_VERSION = "3";
+    private static final String PROTOCOL_VERSION = "6";
 
     @SubscribeEvent
     public static void register(final @NotNull RegisterPayloadHandlersEvent event) {
@@ -24,6 +25,9 @@ public class AANetwork {
 
         // 屏幕视觉：仅服务端 → 客户端
         registrar.playToClient(ScreenVisionPayload.TYPE, ScreenVisionPayload.STREAM_CODEC, ScreenVisionPayload::handleClient);
+
+        // 屏幕视觉的立即清空（无字段）：仅服务端 → 客户端
+        registrar.playToClient(ScreenVisionClearPayload.TYPE, ScreenVisionClearPayload.STREAM_CODEC, ScreenVisionClearPayload::handleClient);
 
         // 方块震动：仅服务端 → 客户端
         registrar.playToClient(BlockQuakePayload.TYPE, BlockQuakePayload.STREAM_CODEC, BlockQuakePayload::handleClient);

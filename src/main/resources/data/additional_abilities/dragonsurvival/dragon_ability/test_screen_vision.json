@@ -6,14 +6,25 @@
           "entity_effect": [
             {
               "effect_type": "additional_abilities:simple_screen_vision",
-              "type": "screen_shake",
+              "type": "blur",
               "duration": {
                 "type": "minecraft:linear",
                 "base": 40.0,
-                "per_level_above_first": 10.0
+                "per_level_above_first": 20.0
               },
-              "amplifier": 2.0,
-              "probability": 0.5
+              "amplifier": 5,
+              "probability": 1.0
+            },
+            {
+              "effect_type": "additional_abilities:simple_screen_vision",
+              "type": "shake",
+              "duration": {
+                "type": "minecraft:linear",
+                "base": 40.0,
+                "per_level_above_first": 20.0
+              },
+              "amplifier": 3.0,
+              "probability": 1.0
             }
           ],
           "target_conditions": {
