@@ -6,6 +6,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -18,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 方块震动的服务端调度（仅服务端逻辑，客户端状态见 {@code client.ClientBlockQuakeState}）。
@@ -40,16 +43,23 @@ public final class BlockQuakes {
     /** 假身方块默认视距 64 格，广播半径在此之上留出余量 */
     private static final double VIEW_MARGIN = 64.0;
 
+    /**
+     * 音效音量与音高。固定为原版默认值，不随强度变化 ——
+     * 音量同时决定可听半径（约 {@code volume × 16} 格），超出该半径的玩家看不到效果也就不必听。
+     */
+    private static final float SOUND_VOLUME = 1.0F;
+    private static final float SOUND_PITCH = 1.0F;
+
     /** 维度 → 位置 → 上次震动刻。条目只保留冷却窗口内的，见 {@link #onServerTickPost} */
     private static final Map<ResourceKey<Level>, Map<Long, Long>> LAST_QUAKE = new HashMap<>();
 
     /** 维度 → 本刻待发送的方块 */
     private static final Map<ResourceKey<Level>, Pending> PENDING = new HashMap<>();
 
-    private record Entry(BlockPos position, float height, int durationTicks) {}
+    private record Entry(BlockPos position, float height, int durationTicks, Optional<SoundEvent> sound) {}
 
-    /** 同一批方块共享的高度与时长（同一次技能动作必然一致） */
-    private record QuakeShape(float height, int durationTicks) {}
+    /** 同一批发包与发声的参数。音效计入分组键，使不同技能的声音不会被合并到一起 */
+    private record QuakeShape(float height, int durationTicks, Optional<SoundEvent> sound) {}
 
     private static final class Pending {
         private final ServerLevel level;
@@ -67,9 +77,10 @@ public final class BlockQuakes {
      *
      * @param height        跃起高度（方块），已钳制
      * @param durationTicks 一次完整升落的时长
+     * @param sound         跃起时播放的音效，空则无声
      */
     public static void trigger(final @NotNull ServerLevel level, final @NotNull BlockPos position,
-                               final float height, final int durationTicks) {
+                               final float height, final int durationTicks, final @NotNull Optional<SoundEvent> sound) {
         if (height <= 0.0F || durationTicks <= 0) {
             return;
         }
@@ -85,7 +96,7 @@ public final class BlockQuakes {
 
         lastQuake.put(key, now);
         PENDING.computeIfAbsent(level.dimension(), ignored -> new Pending(level))
-                .entries.put(key, new Entry(position.immutable(), height, durationTicks));
+                .entries.put(key, new Entry(position.immutable(), height, durationTicks, sound));
     }
 
     @SubscribeEvent
@@ -112,15 +123,18 @@ public final class BlockQuakes {
             return;
         }
 
-        // 按「高度 + 时长」分组：不同强度的效果恰好落在同一刻时，各自保持各自的参数
+        // 按「高度 + 时长 + 音效」分组：不同强度的效果恰好落在同一刻时，各自保持各自的参数
         Map<QuakeShape, List<Long>> grouped = new LinkedHashMap<>();
 
         for (Entry entry : pending.entries.values()) {
-            grouped.computeIfAbsent(new QuakeShape(entry.height(), entry.durationTicks()), ignored -> new ArrayList<>())
+            grouped.computeIfAbsent(new QuakeShape(entry.height(), entry.durationTicks(), entry.sound()), ignored -> new ArrayList<>())
                     .add(entry.position().asLong());
         }
 
-        grouped.forEach((shape, positions) -> send(pending.level, shape, positions));
+        grouped.forEach((shape, positions) -> {
+            send(pending.level, shape, positions);
+            playSound(pending.level, shape, positions);
+        });
     }
 
     private static void send(final @NotNull ServerLevel level, final @NotNull QuakeShape shape, final @NotNull List<Long> positions) {
@@ -128,37 +142,58 @@ public final class BlockQuakes {
             List<Long> slice = positions.subList(start, Math.min(start + BlockQuakePayload.MAX_POSITIONS, positions.size()));
             long[] packed = new long[slice.size()];
 
-            double sumX = 0.0;
-            double sumY = 0.0;
-            double sumZ = 0.0;
-
             for (int index = 0; index < slice.size(); index++) {
                 packed[index] = slice.get(index);
-                BlockPos position = BlockPos.of(packed[index]);
-                sumX += position.getX() + 0.5;
-                sumY += position.getY() + 0.5;
-                sumZ += position.getZ() + 0.5;
             }
 
-            double centerX = sumX / slice.size();
-            double centerY = sumY / slice.size();
-            double centerZ = sumZ / slice.size();
-
+            double[] center = center(slice);
             double maxDistanceSqr = 0.0;
 
             for (long position : packed) {
-                BlockPos pos = BlockPos.of(position);
-                maxDistanceSqr = Math.max(maxDistanceSqr, pos.distToCenterSqr(centerX, centerY, centerZ));
+                maxDistanceSqr = Math.max(maxDistanceSqr, BlockPos.of(position).distToCenterSqr(center[0], center[1], center[2]));
             }
 
             double radiusSqr = Math.pow(Math.sqrt(maxDistanceSqr) + VIEW_MARGIN, 2.0);
             BlockQuakePayload payload = new BlockQuakePayload(packed, shape.height(), shape.durationTicks());
 
             for (ServerPlayer player : level.players()) {
-                if (player.distanceToSqr(centerX, centerY, centerZ) <= radiusSqr) {
+                if (player.distanceToSqr(center[0], center[1], center[2]) <= radiusSqr) {
                     PacketDistributor.sendToPlayer(player, payload);
                 }
             }
         }
+    }
+
+    /**
+     * 播放一次震动音效。
+     * <p>
+     * <b>每次技能动作只响一次</b>：声源取该批方块的几何中心，而不是每个方块各响一次 ——
+     * 一次范围震动往往同时抬起几十个方块，逐方块播放等于几十个音源同时叠加，
+     * 听感上是爆音而不是"一下砸地"。同一批内的方块本就来自同一次动作，中心足以代表声源。
+     */
+    private static void playSound(final @NotNull ServerLevel level, final @NotNull QuakeShape shape, final @NotNull List<Long> positions) {
+        shape.sound().ifPresent(sound -> {
+            double[] center = center(positions);
+
+            // 首参为"要排除的玩家"，传 null 表示不排除任何人 —— 施法者本人也应听到声响
+            level.playSound(null, center[0], center[1], center[2], sound, SoundSource.BLOCKS, SOUND_VOLUME, SOUND_PITCH);
+        });
+    }
+
+    /** 一批方块的几何中心（各取方块中心，即整数坐标 +0.5） */
+    private static double[] center(final @NotNull List<Long> positions) {
+        double sumX = 0.0;
+        double sumY = 0.0;
+        double sumZ = 0.0;
+
+        for (long position : positions) {
+            BlockPos pos = BlockPos.of(position);
+            sumX += pos.getX() + 0.5;
+            sumY += pos.getY() + 0.5;
+            sumZ += pos.getZ() + 0.5;
+        }
+
+        int count = positions.size();
+        return new double[]{sumX / count, sumY / count, sumZ / count};
     }
 }

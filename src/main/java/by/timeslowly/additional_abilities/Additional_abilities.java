@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 // 必须匹配 META-INF/neoforge.mods.toml file
+// TODO:尝试注册自定义被动触发器（这个连文档都还没有）
 // TODO：写使用文档
 // TODO：给测试技能补上描述与简单图标
 @Mod(Additional_abilities.MOD_ID)

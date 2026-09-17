@@ -15,12 +15,37 @@
               "valid_blocks": {
                 "type": "minecraft:matching_block_tag",
                 "tag": "wing_kirin:thunderous_shout_break"
+              },
+              "sound": "minecraft:item.mace.smash_ground"
+            },
+            {
+              "effect_type": "dragonsurvival:particle",
+              "particle_count": 2,
+              "particle_data": {
+                "particle": {
+                  "type": "dust_plume"
+                },
+                "horizontal_position": {
+                  "type": "in_bounding_box"
+                },
+                "vertical_position": {
+                  "type": "in_bounding_box"
+                },
+                "horizontal_velocity": {
+                  "base": 1
+                },
+                "vertical_velocity": {
+                  "base": 1
+                },
+                "speed": 0
               }
             }
           ]
         },
-        "target_type": "dragonsurvival:dragon_breath",
-        "range_multiplier": 1
+        "target_type": "dragonsurvival:disc",
+        "radius": 8,
+        "height": 2,
+        "height_starts_below": true
       },
       "trigger_rate": 10
     },
@@ -29,54 +54,58 @@
         "applied_effects": {
           "entity_effect": [
             {
-              "effect_type": "dragonsurvival:breath_particles",
-              "main_particle": {
-                "type": "wing_kirin:thunderous_shout"
+              "effect_type": "dragonsurvival:damage",
+              "amount": {
+                "type": "linear",
+                "base": 5,
+                "per_level_above_first": 5
               },
-              "secondary_particle": {
-                "type": "wing_kirin:thunderous_shout"
-              },
-              "speed_per_growth": 0.025,
-              "spread": 0.0
+              "damage_type": "falling_block"
             }
           ],
-          "targeting_mode": "all"
+          "targeting_mode": "non_allies",
+          "target_conditions": {
+            "condition": "entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type_specific": {
+                "type": "dragonsurvival:entity_check_predicate",
+                "check_for": "living_entity"
+              }
+            }
+          }
         },
-        "target_type": "dragonsurvival:self"
-      },
-      "trigger_point": "default",
-      "trigger_rate": 2.0
+        "target_type": "dragonsurvival:disc",
+        "radius": 8,
+        "height": 2,
+        "height_starts_below": true
+      }
     }
   ],
   "activation": {
-    "activation_type": "dragonsurvival:channeled",
+    "activation_type": "dragonsurvival:simple",
     "animations": {
-      "looping": {
-        "animation_key": "breath",
-        "layer": "BREATH",
+      "start_and_charging": {
+        "animation_key": "cast_mass_buff",
+        "layer": "BASE",
         "locks_neck": false,
         "locks_tail": false,
         "transition_length": 5
       },
-      "start_and_charging": {
-        "animation_key": "spell_charge",
-        "layer": "BREATH",
-        "locks_neck": false,
+      "end": {
+        "animation_key": "mass_buff",
+        "layer": "BASE",
         "locks_tail": false,
+        "locks_neck": false,
         "transition_length": 5
       }
     },
-    "cast_time": 30.0,
-    "continuous_mana_cost": {
-      "type": "ticking",
-      "amount": 0.05
-    },
     "sound": {
-      "end": "dragonsurvival:storm_breath_end",
-      "charging": "entity.warden.sonic_charge",
-      "looping": "wing_kirin:thunderous_shout",
-      "start": "dragonsurvival:storm_breath_start"
-    }
+      "charging": "block.conduit.activate",
+      "end": "block.enchantment_table.use"
+    },
+    "cast_time": 10.0,
+    "initial_mana_cost": 5
   },
   "icon": {
     "texture_entries": [

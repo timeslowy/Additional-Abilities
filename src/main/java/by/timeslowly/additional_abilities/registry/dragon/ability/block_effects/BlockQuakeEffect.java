@@ -9,10 +9,12 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.enchantment.LevelBasedValue;
 import net.minecraft.world.level.block.state.BlockState;
@@ -22,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * 龙之技能方块效果：方块震动（{@code additional_abilities:block_quake}）。
@@ -46,11 +49,16 @@ import java.util.Locale;
  * "amplifier":    { "type": "minecraft:linear", "base": 0.5, "per_level_above_first": 0.25 }  // 可选，默认 0.5，跃起高度倍率
  * "probability":  0.35                                                                       // 可选，默认 1.0，每次判定独立
  * "valid_blocks": { "type": "minecraft:matching_block_tag", "tag": "minecraft:dirt" }        // 可选，默认全匹配
+ * "sound":        "minecraft:item.mace.smash_ground"                                         // 可选，默认无声，跃起时播放的音效 id
  * </pre>
  * 跃起高度 = {@code min(MAX_JUMP_HEIGHT, BASE_JUMP_HEIGHT × amplifier)}。
+ * <p>
+ * {@code sound} 的 codec 与 DS 的 {@code activation.sound} 同为
+ * {@code BuiltInRegistries.SOUND_EVENT.byNameCodec()}，因此直接写音效的注册 id 字符串即可，
+ * 与 DS 技能 JSON 的书写风格一致。自定义音效只要已注册进 {@code minecraft:sound_event} 亦可填写。
  */
-// TODO:声音选项？
-public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probability, BlockPredicate validBlocks) implements AbilityBlockEffect {
+public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probability, BlockPredicate validBlocks,
+                               Optional<SoundEvent> sound) implements AbilityBlockEffect {
     /** amplifier = 1.0 时的跃起高度（方块） */
     public static final float BASE_JUMP_HEIGHT = 0.5F;
 
@@ -68,7 +76,8 @@ public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probab
     public static final MapCodec<BlockQuakeEffect> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             LevelBasedValue.CODEC.optionalFieldOf("amplifier", LevelBasedValue.constant(DEFAULT_AMPLIFIER)).forGetter(BlockQuakeEffect::amplifier),
             LevelBasedValue.CODEC.optionalFieldOf("probability", LevelBasedValue.constant(DEFAULT_PROBABILITY)).forGetter(BlockQuakeEffect::probability),
-            BlockPredicate.CODEC.optionalFieldOf("valid_blocks", BlockPredicate.alwaysTrue()).forGetter(BlockQuakeEffect::validBlocks)
+            BlockPredicate.CODEC.optionalFieldOf("valid_blocks", BlockPredicate.alwaysTrue()).forGetter(BlockQuakeEffect::validBlocks),
+            BuiltInRegistries.SOUND_EVENT.byNameCodec().optionalFieldOf("sound").forGetter(BlockQuakeEffect::sound)
     ).apply(instance, BlockQuakeEffect::new));
 
     @Override
@@ -109,7 +118,7 @@ public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probab
             return;
         }
 
-        BlockQuakes.trigger(level, position, height, durationFor(height));
+        BlockQuakes.trigger(level, position, height, durationFor(height), sound);
     }
 
     /** 施法一次可用的跃起高度（方块），已钳制到上限 */
