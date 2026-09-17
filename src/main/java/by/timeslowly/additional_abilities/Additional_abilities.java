@@ -3,10 +3,7 @@ package by.timeslowly.additional_abilities;
 import by.timeslowly.additional_abilities.common.AAClientSetup;
 import by.timeslowly.additional_abilities.common.network.AANetwork;
 import by.timeslowly.additional_abilities.registry.*;
-import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityActivations;
-import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityBlockEffects;
-import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityEntityEffects;
-import by.timeslowly.additional_abilities.registry.dragon.ability.AAAbilityTargets;
+import by.timeslowly.additional_abilities.registry.dragon.ability.*;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -16,8 +13,8 @@ import org.slf4j.Logger;
 
 // 必须匹配 META-INF/neoforge.mods.toml file
 // TODO:尝试注册自定义被动触发器（这个连文档都还没有）
-// TODO：写使用文档
-// TODO：给测试技能补上描述与简单图标
+// TODO：给测试技能补上简单图标
+// TODO：决定使用的协议？
 @Mod(Additional_abilities.MOD_ID)
 public class Additional_abilities {
     // 定义模组ID以供他处调用

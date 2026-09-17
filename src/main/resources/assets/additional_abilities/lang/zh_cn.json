@@ -41,5 +41,9 @@
 "additional_abilities.gui.ability_target.reverse_cone_target.block": "影响身后 %s 格锥形范围内的方块",
 "additional_abilities.gui.ability_target.reverse_cone_target.entity": "影响身后 %s 格锥形范围内的%s",
 "dragon_ability.additional_abilities.test_anti_dragon_breath": "反向龙息测试",
-"dragon_ability.additional_abilities.test_anti_dragon_breath.desc": "§7■ 用于测试§6「反向龙息锥形」§7目标选择器（§fadditional_abilities:anti_dragon_breath§7）的测试技能。\n\n■ 其余表现与§f龙息锥形§7相同，但选择箱体§f朝施法者身后§7延伸。\n\n■ 命中的实体会§f发光§7，箱体内还会浮现白色粒子§2（便于肉眼确认范围方向）§r。\n\n■ §8未挂在任何龙种下，需用指令自行授予。"
+"dragon_ability.additional_abilities.test_anti_dragon_breath.desc": "§7■ 用于测试§6「反向龙息锥形」§7目标选择器（§fadditional_abilities:anti_dragon_breath§7）的测试技能。\n\n■ 其余表现与§f龙息锥形§7相同，但选择箱体§f朝施法者身后§7延伸。\n\n■ 命中的实体会§f发光§7，箱体内还会浮现白色粒子§2（便于肉眼确认范围方向）§r。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
+"dragon_ability.additional_abilities.test_block_quake": "方块震动测试",
+"dragon_ability.additional_abilities.test_block_quake.desc": "§7■ 用于测试§6「方块震动」§7方块效果（§fadditional_abilities:block_quake§7）的测试技能。\n\n■ §f具体表现与数值会随调试改动§7，本描述不作详细说明。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
+"dragon_ability.additional_abilities.test_screen_vision": "屏幕视觉测试",
+"dragon_ability.additional_abilities.test_screen_vision.desc": "§7■ 用于测试§6「简单屏幕视觉」§7实体效果（§fadditional_abilities:simple_screen_vision§7）的测试技能。\n\n■ §f具体表现与数值会随调试改动§7，本描述不作详细说明。\n\n■ §8未挂在任何龙种下，需用指令自行授予。"
 }
