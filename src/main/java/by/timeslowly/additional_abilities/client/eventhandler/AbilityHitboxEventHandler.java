@@ -6,6 +6,7 @@ import by.dragonsurvivalteam.dragonsurvival.compat.Compat;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AnnulusTarget;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AntiDragonBreathTarget;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -21,8 +22,11 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 在 <b>F3+B</b>（碰撞箱显示）开启时，用线框画出本模组目标选择器的实际作用箱体
- * （{@code additional_abilities:anti_dragon_breath}）。
+ * 在 <b>F3+B</b>（碰撞箱显示）开启时，用线框画出本模组目标选择器的实际作用箱体：
+ * <ul>
+ *     <li>{@code additional_abilities:anti_dragon_breath} —— 单个包围盒，黄；</li>
+ *     <li>{@code additional_abilities:annulus} —— 内外双包围盒，青（外框）/ 暗青（内框）。</li>
+ * </ul>
  * <p>
  * 对应 DS 侧的实现在 {@code ClientDragonRenderer#renderAbilityHitbox(RenderLevelStageEvent)}
  * —— 它用一个 {@code targeting instanceof XxxTarget} 的分支链渲染内置的 5 种目标类型，
@@ -46,14 +50,24 @@ import org.jetbrains.annotations.NotNull;
  * 不会把背包/热键栏里所有技能的范围一起糊在屏幕上。
  * <p>
  * <b>刻意使用与 DS 不同的颜色</b>：DS 内置目标类型的调试箱是红（dragon_breath）、蓝（area）、
- * 绿（looking_at / disc）。本类型取黄色
+ * 绿（looking_at / disc）。本模组取黄（反向龙息锥形）与青 / 暗青（环形）。
  */
 @EventBusSubscriber(modid = Additional_abilities.MOD_ID, value = Dist.CLIENT)
 public class AbilityHitboxEventHandler {
-    /** 调试箱颜色（黄）：与 DS 的红/蓝/绿全部错开，便于区分归属 */
+    /** 调试箱颜色（黄）：与 DS 的红/蓝/绿全部错开，便于区分归属 —— 反向龙息锥形 */
     private static final float DEBUG_COLOR_R = 1.0F;
     private static final float DEBUG_COLOR_G = 1.0F;
     private static final float DEBUG_COLOR_B = 0.0F;
+
+    /** 调试箱颜色（青，外框）：环形目标；与上面的黄再错开一档 */
+    private static final float ANNULUS_OUTER_R = 0.0F;
+    private static final float ANNULUS_OUTER_G = 1.0F;
+    private static final float ANNULUS_OUTER_B = 1.0F;
+
+    /** 调试箱颜色（暗青，内框）：环形目标的挖空内圈 */
+    private static final float ANNULUS_INNER_R = 0.0F;
+    private static final float ANNULUS_INNER_G = 0.45F;
+    private static final float ANNULUS_INNER_B = 0.45F;
 
     @SubscribeEvent
     public static void onRenderLevelStage(final @NotNull RenderLevelStageEvent event) {
@@ -98,6 +112,21 @@ public class AbilityHitboxEventHandler {
             if (action.effect() instanceof AntiDragonBreathTarget reverseCone) {
                 LevelRenderer.renderLineBox(pose, buffer, reverseCone.calculateReverseBreathArea(player, ability),
                         DEBUG_COLOR_R, DEBUG_COLOR_G, DEBUG_COLOR_B, 1.0F);
+            } else if (action.effect() instanceof AnnulusTarget annulus) {
+                // 环形无法用单个包围盒表达：外框给出环带外沿，内框给出被挖空的中心
+                Vec3 origin = player.position();
+                double height = annulus.resolveHeight(ability);
+                double inner = annulus.resolveInnerRadius(ability);
+                double outer = annulus.resolveOuterRadius(ability);
+
+                LevelRenderer.renderLineBox(pose, buffer, annulus.calculateArea(origin, outer, height),
+                        ANNULUS_OUTER_R, ANNULUS_OUTER_G, ANNULUS_OUTER_B, 1.0F);
+
+                // 内半径 ≤ 0 时内框退化为一个点，没必要画
+                if (inner > 0) {
+                    LevelRenderer.renderLineBox(pose, buffer, annulus.calculateArea(origin, inner, height),
+                            ANNULUS_INNER_R, ANNULUS_INNER_G, ANNULUS_INNER_B, 1.0F);
+                }
             }
         }
 

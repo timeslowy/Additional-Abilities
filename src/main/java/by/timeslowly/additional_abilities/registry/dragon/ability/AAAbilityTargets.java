@@ -2,6 +2,7 @@ package by.timeslowly.additional_abilities.registry.dragon.ability;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.targeting.AbilityTargeting;
 import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AnnulusTarget;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AntiDragonBreathTarget;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
@@ -37,5 +38,11 @@ public class AAAbilityTargets {
         event.register(AbilityTargeting.REGISTRY_KEY,
                 ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "anti_dragon_breath"),
                 () -> AntiDragonBreathTarget.CODEC);
+
+        // 环形（内圈挖空的圆盘）：additional_abilities:annulus
+        // 字段为 applied_effects + inner_radius / width / height / height_starts_below
+        event.register(AbilityTargeting.REGISTRY_KEY,
+                ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "annulus"),
+                () -> AnnulusTarget.CODEC);
     }
 }
