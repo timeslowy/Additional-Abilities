@@ -1,14 +1,15 @@
 package by.timeslowly.additional_abilities.mixins;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
-import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargedActivation;
+import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 /**
  * 让"可以蓄力按住超过上限而不释放"成为可能
- * （{@code additional_abilities:charged} 的 {@code can_charge_exceed_cast_time} 字段）。
+ * （蓄力类激活类型的 {@code can_charge_exceed_cast_time} 字段，
+ * 目前由 {@code additional_abilities:charged} 与 {@code additional_abilities:optional_charged} 使用）。
  *
  * <h2>为什么要动 Mixin</h2>
  * 蓄力档位类型本身完全建立在 DS 现成流程之上，唯独这一项做不到：
@@ -27,12 +28,18 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
  *         {@code Activation#getCastTime} 本身不受影响 ——
  *         HUD 蓄力条的长度、侧边栏"施法时间"、以及本模组
  *         {@code ChargedCasts#fire} 里读取的档位阈值全部照旧；</li>
- *     <li>只对 {@link ChargedActivation} 且显式开启该字段的技能生效，
+ *     <li>只对实现了 {@link ChargeableActivation} 且显式开启该字段的技能生效，
  *         其他技能与 DS 内置技能完全不受影响。</li>
  * </ul>
  * 蓄力按满后继续按住时，{@code currentTick} 会一直增长（越过真实 {@code cast_time}），
  * 于是 HUD 上的满档数字会一直保持、蓄力条保持满格，直到玩家松手才由
- * {@code ChargedCasts#fire} 按档位释放。
+ * {@code ChargedCasts#fire} 按档位（{@code optional_charged} 下为玩家滚轮指定的档位）释放。
+ *
+ * <h2>副作用（已在收尾路径上处理）</h2>
+ * {@code currentTick} 越过 {@code cast_time} 会让 {@code DragonAbilityInstance#isApplyingEffects()}
+ * 提前返回 {@code true}，进而使 {@code MagicData#stopCasting(player, instance)} 误判为
+ * "效果已生效"而施加冷却。因此"取消施法"不能交给 DS 原生路径，
+ * 必须显式 {@code stopCasting(…, false)} —— 详见 {@code ChargedCasts}。
  *
  * <h2>风险与对策</h2>
  * {@code @ModifyVariable} 依赖局部量序号，DS 若重构 {@code tickActions} 可能错位。
@@ -50,12 +57,13 @@ public abstract class DragonAbilityInstanceMixin {
     private int additional_abilities$holdChargePastCastTime(final int castTime) {
         DragonAbilityInstance self = (DragonAbilityInstance) (Object) this;
 
-        if (!(self.value().activation() instanceof ChargedActivation charged) || !charged.canChargeExceedCastTime()) {
+        if (!(self.value().activation() instanceof ChargeableActivation chargeable)
+                || !chargeable.canChargeExceedCastTime()) {
             return castTime;
         }
 
         // 安全网：序号错位时这个值不会等于 cast_time，于是原样返回、不改动任何行为
-        if (castTime != charged.getCastTime(self.level())) {
+        if (castTime != chargeable.getCastTime(self.level())) {
             return castTime;
         }
 

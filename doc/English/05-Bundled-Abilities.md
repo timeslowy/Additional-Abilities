@@ -10,8 +10,9 @@ data and functions, so **Wing Kirin is a hard dependency**.
 > "Thunderous Shout" using this mod's own custom components. It is **off by default**; see
 > [07-Bundled-Datapacks.md](07-Bundled-Datapacks.md) for what it changes and how to enable it.
 
-> There is also a set of `test_*` abilities (`test_charged` / `test_charged_hold` / `test_block_quake` /
-> `test_screen_vision` / `test_anti_dragon_breath` / `test_annulus`) for development and debugging only.
+> There is also a set of `test_*` abilities (`test_charged` / `test_charged_hold` / `test_optional_charged` /
+> `test_block_quake` / `test_screen_vision` / `test_anti_dragon_breath` / `test_annulus`) for development and
+> debugging only.
 > They are **not attached to any species** and must be granted with a command.
 > See the [README](../../README.md) quick-reference table for which custom type each one exercises.
 

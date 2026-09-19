@@ -6,11 +6,9 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.A
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.Notification;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.Sound;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.item.enchantment.LevelBasedValue;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
@@ -19,6 +17,8 @@ import java.util.Optional;
  * <p>
  * 行为上等价于 {@code dragonsurvival:simple} 的"按住读条"，但读条过程被理解为<b>蓄力</b>：
  * 按住期间按蓄力时长逐档提升，<b>松手时按当前所达到的档位释放技能</b>。
+ * 档位换算的全部逻辑（阈值、上限、反查）由 {@link ChargeableActivation} 统一提供，
+ * 本类只负责字段、CODEC 与类型标识。
  * <ul>
  *     <li>蓄力未达 {@link #getMinimumChargeTicks()}（即档位 1 所需时长）就松手 → 视为取消施法；
  *         与服务端 {@code stopCasting} 的原生"提前松手"路径一致，<b>不产生冷却</b>。</li>
@@ -47,7 +47,7 @@ import java.util.Optional;
  *     <li>{@code cast_time} —— 一并作为动作 {@code trigger_rate} 的取模基准传入。</li>
  * </ul>
  * 不随档位变化的是"档位换算本身"：{@code charged_duration_per_level} 逐级求值得到各档阈值，
- * {@code cast_time} 给出蓄力上限（见下节"档位换算"）。
+ * {@code cast_time} 给出蓄力上限。
  * <p>
  * 直接后果：一个只升到 3 级的玩家，即使蓄满也只是按 3 级结算上面全部数值。
  * <p>
@@ -81,24 +81,10 @@ import java.util.Optional;
  *     <li>禁 {@code looping} 音效 / 动画，与 {@code simple} 相同（本类型同样没有"引导期"）。</li>
  * </ol>
  *
- * <h2>档位换算</h2>
- * 档位 {@code L} 所需时长 = {@code min(charged_duration_per_level(L), 蓄力时长上限(L))}，
- * 也就是"最高等级所需蓄力时长不得超过总施法时间"的落地位置：超限时封顶。
- * <p>
- * 上限取多少取决于 {@link #canChargeExceedCastTime()}：
- * <ul>
- *     <li>{@code false}（默认）：DS 会在 {@code currentTick == cast_time} 的<b>当刻</b>完成释放并立刻停手，
- *         所以"仍在蓄力"的状态最多只能观察到 {@code cast_time - 1}。若把上限压在 {@code cast_time}，
- *         最高档的落点就落在客户端看不到的那一帧 —— 满档数字与提示音永远不会出现；
- *         而且"最后一刻松手"会比"按满自动释放"低一档，自相矛盾。
- *         故上限前移 1 刻（{@code cast_time - 1}），消除这一帧错位。</li>
- *     <li>{@code true}：蓄力按满后可以继续按住不释放 —— {@code currentTick} 会越过 {@code cast_time}
- *         （由 {@code mixins.DragonAbilityInstanceMixin} 撑开 DS 的完成判定），
- *         上限即 {@code cast_time} 本身，满档可以一直保持并显示在 HUD 上。</li>
- * </ul>
- * <p>
- * 因为 {@link LevelBasedValue} 以 1 为最低计算等级（0 会被 {@code lookup} 类型读成越界），
- * 本类所有涉及等级的换算都从 1 起算，等级 0 一律视为"技能未解锁 / 无效"。
+ * <h2>相关类型</h2>
+ * {@link OptionalChargedActivation}（{@code additional_abilities:optional_charged}）是本类型的改版：
+ * 字段完全一致，但 {@code can_charge_exceed_cast_time} 默认为 {@code true}，
+ * 且允许玩家在蓄力期间用鼠标滚轮指定释放档位（含"取消"）。
  *
  * @param chargedDurationPerLevel 各档位所需的蓄力时长（tick），对应 JSON {@code charged_duration_per_level}
  * @param castTime                总蓄力上限（tick），对应 {@code cast_time}；必填且必须为正
@@ -123,51 +109,18 @@ public record ChargedActivation(
         boolean canMoveWhileCasting,
         Optional<Sound> sound,
         Optional<Animations> animations
-) implements Activation {
-    /** 档位 0 表示"蓄力不足，未达成任何档位"。 */
-    public static final int NO_CHARGED_LEVEL = 0;
-
-    /**
-     * 总蓄力上限。必须为正 —— 否则蓄力过程无意义（第 1 刻就读条完成），
-     * 因此在解析期直接拦下，而不是留到运行时。
-     */
-    private static final Codec<LevelBasedValue> CAST_TIME_CODEC = LevelBasedValue.CODEC.validate(value ->
-            value.calculate(DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) > 0
-                    ? DataResult.success(value)
-                    : DataResult.error(() -> "Charged activation requires a positive [cast_time] (it is the maximum charge duration)"));
-
+) implements ChargeableActivation {
     public static final MapCodec<ChargedActivation> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             LevelBasedValue.CODEC.fieldOf("charged_duration_per_level").forGetter(ChargedActivation::chargedDurationPerLevel),
-            CAST_TIME_CODEC.fieldOf("cast_time").forGetter(ChargedActivation::castTime),
+            ChargeableActivation.CAST_TIME_CODEC.fieldOf("cast_time").forGetter(ChargedActivation::castTime),
             Codec.BOOL.optionalFieldOf("can_charge_exceed_cast_time", false).forGetter(ChargedActivation::canChargeExceedCastTime),
             LevelBasedValue.CODEC.optionalFieldOf("cooldown").forGetter(ChargedActivation::cooldown),
             LevelBasedValue.CODEC.optionalFieldOf("initial_mana_cost").forGetter(ChargedActivation::initialManaCost),
             Notification.CODEC.optionalFieldOf("notification", Notification.DEFAULT).forGetter(ChargedActivation::notification),
             Codec.BOOL.optionalFieldOf("can_move_while_casting", true).forGetter(ChargedActivation::canMoveWhileCasting),
-            Sound.CODEC
-                    .validate(sound -> sound.looping().isPresent() ? DataResult.error(() -> "Charged activation does not support [looping] sounds") : DataResult.success(sound))
-                    .optionalFieldOf("sound").forGetter(ChargedActivation::sound),
-            Animations.CODEC
-                    .validate(animations -> animations.looping().isPresent() ? DataResult.error(() -> "Charged activation does not support [looping] animations") : DataResult.success(animations))
-                    .optionalFieldOf("animations").forGetter(ChargedActivation::animations)
+            ChargeableActivation.SOUND_CODEC.optionalFieldOf("sound").forGetter(ChargedActivation::sound),
+            ChargeableActivation.ANIMATIONS_CODEC.optionalFieldOf("animations").forGetter(ChargedActivation::animations)
     ).apply(instance, ChargedActivation::new));
-
-    @Override
-    public int getCastTime(final int level) {
-        return (int) castTime.calculate(level);
-    }
-
-    @Override
-    public int getCooldown(final int level) {
-        return cooldown.map(value -> (int) value.calculate(level))
-                .orElseGet(() -> Activation.super.getCooldown(level));
-    }
-
-    @Override
-    public float getInitialManaCost(final int level) {
-        return initialManaCost.map(cost -> cost.calculate(level))
-                .orElseGet(() -> Activation.super.getInitialManaCost(level));
-    }
 
     @Override
     public Type type() {
@@ -177,91 +130,5 @@ public record ChargedActivation(
     @Override
     public MapCodec<? extends Activation> codec() {
         return CODEC;
-    }
-
-    /**
-     * 档位 {@code level} 所需的蓄力时长（tick）。
-     * <p>
-     * 若 {@code charged_duration_per_level} 在该档位超过蓄力时长上限 {@link #chargeCapTicks(int)}，
-     * 则封顶为该上限 —— 这就是"最高等级所需蓄力时长不得超过 {@code cast_time}"的落地点
-     * （上限为何是 {@code cast_time} 或 {@code cast_time - 1} 见 {@link #canChargeExceedCastTime()} 的说明）。
-     *
-     * @param level 档位，从 1（{@link DragonAbilityInstance#MIN_LEVEL_FOR_CALCULATIONS}）起算
-     * @return 该档位所需的蓄力游戏刻数
-     */
-    public int getRequiredChargeTicks(final int level) {
-        int required = Math.max(0, (int) chargedDurationPerLevel.calculate(level));
-        return Math.min(required, chargeCapTicks(level));
-    }
-
-    /**
-     * 蓄力时长的有效上限：超过它之后档位不再提升。
-     * <p>
-     * 不能超上限蓄力时前移 1 刻 —— DS 在 {@code currentTick == cast_time} 当刻就完成释放，
-     * "仍在蓄力"的状态观察不到那一帧（详见类注释）。
-     */
-    private int chargeCapTicks(final int level) {
-        int castTimeTicks = Math.max(1, getCastTime(level));
-        return canChargeExceedCastTime ? castTimeTicks : Math.max(1, castTimeTicks - 1);
-    }
-
-    /**
-     * 最低蓄力时长：档位 1 所需的蓄力时长，未达此值松手视为取消施法。
-     *
-     * @return 最少需要按住的游戏刻数
-     */
-    public int getMinimumChargeTicks() {
-        return getRequiredChargeTicks(DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS);
-    }
-
-    /**
-     * 由已蓄力时长反查档位。
-     *
-     * @param chargeTicks 已蓄力的游戏刻数
-     * @param playerLevel 玩家自身的技能升级等级，档位不会超过它
-     * @return 达成的最高档位；未达最低蓄力时长或玩家等级为 0 时返回 {@link #NO_CHARGED_LEVEL}
-     */
-    public int getChargedLevel(final int chargeTicks, final int playerLevel) {
-        if (playerLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS
-                || chargeTicks < getMinimumChargeTicks()) {
-            return NO_CHARGED_LEVEL;
-        }
-
-        int result = NO_CHARGED_LEVEL;
-
-        // 取"满足时长的最高档位"而不是遇到第一个不满足就中断：
-        // 配置非单调（例如 lookup 手写成高低起伏）时，语义仍然是"蓄力足够久就该拿到对应档位"
-        for (int level = DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS; level <= playerLevel; level++) {
-            if (getRequiredChargeTicks(level) <= chargeTicks) {
-                result = level;
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * 便捷入口：技能实例的激活类型是蓄力档位时才换算档位，否则返回 {@link #NO_CHARGED_LEVEL}。
-     * <p>
-     * 客户端与服务端都要用同一套换算，故放在这里统一提供。
-     *
-     * @param instance    技能实例，等级取 {@link DragonAbilityInstance#level()}（即玩家真实升级等级）
-     * @param chargeTicks 已蓄力的游戏刻数
-     * @return 达成的最高档位；类型不匹配、未达最低蓄力时长或玩家等级为 0 时为 {@link #NO_CHARGED_LEVEL}
-     */
-    public static int getChargedLevelOf(final @NotNull DragonAbilityInstance instance, final int chargeTicks) {
-        return instance.value().activation() instanceof ChargedActivation charged
-                ? charged.getChargedLevel(chargeTicks, instance.level())
-                : NO_CHARGED_LEVEL;
-    }
-
-    /**
-     * 是否为蓄力档位类型（客户端 / 服务端共用的类型判定）。
-     *
-     * @param activation 待判定的激活类型
-     * @return 该激活类型是否为本类
-     */
-    public static boolean isCharged(final @NotNull Activation activation) {
-        return activation instanceof ChargedActivation;
     }
 }

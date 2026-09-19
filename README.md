@@ -41,6 +41,7 @@
 | 目标选择器 | `target_type` | `additional_abilities:anti_dragon_breath` | 龙息锥形，但朝施法者**身后**延伸 | [03](doc/中文/03-目标选择器.md) |
 | 目标选择器 | `target_type` | `additional_abilities:annulus` | 环形（圆盘挖空内圈） | [03](doc/中文/03-目标选择器.md) |
 | 激活类型 | `activation_type` | `additional_abilities:charged` | 按住蓄力，松手按蓄到的档位释放 | [04](doc/中文/04-激活类型.md) |
+| 激活类型 | `activation_type` | `additional_abilities:optional_charged` | 同上，但蓄力期间可用滚轮挑档位（含取消） | [04](doc/中文/04-激活类型.md) |
 
 ### 随附的伤害类型
 
@@ -54,6 +55,7 @@
 |---|---|---|
 | `/simple-screen-vision clear <targets>` | 清空目标玩家身上的屏幕视觉 | [06](doc/中文/06-调试与查询指令.md) |
 | `/dragon-ability query <目标> <技能> current_charged_level` | 查询蓄力档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
+| `/dragon-ability query <目标> <技能> current_selected_level` | 查询滚轮选定的释放档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
 
 ### 内置数据包（默认不启用）
 
@@ -166,6 +168,7 @@ The values added by this mod are:
 | Target type | `target_type` | `additional_abilities:anti_dragon_breath` | A dragon breath cone, but extending **behind** the caster | [03](doc/English/03-Target-Type.md) |
 | Target type | `target_type` | `additional_abilities:annulus` | A ring — a disc with the inner circle hollowed out | [03](doc/English/03-Target-Type.md) |
 | Activation type | `activation_type` | `additional_abilities:charged` | Hold to charge, release to fire at the tier you reached | [04](doc/English/04-Activation-Type.md) |
+| Activation type | `activation_type` | `additional_abilities:optional_charged` | Same, but you pick the tier with the mouse wheel (cancel included) | [04](doc/English/04-Activation-Type.md) |
 
 ### Bundled damage type
 
@@ -179,6 +182,7 @@ The values added by this mod are:
 |---|---|---|
 | `/simple-screen-vision clear <targets>` | Clear screen vision from the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/dragon-ability query <target> <ability> current_charged_level` | Query the charge tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
+| `/dragon-ability query <target> <ability> current_selected_level` | Query the wheel-picked release tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
 
 ### Bundled datapacks (off by default)
 

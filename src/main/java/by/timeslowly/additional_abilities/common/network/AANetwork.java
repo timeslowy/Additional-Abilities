@@ -16,8 +16,11 @@ public class AANetwork {
      * 协议版本。两端版本不一致时 NeoForge 会拒绝连接，
      * 因此改动 payload 字段结构、增删 payload 种类、或改动随包传输的
      * 枚举序列名取值时，必须同步递增。
+     * <p>
+     * 6 → 7：{@link ChargedReleasePayload} 增加 {@code releaseLevel} 字段
+     * （支撑 {@code additional_abilities:optional_charged} 的滚轮选档与取消）。
      */
-    private static final String PROTOCOL_VERSION = "6";
+    private static final String PROTOCOL_VERSION = "7";
 
     @SubscribeEvent
     public static void register(final @NotNull RegisterPayloadHandlersEvent event) {
@@ -34,5 +37,9 @@ public class AANetwork {
 
         // 蓄力释放：仅客户端 → 服务端
         registrar.playToServer(ChargedReleasePayload.TYPE, ChargedReleasePayload.STREAM_CODEC, ChargedReleasePayload::handleServer);
+
+        // 可选性蓄力的滚轮选档同步：仅客户端 → 服务端（只为查询指令可见性，不参与结算）
+        registrar.playToServer(OptionalChargedSelectionPayload.TYPE, OptionalChargedSelectionPayload.STREAM_CODEC,
+                OptionalChargedSelectionPayload::handleServer);
     }
 }

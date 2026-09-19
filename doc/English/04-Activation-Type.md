@@ -59,6 +59,70 @@ reachable.
 
 ---
 
+## `additional_abilities:optional_charged` — Optional Charged Tiers
+
+**In one line**: the `charged` variant that lets you **pick the tier you release** with the mouse wheel while
+charging — including picking *cancel, release nothing*.
+
+The fields are **identical** to `charged` (same table as above); only one default differs, plus a wheel
+interaction on top.
+
+### Differences from `charged`
+
+| | `charged` | `optional_charged` |
+|---|---|---|
+| `can_charge_exceed_cast_time` default | `false` | **`true`** |
+| Tier used on release | the tier you have reached | the tier you **picked** with the wheel |
+| Can you cancel? | only by releasing before tier 1 | **at any time** (pick tier `0`) |
+
+> **Why the default flips to `true`**: picking a tier needs a window where holding past the cap does not
+> fire. With `false`, Dragon Survival releases automatically at the player's highest tier the moment
+> `currentTick == cast_time`, leaving no time to pick. The field can still be written as `false`
+> explicitly, but then picking only works within `[0, cast_time - 1]`.
+
+### Wheel interaction
+
+While the ability key is held:
+
+| Action | Effect |
+|---|---|
+| Scroll up | release tier +1 |
+| Scroll down | release tier −1 |
+| Scroll down to `0` | picks **cancel**: releasing then casts nothing |
+
+**The selectable range is always `[0, the tier you have reached]`** — you cannot pick a tier you have not
+charged up to. Before tier 1 there is nothing to pick, so the wheel is not captured and keeps switching
+hotbar items as usual.
+
+**Auto-follow by default**: without scrolling, the release tier equals the reached tier, exactly like
+`charged`. The first scroll switches to **manual**; scrolling back up to the reached tier returns to
+auto-follow.
+
+**Manual picking does not freeze the charge**: the reached tier keeps rising (reach 5, pick 3, keep holding
+— the reached tier is still 5), so you can always scroll back up to 4, 5.
+
+> **Note**: while charging, the wheel is claimed by the ability and **does not switch hotbar items**
+> (intentional).
+
+### What cancelling costs
+
+Picking `0` and releasing **cancels the cast**: no actions run, no initial mana is spent, **no cooldown is
+applied**, and the looping sound and ability animation are cleared immediately.
+
+> The cancel path deliberately bypasses Dragon Survival's native stop: `DragonAbilityInstance#isApplyingEffects()`
+> tests `currentTick >= cast_time`, and with `can_charge_exceed_cast_time` enabled the "holding past the cap"
+> stretch makes it **return true early** — Dragon Survival would then treat the cast as "effects already
+> applied" and hand out a cooldown plus ending sound / animation. Cancelling is therefore wrapped up by this
+> mod explicitly as "no cooldown", with its own stop-sound and stop-animation broadcasts.
+
+### Balance note
+
+`cooldown` and `initial_mana_cost` are resolved against the **tier actually released**, so releasing a low
+tier is naturally cheaper — that is the point. But if you configure those two to **decrease** with the tier,
+spamming the lowest tier becomes the optimal play; keep them non-decreasing in the tier.
+
+---
+
 ## Tier conversion
 
 ```
@@ -88,6 +152,8 @@ release.
 | Released at or beyond tier 1 | Fires once at the current tier: spend initial mana → run the actions → resolve cooldown / ending sound / ending animation against that tier |
 | Charged all the way to `cast_time` | Dragon Survival's native "casting complete" releases it automatically, at the player's own upgrade level (max tier) |
 | `can_charge_exceed_cast_time` enabled | You may hold past the cap indefinitely; the tier parks at your own maximum and **only releasing fires it — nothing is automatic** |
+| `optional_charged`: released with a picked tier | Fires at the **picked tier** (this cell is always "the reached tier" for `charged`) |
+| `optional_charged`: released with tier `0` picked | **Cast cancelled**: no actions run, no initial mana spent, **no cooldown**, looping sound and animation cleared |
 
 ---
 
@@ -134,15 +200,44 @@ A **tier number** is drawn to the right of the cast bar:
 A note-block cue plays each time a tier is crossed, rising in pitch with the tier.
 **The number shown is exactly the tier that will be used on release.**
 
+Under `optional_charged` the readout changes shape with the selection (the progress bar and its percentage
+below keep their meaning):
+
+| State | Shown | Colour |
+|---|---|---|
+| Auto-follow (not scrolled) | a single number = the reached tier | white / gold at max, same as `charged` |
+| Manual pick | `picked/reached`, e.g. `3/5` | picked value in **cyan**, `/reached` in grey |
+| Manual pick set to cancel | `0/reached`, e.g. `0/5` | **red** |
+
+Each wheel step that actually changes the tier plays a click (pitch rises with the tier; picking `0` uses a
+lower pitch so it stands out).
+
 ### Query command
 
 ```
 /dragon-ability query <target> <ability> current_charged_level
+/dragon-ability query <target> <ability> current_selected_level
 ```
 
+`current_charged_level`:
+
 - currently charging → the **tier corresponding to the current charge**;
-- not charging → the tier used by the **most recent actual release**;
+- not charging → the tier used by the **most recent actual release** (cancels are not recorded);
 - the ability is not a charged type → `0`.
+
+`current_selected_level` (for `optional_charged`) — always answers "**how many tiers would come out if I released right now**":
+
+- manually picked → the **picked release tier**; `0` means it has been picked as **cancel**;
+- **auto-follow** (never scrolled, or scrolled back up to the reached tier) → the **tier reached so far**
+  (which is exactly what a release would use);
+- not charging, or charging has not reached tier 1 yet → `-1` (unspecified);
+- the ability is not a charged type → `-1`.
+
+> The internal "auto / manual" state is deliberately **not** exposed: as soon as the player scrolls back to the
+> top the client returns to auto-follow, and reporting `-1` ("unspecified") at a moment when a concrete tier
+> is perfectly computable only misleads debugging.
+> There is also no state of "manually picked exactly the reached tier" that would need to be told apart from
+> auto-follow — the two are identical in effect.
 
 ---
 
@@ -152,5 +247,6 @@ A note-block cue plays each time a tier is crossed, rising in pitch with the tie
 |---|---|---|
 | `additional_abilities:test_charged` | `cast_time: 50`, `can_charge_exceed_cast_time` off | Default mode: fires automatically at the cap, all 5 tiers reachable |
 | `additional_abilities:test_charged_hold` | `cast_time: 60`, `can_charge_exceed_cast_time: true` | Past-the-cap charging: hold at max tier as long as you like |
+| `additional_abilities:test_optional_charged` | `cast_time: 60`, type `optional_charged` | Wheel picking: scroll to pick a tier, pick `0` to cancel |
 
-Neither is attached to any species; grant them with `/dragon-ability add <target> <ability>`.
+None is attached to any species; grant them with `/dragon-ability add <target> <ability>`.

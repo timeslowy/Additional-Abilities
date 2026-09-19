@@ -27,8 +27,17 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.ToIntBiFunction;
+
 /**
- * 扩展现有查询指令：{@code /dragon-ability query <target> <dragon_ability> current_charged_level}。
+ * 扩展现有查询指令，为蓄力档位族系激活类型补两条只读查询：
+ * <ul>
+ *     <li>{@code /dragon-ability query <target> <dragon_ability> current_charged_level}
+ *         —— 当前已蓄到的档位；</li>
+ *     <li>{@code /dragon-ability query <target> <dragon_ability> current_selected_level}
+ *         —— {@code additional_abilities:optional_charged} 下"此刻松手会放几档"
+ *         （{@code 0} 表示已选定为取消、{@code -1} 表示无有效档位可参照）。</li>
+ * </ul>
  *
  * <h2>为什么是"扩展"而不是"新建"</h2>
  * 指令树由 DS 的 {@code DragonAbilityCommand} 注册为
@@ -38,11 +47,13 @@ import org.jetbrains.annotations.Nullable;
  * 因此不会与 DS 抢根节点，也不会影响原有子命令（尤其是 {@code level} 的语义保持不变）。
  *
  * <h2>语义</h2>
- * 蓄力档位激活类型下，"技能输出的实际等级"未必等于玩家的升级等级，因此单列一项查询：
+ * 蓄力档位激活类型下，"技能输出的实际等级"未必等于玩家的升级等级，因此单列查询：
  * <ul>
- *     <li>正在蓄力 → 当前蓄力所对应的档位；</li>
- *     <li>未在蓄力 → 最近一次实际释放所用的档位；</li>
- *     <li>技能不是蓄力档位类型 → 0。</li>
+ *     <li>{@code current_charged_level}：正在蓄力 → 当前蓄力所对应的档位；
+ *         未在蓄力 → 最近一次实际释放所用的档位（取消不写入）；技能不属于本族系 → 0。</li>
+ *     <li>{@code current_selected_level}：手动选定过 → 该选定值（含 0 = 取消）；
+ *         自动跟随 → 已蓄到的档位；未在蓄力 / 尚未达最低档 / 不属于本族系 → -1。
+ *         详见 {@link ChargedCasts#resolveSelectedLevel}。</li>
  * </ul>
  * 输出文案直接复用 DS 自己的 {@code ability.query_result} 语言键，
  * 与 {@code level} / {@code cast_time} 等既有条目的显示格式完全一致。
@@ -52,6 +63,7 @@ public final class ChargedQueryCommand {
     private static final String DRAGON_ABILITY = "dragon-ability";
     private static final String QUERY = "query";
     private static final String CURRENT_CHARGED_LEVEL = "current_charged_level";
+    private static final String CURRENT_SELECTED_LEVEL = "current_selected_level";
 
     /** 复用 DS 的查询结果文案：{@code %s of the ability %s from player %s has the value %s}。 */
     private static final String QUERY_RESULT = Translation.Type.COMMAND.wrap("ability.query_result");
@@ -75,7 +87,11 @@ public final class ChargedQueryCommand {
         }
 
         abilityNode.addChild(Commands.literal(CURRENT_CHARGED_LEVEL)
-                .executes(ChargedQueryCommand::query)
+                .executes(source -> query(source, ChargedCasts::resolveQueryLevel))
+                .build());
+
+        abilityNode.addChild(Commands.literal(CURRENT_SELECTED_LEVEL)
+                .executes(source -> query(source, ChargedCasts::resolveSelectedLevel))
                 .build());
     }
 
@@ -94,7 +110,16 @@ public final class ChargedQueryCommand {
         return node == null ? null : node.getChild(DragonAbilityArgument.ID);
     }
 
-    private static int query(final @NotNull CommandContext<CommandSourceStack> source) throws CommandSyntaxException {
+    /**
+     * 两个子命令共用的查询主体：解析目标与技能，再交给具体的取值函数。
+     *
+     * @param source   指令上下文
+     * @param resolver 取值函数，见 {@link ChargedCasts#resolveQueryLevel} /
+     *                 {@link ChargedCasts#resolveSelectedLevel}
+     * @return 取到的档位值（同时作为指令返回值，便于 {@code /execute store} 使用）
+     */
+    private static int query(final @NotNull CommandContext<CommandSourceStack> source,
+                             final @NotNull ToIntBiFunction<Player, DragonAbilityInstance> resolver) throws CommandSyntaxException {
         Player player = EntityArgument.getPlayer(source, DSCommands.TARGET);
         Holder<DragonAbility> ability = DragonAbilityArgument.get(source);
 
@@ -110,7 +135,7 @@ public final class ChargedQueryCommand {
             throw UNKNOWN_ABILITY_EXCEPTION.create(null, player.getDisplayName(), ability.getRegisteredName());
         }
 
-        int result = ChargedCasts.resolveQueryLevel(player, instance);
+        int result = resolver.applyAsInt(player, instance);
 
         source.getSource().sendSuccess(() -> Component.translatable(
                 QUERY_RESULT,

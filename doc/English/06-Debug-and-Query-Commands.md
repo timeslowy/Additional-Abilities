@@ -38,7 +38,8 @@ On success it reports: `Cleared simple screen vision from %s player(s)`.
 
 ## 2. `/dragon-ability query <target> <ability> current_charged_level`
 
-A **sub-command appended** to Dragon Survival's own ability query, dedicated to `additional_abilities:charged`:
+One of the two **sub-commands appended** to Dragon Survival's own ability query, covering the charged-tier
+family (`additional_abilities:charged` and `additional_abilities:optional_charged`):
 
 ```
 /dragon-ability query @s additional_abilities:test_charged current_charged_level
@@ -47,7 +48,7 @@ A **sub-command appended** to Dragon Survival's own ability query, dedicated to 
 | Situation | Value returned |
 |---|---|
 | Currently charging | The **tier** corresponding to the current charge |
-| Not charging | The tier used by the **most recent actual release** |
+| Not charging | The tier used by the **most recent actual release** (cancels are not recorded) |
 | The ability's activation type is not a charged type | `0` |
 
 The output reuses Dragon Survival's own query result message, so it is **formatted exactly like** the existing
@@ -63,9 +64,45 @@ The output reuses Dragon Survival's own query result message, so it is **formatt
 **A charged ability's damage, cooldown, mana cost and durations are all resolved against
 `current_charged_level`**, so watch this entry when debugging numbers — not `level`.
 
-### For reference: Dragon Survival's own query entries
+---
 
-Under `/dragon-ability query <target> <ability>` these sub-entries already exist and can be mixed with the one
+## 3. `/dragon-ability query <target> <ability> current_selected_level`
+
+Works with `additional_abilities:optional_charged` (the optional charged-tier type) and its wheel picking:
+
+```
+/dragon-ability query @s additional_abilities:test_optional_charged current_selected_level
+```
+
+| Situation | Value returned |
+|---|---|
+| The player has picked a tier with the wheel | The **picked release tier** (`0` means it has been picked as "cancel, release nothing") |
+| Auto-follow (never scrolled, or scrolled back up to the reached tier) | The **tier reached so far** (exactly what a release would use) |
+| Not charging, or charging has not reached tier 1 yet | `-1` (unspecified) |
+| The ability's activation type is not a charged type | `-1` |
+
+**The picked tier takes no part in any numeric resolution**: the tier that actually fires is reported by the
+release packet and re-validated / clamped on the server. This entry merely exposes the client's picking state
+so you can confirm "how many tiers will actually come out on release". The server clears the record at the end
+of every cast (release or cancel), so it never leaks into the next one.
+
+> **Why auto-follow reports a tier number instead of `-1`**: `-1` only ever means "no tier to refer to".
+> When the player scrolls back to the top (or never scrolled at all) the client returns to auto-follow, and
+> reporting "unspecified" at a moment when a concrete tier is perfectly computable only misleads debugging —
+> the entry answers "how many tiers will fire", not "has the player turned the wheel".
+
+### How it differs from `current_charged_level`
+
+| Query | Meaning |
+|---|---|
+| `current_charged_level` | The tier you have **reached** (the charge-progress conversion) |
+| `current_selected_level` | The tier **about to be released** (the player's wheel pick), never above the reached tier |
+
+---
+
+## 4. For reference: Dragon Survival's own query entries
+
+Under `/dragon-ability query <target> <ability>` these sub-entries already exist and can be mixed with the ones
 above:
 
 | Sub-entry | Meaning |
@@ -80,7 +117,7 @@ above:
 
 ---
 
-## 3. Granting abilities by hand (Dragon Survival's own, not added by this mod)
+## 5. Granting abilities by hand (Dragon Survival's own, not added by this mod)
 
 This mod's `test_*` abilities are not attached to any species, so grant them manually while debugging:
 

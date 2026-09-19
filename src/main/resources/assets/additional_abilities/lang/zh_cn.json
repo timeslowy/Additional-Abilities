@@ -37,6 +37,8 @@
 "dragon_ability.additional_abilities.test_charged.desc": "§7■ 用于测试§6「蓄力」§7激活类型的技能。\n\n■ §f按住§7技能键蓄力，按得越久，效果实际生效的§f等级§7越高。\n\n■ 蓄力§f达到最低时长后松手§7，按已蓄到的档位释放；§f更早松手§7则取消施法。\n\n■ 一直按到 §fcast_time（总蓄力时长）§7 会直接以自身最高档位自动释放。",
 "dragon_ability.additional_abilities.test_charged_hold": "蓄力超上限测试",
 "dragon_ability.additional_abilities.test_charged_hold.desc": "§7■ 与§6「蓄力测试」§7相同，但开启了 §fcan_charge_exceed_cast_time§7。\n\n■ 蓄力可以§f按过总蓄力时长而不释放§7，档位停在自身最高档不再上升，提示会一直保持。\n\n■ 只有§f松手§7才会释放，不会自动释放。",
+"dragon_ability.additional_abilities.test_optional_charged": "可选蓄力测试",
+"dragon_ability.additional_abilities.test_optional_charged.desc": "§7■ 用于测试§6「可选性蓄力」§7激活类型的技能。\n\n■ §f按住技能键§7蓄力。蓄力期间§f滚动鼠标滚轮§7即可挑选松手时要释放的档位：上滚提升、下滚降低。\n\n■ 只能挑选§f当前已蓄到§7的档位 —— 提示区左边的数字是你选定的档位，紧跟其后的灰色数字是已蓄到的档位。\n\n■ 一直下滚到 §f0§7 即为§f取消§7：此时松手什么都不放，既不耗蓝也不进冷却。\n\n■ 把档位滚回「已蓄到档位」即恢复§f自动跟随§7（表现与§6「蓄力」§7类型一致）：松手按已蓄到的档位释放。",
 "commands.additional_abilities.simple_screen_vision.clear.success": "已清除 %s 名玩家身上的简单视觉效果",
 "additional_abilities.gui.ability_target.reverse_cone_target.block": "影响身后 %s 格锥形范围内的方块",
 "additional_abilities.gui.ability_target.reverse_cone_target.entity": "影响身后 %s 格锥形范围内的%s",

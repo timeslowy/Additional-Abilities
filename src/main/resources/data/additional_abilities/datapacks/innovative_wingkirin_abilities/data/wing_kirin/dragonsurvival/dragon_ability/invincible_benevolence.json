@@ -1,0 +1,244 @@
+{
+    "actions": [
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:glow",
+                            "glows": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:charging_glow",
+                                        "duration": 60,
+                                        "is_hidden": true
+                                    },
+                                    "color": "#fbdc92"
+                                }
+                            ]
+                        }
+                    ],
+                    "targeting_mode": "allies_and_self"
+                },
+                "target_type": "dragonsurvival:area",
+                "radius": 9
+            },
+            "trigger_point": "charging"
+        },
+        {
+            "target_selection": {
+                "target_type": "dragonsurvival:area",
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:heal",
+                            "percentage": {
+                                "type": "minecraft:linear",
+                                "base": 0.2,
+                                "per_level_above_first": 0.1
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:effect_removal",
+                            "categories": [
+                                "HARMFUL"
+                            ],
+                            "max_amount": 10
+                        },
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": "minecraft:regeneration",
+                                "amplifier": 2,
+                                "duration": {
+                                    "type": "linear",
+                                    "base": 200,
+                                    "per_level_above_first": 200
+                                }
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:particle",
+                            "particle_count": 20,
+                            "particle_data": {
+                                "particle": {
+                                    "type": "instant_effect"
+                                },
+                                "horizontal_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "vertical_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "horizontal_velocity": {
+                                    "base": 1.0
+                                },
+                                "vertical_velocity": {
+                                    "base": 1.0
+                                },
+                                "speed": 0.5
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:run_function",
+                            "function": "wing_kirin:dragon_ability/invincible_benevolence/beneficiary"
+                        }
+                    ],
+                    "targeting_mode": "allies_and_self",
+                    "target_conditions": {
+                        "condition": "entity_properties",
+                        "entity": "this",
+                        "predicate": {
+                            "type_specific": {
+                                "type": "dragonsurvival:entity_check_predicate",
+                                "check_for": "living_entity"
+                            }
+                        }
+                    }
+                },
+                "radius": 9
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:run_function",
+                            "function": "wing_kirin:dragon_ability/invincible_benevolence/search_beneficiary"
+                        },
+                        {
+                            "effect_type": "dragonsurvival:particle",
+                            "particle_count": 20,
+                            "particle_data": {
+                                "particle": {
+                                    "type": "dragonsurvival:large_sun",
+                                    "duration": 200,
+                                    "swirls": true
+                                },
+                                "horizontal_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "vertical_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "horizontal_velocity": {
+                                    "base": 1.0
+                                },
+                                "vertical_velocity": {
+                                    "base": 1.0
+                                },
+                                "speed": 0.1
+                            }
+                        }
+                    ],
+                    "targeting_mode": "all"
+                },
+                "target_type": "dragonsurvival:self"
+            }
+        }
+    ],
+    "activation": {
+        "activation_type": "additional_abilities:optional_charged",
+        "can_move_while_casting": false,
+        "cast_time": 60,
+        "charged_duration_per_level": {
+            "type": "minecraft:linear",
+            "base": 10.0,
+            "per_level_above_first": 10.0
+        },
+        "cooldown": {
+            "type": "minecraft:linear",
+            "base": 200,
+            "per_level_above_first": 200
+        },
+        "initial_mana_cost": 8,
+        "animations": {
+            "start_and_charging": {
+                "animation_key": "cast_mass_buff",
+                "layer": "BASE",
+                "locks_neck": false,
+                "locks_tail": false,
+                "transition_length": 5
+            },
+            "end": {
+                "animation_key": "mass_buff",
+                "layer": "BASE",
+                "locks_tail": false,
+                "locks_neck": false,
+                "transition_length": 5
+            }
+        },
+        "sound": {
+            "charging": "block.conduit.activate",
+            "end": "block.enchantment_table.use"
+        },
+        "notification": {
+            "usage_blocked": {
+                "translate": "dragon_ability.wing_kirin.invincible_benevolence.activation.notification.usage_blocked"
+            }
+        }
+    },
+    "can_be_manually_disabled": true,
+    "icon": {
+        "texture_entries": [
+            {
+                "from_level": 0,
+                "texture_resource": "wing_kirin:abilities/invincible_benevolence/invincible_benevolence_0"
+            },
+            {
+                "from_level": 1,
+                "texture_resource": "wing_kirin:abilities/invincible_benevolence/invincible_benevolence_1"
+            },
+            {
+                "from_level": 2,
+                "texture_resource": "wing_kirin:abilities/invincible_benevolence/invincible_benevolence_2"
+            },
+            {
+                "from_level": 3,
+                "texture_resource": "wing_kirin:abilities/invincible_benevolence/invincible_benevolence_3"
+            },
+            {
+                "from_level": 4,
+                "texture_resource": "wing_kirin:abilities/invincible_benevolence/invincible_benevolence_4"
+            },
+            {
+                "from_level": 5,
+                "texture_resource": "wing_kirin:abilities/invincible_benevolence/invincible_benevolence_5"
+            }
+        ]
+    },
+    "upgrade": {
+        "upgrade_type": "dragonsurvival:experience_levels",
+        "maximum_level": 5,
+        "level_requirement": {
+            "type": "lookup",
+            "values": [
+                60,
+                70,
+                80,
+                90,
+                100
+            ],
+            "fallback": 10
+        }
+    },
+    "usage_blocked": {
+        "condition": "all_of",
+        "terms": [
+            {
+                "condition": "inverted",
+                "term": {
+                    "condition": "entity_properties",
+                    "entity": "this",
+                    "predicate": {
+                        "type_specific": {
+                            "type": "dragonsurvival:dragon_predicate",
+                            "dragon_species": "dragonsurvival:wing_kirin"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}
