@@ -1,0 +1,67 @@
+{
+  "actions": [
+    {
+      "target_selection": {
+        "applied_effects": {
+          "entity_effect": [
+            {
+              "effect_type": "dragonsurvival:particle",
+              "particle_count": 12.0,
+              "particle_data": {
+                "horizontal_position": {
+                  "type": "in_bounding_box"
+                },
+                "horizontal_velocity": {
+                  "base": 0.05
+                },
+                "particle": {
+                  "type": "minecraft:end_rod"
+                },
+                "speed": 0.02,
+                "vertical_position": {
+                  "type": "in_bounding_box"
+                },
+                "vertical_velocity": {
+                  "base": 0.05
+                }
+              }
+            },
+            {
+              "effect_type": "dragonsurvival:potion",
+              "potion": {
+                "amplifier": 0.0,
+                "duration": 60.0,
+                "effects": "minecraft:glowing",
+                "probability": 1.0
+              }
+            }
+          ],
+          "targeting_mode": "allies_and_self"
+        },
+        "target_type": "dragonsurvival:self"
+      }
+    }
+  ],
+  "activation": {
+    "activation_type": "dragonsurvival:passive",
+    "trigger": {
+      "trigger_type": "additional_abilities:on_block_placed",
+      "condition": {
+        "condition": "minecraft:location_check",
+        "predicate": {
+          "block": {
+            "blocks": "#minecraft:dirt"
+          }
+        }
+      }
+    }
+  },
+  "icon": {
+    "texture_entries": [
+      {
+        "from_level": 0,
+        "texture_resource": "additional_abilities:test"
+      }
+    ]
+  }
+}

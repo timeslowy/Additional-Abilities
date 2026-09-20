@@ -51,5 +51,12 @@
 "dragon_ability.additional_abilities.test_screen_vision.desc": "§7■ A test ability for the §6「Screen Vision」§7 entity effect (§fadditional_abilities:simple_screen_vision§7).\n\n■ §fIts exact behaviour and numbers change while the effect is being tuned§7, so this description stays vague.\n\n■ §8Not attached to any species — grant it with a command.",
 
 "datapack.additional_abilities.innovative_wingkirin_abilities":"Innovative WingKirin's Abilities",
-"datapack.additional_abilities.innovative_wingkirin_abilities.desc":"Some Wing Kirin's abilities have used new ability compoments from `Additional Abilities`to create new effects."
+"datapack.additional_abilities.innovative_wingkirin_abilities.desc":"Some Wing Kirin's abilities have used new ability compoments from `Additional Abilities`to create new effects.",
+"trigger_type.additional_abilities.on_block_placed": "On Block Place",
+"dragon_ability.additional_abilities.test_on_block_placed": "On Block Placed Test",
+"dragon_ability.additional_abilities.test_on_block_placed.desc": "§7■ A test ability for the §6「On Block Placed」§7 passive trigger type (§fadditional_abilities:on_block_placed§7).\n\n■ Placing a block grants you §fGlowing§7 and spawns particles around you.\n\n■ The built-in §fcondition§7 (§f#minecraft:dirt§7) demonstrates the §fblock loot context§7 predicate — placing anything that is §fnot dirt§7 will not trigger it.\n\n■ §8Not attached to any species — grant it with a command.",
+
+"trigger_type.additional_abilities.on_item_consumed": "On Item Consumed",
+"dragon_ability.additional_abilities.test_on_item_consumed": "On Item Consumed Test",
+"dragon_ability.additional_abilities.test_on_item_consumed.desc": "§7■ A test ability for the §6「On Item Consumed」§7 passive trigger type (§fadditional_abilities:on_item_consumed§7).\n\n■ Eating or drinking a §fmatching item§7 grants you §fGlowing§7 and spawns particles around you.\n\n■ The built-in §fitem§7 predicate (§f#minecraft:meat§7) demonstrates the §fItemPredicate§7 syntax §7— eating anything that is §fnot meat§7 will not trigger it.\n\n■ §8Not attached to any species — grant it with a command."
 }

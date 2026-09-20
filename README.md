@@ -6,7 +6,7 @@
   ============================================================
 -->
 
-**语言 / Language**：[中文](#lang-zh)（第 15 行起） · [English](#lang-en)（第 139 行起）
+**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 143 行起）
 
 ---
 
@@ -16,11 +16,12 @@
 
 > 适用版本：Minecraft `1.21.1` · NeoForge · **Additional Abilities for DS `2.0.0`**
 > 前置：Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-> 最后核对：2026-09-17（对照本工作空间源码）
+> 最后核对：2026-09-20（对照本工作空间源码）
 
 本模组给 Dragon Survival 补了两类东西：
 
-1. **可复用的自定义技能组件**（`entity_effect` / `block_effect` / `target_type` / `activation_type`）
+1. **可复用的自定义技能组件**（`entity_effect` / `block_effect` / `target_type` / `activation_type` /
+   `trigger_type`）
    —— 供数据包或其它附属模组直接在自己的技能 JSON 里调用；
 2. **随附的技能内容** —— 给几种龙加的新技能。
 
@@ -42,6 +43,8 @@
 | 目标选择器 | `target_type` | `additional_abilities:annulus` | 环形（圆盘挖空内圈） | [03](doc/中文/03-目标选择器.md) |
 | 激活类型 | `activation_type` | `additional_abilities:charged` | 按住蓄力，松手按蓄到的档位释放 | [04](doc/中文/04-激活类型.md) |
 | 激活类型 | `activation_type` | `additional_abilities:optional_charged` | 同上，但蓄力期间可用滚轮挑档位（含取消） | [04](doc/中文/04-激活类型.md) |
+| 触发器 | `trigger_type` | `additional_abilities:on_block_placed` | **放下**方块时触发（`on_block_break` 的反向版） | [08](doc/中文/08-触发类型.md) |
+| 触发器 | `trigger_type` | `additional_abilities:on_item_consumed` | **消耗**物品时触发（结构对齐原版 `consume_item`） | [08](doc/中文/08-触发类型.md) |
 
 ### 随附的伤害类型
 
@@ -61,7 +64,7 @@
 
 | 包名 | 显示名 | 作用 | 文档 |
 |---|---|---|---|
-| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 | 用本模组的自定义组件重做 Wing Kirin 的「咒印」与「雷霆怒吼」 | [07](doc/中文/07-内置数据包.md) |
+| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 | 用本模组的自定义组件重做 Wing Kirin 的「定身术」与「龙吼功」 | [07](doc/中文/07-内置数据包.md) |
 
 > 启用时**不要**加 `first`（会变成最低优先级、静默失效），且启用后要**退出世界重进**。
 > 详见 [07](doc/中文/07-内置数据包.md)。
@@ -129,6 +132,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 | [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 5 个技能、所属龙种、解锁方式 |
 | [06-调试与查询指令.md](doc/中文/06-调试与查询指令.md) | 两条调试 / 查询指令的用法 |
 | [07-内置数据包.md](doc/中文/07-内置数据包.md) | 内置的可选数据包、启用方法与改动明细 |
+| [08-触发类型.md](doc/中文/08-触发类型.md) | `on_block_placed`（放置方块时）、`on_item_consumed`（消耗物品时），含覆盖范围与谓词写法 |
 
 > 想直接抄一份能跑的技能，看 `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/`
 > 下的 `test_*.json` —— 每个自定义类型都有对应的测试技能。
@@ -142,12 +146,13 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 
 > Applies to: Minecraft `1.21.1` · NeoForge · **Additional Abilities for DS `2.0.0`**
 > Requirements: Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-> Last verified: 2026-09-17 (against this workspace's source)
+> Last verified: 2026-09-20 (against this workspace's source)
 
 This mod adds two kinds of things to Dragon Survival:
 
 1. **Reusable custom ability components** (`entity_effect` / `block_effect` / `target_type` /
-   `activation_type`) — for datapacks and other add-ons to call directly from their own ability JSON;
+   `activation_type` / `trigger_type`) — for datapacks and other add-ons to call directly from their own
+   ability JSON;
 2. **Bundled ability content** — new abilities for several dragon species.
 
 This documentation is the **field manual** for the first category and the **content list** for the second.
@@ -169,6 +174,8 @@ The values added by this mod are:
 | Target type | `target_type` | `additional_abilities:annulus` | A ring — a disc with the inner circle hollowed out | [03](doc/English/03-Target-Type.md) |
 | Activation type | `activation_type` | `additional_abilities:charged` | Hold to charge, release to fire at the tier you reached | [04](doc/English/04-Activation-Type.md) |
 | Activation type | `activation_type` | `additional_abilities:optional_charged` | Same, but you pick the tier with the mouse wheel (cancel included) | [04](doc/English/04-Activation-Type.md) |
+| Trigger | `trigger_type` | `additional_abilities:on_block_placed` | Fires when a block is **placed** (the mirror of `on_block_break`) | [08](doc/English/08-Trigger-Type.md) |
+| Trigger | `trigger_type` | `additional_abilities:on_item_consumed` | Fires when an item is **consumed** (shaped after vanilla `consume_item`) | [08](doc/English/08-Trigger-Type.md) |
 
 ### Bundled damage type
 
@@ -259,6 +266,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 | [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 5 bundled abilities, their species and unlock conditions |
 | [06-Debug-and-Query-Commands.md](doc/English/06-Debug-and-Query-Commands.md) | Usage of the two debug / query commands |
 | [07-Bundled-Datapacks.md](doc/English/07-Bundled-Datapacks.md) | The bundled optional datapack, how to enable it, and what it changes |
+| [08-Trigger-Type.md](doc/English/08-Trigger-Type.md) | `on_block_placed` (on placing a block) and `on_item_consumed` (on consuming an item), including coverage and predicate syntax |
 
 > For a runnable ability to copy from, look at the `test_*.json` files under
 > `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/` —

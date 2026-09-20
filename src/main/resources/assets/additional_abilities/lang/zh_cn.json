@@ -54,6 +54,13 @@
 "dragon_ability.additional_abilities.test_screen_vision.desc": "§7■ 用于测试§6「简单屏幕视觉」§7实体效果（§fadditional_abilities:simple_screen_vision§7）的测试技能。\n\n■ §f具体表现与数值会随调试改动§7，本描述不作详细说明。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
 
 "datapack.additional_abilities.innovative_wingkirin_abilities":"翼麒麟革新版技能",
-"datapack.additional_abilities.innovative_wingkirin_abilities.desc":"部分采用了`Additional Abilities`此库里的新龙生自定义技能组件所革新技能"
+"datapack.additional_abilities.innovative_wingkirin_abilities.desc":"部分采用了`Additional Abilities`此库里的新龙生自定义技能组件所革新技能",
+"trigger_type.additional_abilities.on_block_placed": "放置方块时",
+"dragon_ability.additional_abilities.test_on_block_placed": "放置方块测试",
+"dragon_ability.additional_abilities.test_on_block_placed.desc": "§7■ 用于测试§6「放置方块时」§7被动触发类型（§fadditional_abilities:on_block_placed§7）的测试技能。\n\n■ 放下方块时，自身会获得§f发光§7并冒出粒子。\n\n■ 内置的§fcondition§7（§f#minecraft:dirt§7）用于演示§f方块战利品上下文§7谓词——放置§f非泥土类§7方块不会触发。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
+
+"trigger_type.additional_abilities.on_item_consumed": "消耗物品时",
+"dragon_ability.additional_abilities.test_on_item_consumed": "消耗物品测试",
+"dragon_ability.additional_abilities.test_on_item_consumed.desc": "§7■ 用于测试§6「消耗物品时」§7被动触发类型（§fadditional_abilities:on_item_consumed§7）的测试技能。\n\n■ 吃下或饮下§f匹配的物品§7时，自身会获得§f发光§7并冒出粒子。\n\n■ 内置的§fitem§7谓词（§f#minecraft:meat§7）用于演示§fItemPredicate§7写法——吃下§f非肉类§7食物不会触发。\n\n■ §8未挂在任何龙种下，需用指令自行授予。"
 
 }
