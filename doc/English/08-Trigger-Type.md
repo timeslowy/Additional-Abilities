@@ -31,6 +31,7 @@ the trigger's own fields (such as `condition`):
 |---|---|---|
 | `additional_abilities:on_block_placed` | Fires when a block is **placed** | `dragonsurvival:on_block_break` (fires when a block is **broken**) |
 | `additional_abilities:on_item_consumed` | Fires when an item is **consumed** | Vanilla advancement criterion `minecraft:consume_item` (identical field structure) |
+| `additional_abilities:on_ability_cast` | Fires **after an active ability's cast settles** (scope it with `abilities`) | No built-in counterpart (DS has no cast event; this mod wires it through a Mixin) |
 
 ---
 
@@ -254,3 +255,103 @@ It is not attached to any species; grant it with `/dragon-ability add <target> <
 
 > That test ability doubles as a copy-paste template for item predicates: delete the whole `item` object
 > and it fires on consuming anything.
+
+---
+
+## 3. `additional_abilities:on_ability_cast` — On Ability Cast
+
+**In one sentence**: fires once **after an active ability's cast settles** — `abilities` decides which
+abilities count, and omitting it means **any active ability**.
+
+### Fields
+
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `abilities` | `HolderSet<DragonAbility>` | ❌ | none (**any active ability**) | A **single ability id**, a **list of ids**, or `"#namespace:tag"`; all three are equivalent |
+
+Ways to write it (all equivalent):
+
+```jsonc
+"abilities": "additional_abilities:explosion_arrow"          // a single ability
+"abilities": ["additional_abilities:explosion_arrow"]        // one-element list (same thing)
+"abilities": ["ns:a", "ns:b"]                                // several
+"abilities": "#dragonsurvival:wing_kirin"                    // a tag (see below)
+```
+
+> A single element and a one-element list are equivalent because the codec is built with
+> `disallowInline = false`, i.e. `Codec.either(element list, single element)` (1.21.1
+> `HolderSetCodec#homogenousList`).
+
+> Ability tags live in `data/<namespace>/tags/dragonsurvival/dragon_ability/<name>.json` and are
+> referenced **without** the `dragon_ability/` prefix — this mod's existing `#dragonsurvival:wing_kirin`
+> and `#dragonsurvival:cave_dragon` follow exactly that layout.
+
+### Example
+
+```json
+{
+  "activation": {
+    "activation_type": "dragonsurvival:passive",
+    "cooldown": 20.0,
+    "trigger": {
+      "trigger_type": "additional_abilities:on_ability_cast",
+      "abilities": ["additional_abilities:explosion_arrow"]
+    }
+  }
+}
+```
+
+### When it fires
+
+"Settles" means the moment **Dragon Survival judged that the cast's effects have actually been
+applied** (`isApplyingEffects()`) — not the moment the key was pressed.
+
+| Outcome | Fires |
+|---|---|
+| `simple` finished casting, actions executed | ✅ |
+| `channeled` released mid-channel, or wrapped up at `max_duration` | ✅ (once per cast) |
+| This mod's charged family (`charged` / `optional_charged`) released at a tier | ✅ |
+| This mod's charged family released as a **cancel** (scrolled to tier 0) | ❌ a cancel is not a use |
+| Released before `cast_time` (the use bar never finished) | ❌ effects never applied |
+| Interrupted by casting another ability | ❌ goes through an internal `release`, not a settle |
+| **A passive being triggered** (constant / event-driven / cooldown-based) | ❌ passives are never "used", see below |
+
+### How it is wired (unlike the other triggers)
+
+Dragon Survival has **no "ability cast" event** — both the start and the end of a cast live inside
+`MagicData` methods: not on the event bus, and not a payload this mod could register a handler for.
+This is therefore the **only trigger in this mod that is not wired to the event bus**: `mixins/MagicDataMixin`
+injects into the `withCooldown == true` branch of `MagicData#stopCasting(Player, DragonAbilityInstance,
+boolean)` — that very parameter is DS's own verdict on "did this cast actually go off", and **a cancel
+explicitly passes `false`**.
+
+### Loop safety: listing the ability itself still cannot loop
+
+- **A passive ability can never be "used"**: DS only puts **non-passive** abilities into the ability
+  hotbar, and casting can only pull an instance from that hotbar; on top of that this trigger skips
+  passives outright. So even if you put the ability's **own id** into `abilities`, it can never become
+  "the used ability" — which means **no `exclude_this`-style field is needed**.
+- Consistent with `on_block_break` / `on_block_placed` / `on_item_consumed`, there is **no same-tick
+  deduplication**: the `triggered` flag is reset every tick, and in the "one cast on two consecutive
+  ticks" ordering it would actually *drop* a trigger. Use `cooldown` to throttle instead.
+
+### Usage notes
+
+- **Use `cooldown` to throttle.** Like every event-driven passive, it only runs on the triggering frame.
+- **`trigger_point` must stay `default`** — a hard requirement for passive abilities (including
+  event-driven ones) in Dragon Survival.
+- **An extra line appears in the sidebar**: `■ Trigger: On Ability Cast: <abilities>` (a tag name is
+  shown for tags; omitted shows `Any Ability`). Translation keys
+  `trigger_type.additional_abilities.on_ability_cast` and `…on_ability_cast.any`.
+
+### Test ability
+
+| Ability id | Configuration | Purpose |
+|---|---|---|
+| `additional_abilities:test_on_ability_cast` | This trigger + `abilities = [test_screen_vision, test_charged]` + `cooldown = 20` | Casting `test_screen_vision` (`simple`, settles after a 30-tick cast) or `test_charged` (charged family: auto-released when fully charged, or released early at the reached tier) makes you glow with end-rod particles |
+
+It is not attached to any species; grant it with `/dragon-ability add <target> <ability>` — note that
+both `test_on_ability_cast` and the two abilities listed under `abilities` must be granted.
+
+> That test ability doubles as a copy-paste template for ability sets: delete the whole `abilities`
+> object and it fires on any active ability; swap in a tag to verify the tag syntax.

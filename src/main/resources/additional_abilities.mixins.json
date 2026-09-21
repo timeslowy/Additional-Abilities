@@ -4,7 +4,8 @@
   "package": "by.timeslowly.additional_abilities.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "DragonAbilityInstanceMixin"
+    "DragonAbilityInstanceMixin",
+    "MagicDataMixin"
   ],
   "injectors": {
     "defaultRequire": 1

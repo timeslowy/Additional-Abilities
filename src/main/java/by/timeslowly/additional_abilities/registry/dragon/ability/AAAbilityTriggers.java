@@ -2,6 +2,7 @@ package by.timeslowly.additional_abilities.registry.dragon.ability;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.trigger.ActivationTrigger;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
+import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnAbilityCast;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnBlockPlaced;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnItemConsumed;
 import net.minecraft.resources.ResourceLocation;
@@ -48,5 +49,13 @@ public class AAAbilityTriggers {
         event.register(ActivationTrigger.REGISTRY_KEY,
                 ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "on_item_consumed"),
                 () -> OnItemConsumed.CODEC);
+
+        // 使用技能后：additional_abilities:on_ability_cast
+        // 字段为可选的 abilities（技能集合，HolderSet：id 列表或 "#标签"），省略即任意主动技能。
+        // 注意：本类型的接线**不在事件总线**上 —— DS 没有施法事件，改由 mixins.MagicDataMixin
+        // 在 MagicData#stopCasting 的 withCooldown == true 分支转接，故主类构造函数无需 addListener
+        event.register(ActivationTrigger.REGISTRY_KEY,
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "on_ability_cast"),
+                () -> OnAbilityCast.CODEC);
     }
 }

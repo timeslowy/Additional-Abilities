@@ -46,6 +46,7 @@
 | 激活类型 | `activation_type` | `additional_abilities:optional_charged` | 同上，但蓄力期间可用滚轮挑档位（含取消） | [04](doc/中文/04-激活类型.md) |
 | 触发器 | `trigger_type` | `additional_abilities:on_block_placed` | **放下**方块时触发（`on_block_break` 的反向版） | [08](doc/中文/08-触发类型.md) |
 | 触发器 | `trigger_type` | `additional_abilities:on_item_consumed` | **消耗**物品时触发（结构对齐原版 `consume_item`） | [08](doc/中文/08-触发类型.md) |
+| 触发器 | `trigger_type` | `additional_abilities:on_ability_cast` | **主动技能结算后**触发（`abilities` 圈定哪些技能算数） | [08](doc/中文/08-触发类型.md) |
 
 ### 随附的伤害类型
 
@@ -133,7 +134,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 | [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 5 个技能、所属龙种、解锁方式 |
 | [06-调试与查询指令.md](doc/中文/06-调试与查询指令.md) | 两条调试 / 查询指令的用法 |
 | [07-内置数据包.md](doc/中文/07-内置数据包.md) | 内置的可选数据包、启用方法与改动明细 |
-| [08-触发类型.md](doc/中文/08-触发类型.md) | `on_block_placed`（放置方块时）、`on_item_consumed`（消耗物品时），含覆盖范围与谓词写法 |
+| [08-触发类型.md](doc/中文/08-触发类型.md) | `on_block_placed`（放置方块时）、`on_item_consumed`（消耗物品时）、`on_ability_cast`（主动技能结算后），含覆盖范围与谓词写法 |
 
 > 想直接抄一份能跑的技能，看 `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/`
 > 下的 `test_*.json` —— 每个自定义类型都有对应的测试技能。
@@ -178,6 +179,7 @@ The values added by this mod are:
 | Activation type | `activation_type` | `additional_abilities:optional_charged` | Same, but you pick the tier with the mouse wheel (cancel included) | [04](doc/English/04-Activation-Type.md) |
 | Trigger | `trigger_type` | `additional_abilities:on_block_placed` | Fires when a block is **placed** (the mirror of `on_block_break`) | [08](doc/English/08-Trigger-Type.md) |
 | Trigger | `trigger_type` | `additional_abilities:on_item_consumed` | Fires when an item is **consumed** (shaped after vanilla `consume_item`) | [08](doc/English/08-Trigger-Type.md) |
+| Trigger | `trigger_type` | `additional_abilities:on_ability_cast` | Fires **after an active ability's cast settles** (scope it with `abilities`) | [08](doc/English/08-Trigger-Type.md) |
 
 ### Bundled damage type
 
@@ -268,7 +270,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 | [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 5 bundled abilities, their species and unlock conditions |
 | [06-Debug-and-Query-Commands.md](doc/English/06-Debug-and-Query-Commands.md) | Usage of the two debug / query commands |
 | [07-Bundled-Datapacks.md](doc/English/07-Bundled-Datapacks.md) | The bundled optional datapack, how to enable it, and what it changes |
-| [08-Trigger-Type.md](doc/English/08-Trigger-Type.md) | `on_block_placed` (on placing a block) and `on_item_consumed` (on consuming an item), including coverage and predicate syntax |
+| [08-Trigger-Type.md](doc/English/08-Trigger-Type.md) | `on_block_placed` (on placing a block), `on_item_consumed` (on consuming an item) and `on_ability_cast` (after an active ability's cast settles), including coverage and predicate syntax |
 
 > For a runnable ability to copy from, look at the `test_*.json` files under
 > `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/` —

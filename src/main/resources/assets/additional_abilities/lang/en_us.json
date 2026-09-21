@@ -60,5 +60,11 @@
 
 "trigger_type.additional_abilities.on_item_consumed": "On Item Consumed",
 "dragon_ability.additional_abilities.test_on_item_consumed": "On Item Consumed Test",
-"dragon_ability.additional_abilities.test_on_item_consumed.desc": "§7■ A test ability for the §6「On Item Consumed」§7 passive trigger type (§fadditional_abilities:on_item_consumed§7).\n\n■ Eating or drinking a §fmatching item§7 grants you §fGlowing§7 and spawns particles around you.\n\n■ The built-in §fitem§7 predicate (§f#minecraft:meat§7) demonstrates the §fItemPredicate§7 syntax §7— eating anything that is §fnot meat§7 will not trigger it.\n\n■ §8Not attached to any species — grant it with a command."
+"dragon_ability.additional_abilities.test_on_item_consumed.desc": "§7■ A test ability for the §6「On Item Consumed」§7 passive trigger type (§fadditional_abilities:on_item_consumed§7).\n\n■ Eating or drinking a §fmatching item§7 grants you §fGlowing§7 and spawns particles around you.\n\n■ The built-in §fitem§7 predicate (§f#minecraft:meat§7) demonstrates the §fItemPredicate§7 syntax §7— eating anything that is §fnot meat§7 will not trigger it.\n\n■ §8Not attached to any species — grant it with a command.",
+
+"trigger_type.additional_abilities.on_ability_cast": "On Ability Cast: %s",
+"trigger_type.additional_abilities.on_ability_cast.any": "Any Ability",
+
+"dragon_ability.additional_abilities.test_on_ability_cast": "On Ability Cast Test",
+"dragon_ability.additional_abilities.test_on_ability_cast.desc": "§7■ Test ability for the§6 \"On Ability Cast\"§7 passive trigger type (§fadditional_abilities:on_ability_cast§7).\n\n■ Cast any ability§f listed in abilities§7 (by default §fadditional_abilities:test_screen_vision§7 and §fadditional_abilities:test_charged§7); once§f that cast settles§7 you gain§f Glowing§7 and emit particles.\n\n■ abilities accepts a§f single ability id§7, a§f list of ids§7 or a§f #tag§7; when§f omitted, any active ability§7 will trigger it.\n\n■ §8Not attached to any species — grant it with a command."
 }

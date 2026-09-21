@@ -63,6 +63,12 @@
 
 "trigger_type.additional_abilities.on_item_consumed": "消耗物品时",
 "dragon_ability.additional_abilities.test_on_item_consumed": "消耗物品测试",
-"dragon_ability.additional_abilities.test_on_item_consumed.desc": "§7■ 用于测试§6「消耗物品时」§7被动触发类型（§fadditional_abilities:on_item_consumed§7）的测试技能。\n\n■ 吃下或饮下§f匹配的物品§7时，自身会获得§f发光§7并冒出粒子。\n\n■ 内置的§fitem§7谓词（§f#minecraft:meat§7）用于演示§fItemPredicate§7写法——吃下§f非肉类§7食物不会触发。\n\n■ §8未挂在任何龙种下，需用指令自行授予。"
+"dragon_ability.additional_abilities.test_on_item_consumed.desc": "§7■ 用于测试§6「消耗物品时」§7被动触发类型（§fadditional_abilities:on_item_consumed§7）的测试技能。\n\n■ 吃下或饮下§f匹配的物品§7时，自身会获得§f发光§7并冒出粒子。\n\n■ 内置的§fitem§7谓词（§f#minecraft:meat§7）用于演示§fItemPredicate§7写法——吃下§f非肉类§7食物不会触发。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
+
+"trigger_type.additional_abilities.on_ability_cast": "使用技能后：%s",
+"trigger_type.additional_abilities.on_ability_cast.any": "任意技能",
+
+"dragon_ability.additional_abilities.test_on_ability_cast": "使用技能测试",
+"dragon_ability.additional_abilities.test_on_ability_cast.desc": "§7■ 用于测试§6「使用技能后」§7被动触发类型（§fadditional_abilities:on_ability_cast§7）的测试技能。\n\n■ 先施放§f列在 abilities 里§7的任一技能（默认 §fadditional_abilities:test_screen_vision§7 与 §fadditional_abilities:test_charged§7），§f该次施法结算后§7自身会获得§f发光§7并冒出粒子。\n\n■ abilities 可写§f单个技能 id§7、§f id 列表§7或§f#标签§7；§f省略则任意主动技能§7施法都会触发。\n\n■ §8未挂在任何龙种下，需用指令自行授予。"
 
 }
