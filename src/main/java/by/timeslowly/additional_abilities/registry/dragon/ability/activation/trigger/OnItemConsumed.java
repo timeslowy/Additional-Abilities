@@ -4,7 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.common.capability.DragonStateHandler
 import by.dragonsurvivalteam.dragonsurvival.common.capability.DragonStateProvider;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.trigger.ActivationTrigger;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.advancements.critereon.ItemPredicate;
@@ -90,7 +90,7 @@ import java.util.Optional;
  */
 public record OnItemConsumed(Optional<ItemPredicate> item) implements ActivationTrigger<ItemStack> {
     /** 侧边栏展示名（见 {@code dragonsurvival.gui.ability.activation_trigger} 的 %s 占位符） */
-    private static final String TRANSLATION = "trigger_type." + Additional_abilities.MOD_ID + ".on_item_consumed";
+    private static final String TRANSLATION = "trigger_type." + AdditionalAbilities.MOD_ID + ".on_item_consumed";
 
     /**
      * 字段与原版 {@code minecraft:consume_item} 同构，仅一个可选的 {@code item}
@@ -101,7 +101,7 @@ public record OnItemConsumed(Optional<ItemPredicate> item) implements Activation
     ).apply(instance, OnItemConsumed::new));
 
     /**
-     * 事件分发：接线见主类 {@code Additional_abilities} 构造函数
+     * 事件分发：接线见主类 {@code AdditionalAbilities} 构造函数
      * （{@code NeoForge.EVENT_BUS.addListener(OnItemConsumed::trigger)}，游戏中事件总线）。
      * <p>
      * 该事件对<b>所有生物</b>都会抛出，故此处先筛出服务端玩家、再要求其处于龙形态 —— 与

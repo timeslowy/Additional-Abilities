@@ -1,7 +1,7 @@
 package by.timeslowly.additional_abilities.registry.dragon.ability;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.entity_effects.AbilityEntityEffect;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.entity_effects.*;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
@@ -22,17 +22,17 @@ public class AAAbilityEntityEffects {
     private static void registerEntries(final @NotNull RegisterEvent event) {
         // 伤害反震：additional_abilities:damage_reflection
         event.register(AbilityEntityEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "damage_reflection"),
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "damage_reflection"),
                 () -> DamageReflectionEffect.CODEC);
 
         // 百分比伤害：additional_abilities:percentaged_damage
         event.register(AbilityEntityEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "percentaged_damage"),
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "percentaged_damage"),
                 () -> PercentagedDamageEffect.CODEC);
 
         // 简单屏幕视觉：additional_abilities:simple_screen_vision
         event.register(AbilityEntityEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "simple_screen_vision"),
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "simple_screen_vision"),
                 () -> SimpleScreenVisionEffect.CODEC);
     }
 }

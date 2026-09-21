@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.common.network;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.ClientScreenVisionState;
 import by.timeslowly.additional_abilities.common.vision.ScreenVisionType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ScreenVisionPayload(ScreenVisionType visionType, float amplifier, int durationTicks) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ScreenVisionPayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "screen_vision"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "screen_vision"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ScreenVisionPayload> STREAM_CODEC = StreamCodec.composite(
             ScreenVisionType.STREAM_CODEC, ScreenVisionPayload::visionType,

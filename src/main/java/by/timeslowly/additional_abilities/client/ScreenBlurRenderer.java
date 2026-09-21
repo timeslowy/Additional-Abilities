@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.client;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
@@ -31,7 +31,7 @@ public final class ScreenBlurRenderer {
 
     /** 本模组的后处理链定义 */
     private static final ResourceLocation CHAIN_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "shaders/post/blur.json");
+            ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "shaders/post/blur.json");
 
     /** 低于该半径时着色器内部 {@code round()} 后为 0（等于没有模糊），整条链直接跳过 */
     private static final float MIN_VISIBLE_RADIUS = 0.5F;

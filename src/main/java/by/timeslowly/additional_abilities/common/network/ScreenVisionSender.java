@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.common.network;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.vision.ScreenVisionType;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 若只按玩家存一份，同一次施法里先下发的强效果会把随后下发的弱效果吞掉
  * （间隔不足 5 刻且强度没提升 → 跳过），表现为"并存的两种视觉只有一种生效"。
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class ScreenVisionSender {
     /** 同一玩家同一视觉类型两次发包的最小间隔（游戏刻） */
     private static final int THROTTLE_TICKS = 5;

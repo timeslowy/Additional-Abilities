@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.common.network;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.ClientScreenVisionState;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ScreenVisionClearPayload() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ScreenVisionClearPayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "screen_vision_clear"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "screen_vision_clear"));
 
     /** 无字段包：用 {@code StreamCodec.unit} 编解码 */
     public static final StreamCodec<RegistryFriendlyByteBuf, ScreenVisionClearPayload> STREAM_CODEC =

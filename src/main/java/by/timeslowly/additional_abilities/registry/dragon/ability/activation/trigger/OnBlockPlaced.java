@@ -5,7 +5,7 @@ import by.dragonsurvivalteam.dragonsurvival.common.capability.DragonStateProvide
 import by.dragonsurvivalteam.dragonsurvival.common.codecs.Condition;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.trigger.ActivationTrigger;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.chat.Component;
@@ -60,14 +60,14 @@ import java.util.Optional;
  */
 public record OnBlockPlaced(Optional<LootItemCondition> condition) implements ActivationTrigger<LootContext> {
     /** 侧边栏展示名（见 {@code dragonsurvival.gui.ability.activation_trigger} 的 %s 占位符） */
-    private static final String TRANSLATION = "trigger_type." + Additional_abilities.MOD_ID + ".on_block_placed";
+    private static final String TRANSLATION = "trigger_type." + AdditionalAbilities.MOD_ID + ".on_block_placed";
 
     public static final MapCodec<OnBlockPlaced> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             LootItemCondition.DIRECT_CODEC.optionalFieldOf("condition").forGetter(OnBlockPlaced::condition)
     ).apply(instance, OnBlockPlaced::new));
 
     /**
-     * 事件分发：接线见主类 {@code Additional_abilities} 构造函数
+     * 事件分发：接线见主类 {@code AdditionalAbilities} 构造函数
      * （{@code NeoForge.EVENT_BUS.addListener(OnBlockPlaced::trigger)}，游戏中事件总线）。
      * <p>
      * 判定流程与 {@code OnBlockBreak#trigger} 逐行对应：非玩家 / 非龙直接跳过 →

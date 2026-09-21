@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.client.eventhandler;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.ClientScreenVisionState;
 import by.timeslowly.additional_abilities.client.ScreenBlurRenderer;
 import net.neoforged.api.distmarker.Dist;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  *         此时对主渲染目标做后处理，正好只糊画面不糊 UI。</li>
  * </ul>
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public class ScreenVisionEventHandler {
     @SubscribeEvent
     public static void onComputeCameraAngles(final @NotNull ViewportEvent.ComputeCameraAngles event) {

@@ -8,7 +8,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.datagen.Translation;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.ChargedCasts;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -58,7 +58,7 @@ import java.util.function.ToIntBiFunction;
  * 输出文案直接复用 DS 自己的 {@code ability.query_result} 语言键，
  * 与 {@code level} / {@code cast_time} 等既有条目的显示格式完全一致。
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class ChargedQueryCommand {
     private static final String DRAGON_ABILITY = "dragon-ability";
     private static final String QUERY = "query";

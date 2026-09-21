@@ -5,7 +5,7 @@ import by.dragonsurvivalteam.dragonsurvival.common.codecs.ability.ActionContaine
 import by.dragonsurvivalteam.dragonsurvival.compat.Compat;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AnnulusTarget;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AntiDragonBreathTarget;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -52,7 +52,7 @@ import org.jetbrains.annotations.NotNull;
  * <b>刻意使用与 DS 不同的颜色</b>：DS 内置目标类型的调试箱是红（dragon_breath）、蓝（area）、
  * 绿（looking_at / disc）。本模组取黄（反向龙息锥形）与青 / 暗青（环形）。
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public class AbilityHitboxEventHandler {
     /** 调试箱颜色（黄）：与 DS 的红/蓝/绿全部错开，便于区分归属 —— 反向龙息锥形 */
     private static final float DEBUG_COLOR_R = 1.0F;

@@ -4,7 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.client.gui.hud.MagicHUD;
 import by.dragonsurvivalteam.dragonsurvival.common.capability.DragonStateProvider;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.OptionalChargedSelection;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import net.minecraft.client.DeltaTracker;
@@ -73,9 +73,10 @@ import org.jetbrains.annotations.NotNull;
  * 不需要发给其他玩家）。滚轮选档时另有一声更短的点击音，见
  * {@code client.eventhandler.OptionalChargedScrollHandler}。
  */
+// TODO:可能支持充能声音可选；甚至可能把播放声音分离出去（HUD里面顺便放声音有点怪，故思降低耦合度）
 public final class ChargedIndicatorLayer {
     public static final ResourceLocation ID =
-            ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "charged_indicator");
+            ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_indicator");
 
     /** 档位提升提示音，复用原版音符盒资源，不新增音频文件。 */
     private static final SoundEvent LEVEL_UP_SOUND = SoundEvents.NOTE_BLOCK_PLING.value();

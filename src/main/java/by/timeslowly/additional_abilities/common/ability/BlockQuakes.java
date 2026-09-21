@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.common.ability;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.network.BlockQuakePayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -36,7 +36,7 @@ import java.util.Optional;
  *     <li><b>就近广播</b>：按本批方块包围盒半径只发给附近玩家（技能目标是方块，影响对象是"看得到的人"）。</li>
  * </ol>
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class BlockQuakes {
     /** 同一位置两次震动的冷却（游戏刻） */
     public static final int COOLDOWN_TICKS = 10;

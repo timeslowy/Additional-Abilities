@@ -1,7 +1,7 @@
 package by.timeslowly.additional_abilities.common.eventhandler.abilities;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.targeting.TargetingMode;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.DamageReflections;
 import by.timeslowly.additional_abilities.registry.AADamageTypes;
 import net.minecraft.core.Holder;
@@ -40,7 +40,7 @@ import java.util.List;
  *         （覆盖 use_same_damage_type 开启时双方互弹的场景）。</li>
  * </ol>
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public class DamageReflectionEventHandler {
     /** 反伤结算重入标志：反伤造成的伤害不再触发反伤，防止无限互相反弹 */
     private static boolean isReflecting = false;

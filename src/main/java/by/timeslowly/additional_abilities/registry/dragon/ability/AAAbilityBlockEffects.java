@@ -1,7 +1,7 @@
 package by.timeslowly.additional_abilities.registry.dragon.ability;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.block_effects.AbilityBlockEffect;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.block_effects.BlockQuakeEffect;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
@@ -23,7 +23,7 @@ public class AAAbilityBlockEffects {
     private static void registerEntries(final @NotNull RegisterEvent event) {
         // 方块震动：additional_abilities:block_quake
         event.register(AbilityBlockEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "block_quake"),
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "block_quake"),
                 () -> BlockQuakeEffect.CODEC);
     }
 }

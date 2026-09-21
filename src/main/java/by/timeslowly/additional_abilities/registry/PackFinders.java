@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.registry;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import com.mojang.logging.LogUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -101,7 +101,7 @@ import java.util.Optional;
  * 位置保持 {@link Pack.Position#TOP}（= 已启用列表的末尾 = 最高优先级），
  * 这样它才能覆盖 {@code mod_data} 里 Wing Kirin 的原版技能。
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public class PackFinders {
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -159,7 +159,7 @@ public class PackFinders {
         // 关键：第 4 个参数（knownPackInfo）传 Optional.empty()，
         // 使本包无法参与「已知包」协商，从而让服务端始终下发本数据包覆盖后的注册表元素。
         PackLocationInfo locationInfo = new PackLocationInfo(
-                "mod/" + ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, path),
+                "mod/" + ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, path),
                 Component.translatable(nameKey),
                 PackSource.FEATURE,
                 Optional.empty()
@@ -201,7 +201,7 @@ public class PackFinders {
             @NotNull String nameKey, boolean alwaysActive) {
         // 该方法内部会自行比对 packType，类型不符时是空操作
         event.addPackFinders(
-                ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, path),
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, path),
                 type,
                 Component.translatable(nameKey),
                 PackSource.FEATURE,
@@ -212,10 +212,10 @@ public class PackFinders {
 
     @Nullable
     private static IModInfo modInfo() {
-        var container = ModList.get().getModContainerById(Additional_abilities.MOD_ID).orElse(null);
+        var container = ModList.get().getModContainerById(AdditionalAbilities.MOD_ID).orElse(null);
 
         if (container == null) {
-            LOGGER.error("[PackFinders] 找不到模组 {}，内置包不会被注册", Additional_abilities.MOD_ID);
+            LOGGER.error("[PackFinders] 找不到模组 {}，内置包不会被注册", AdditionalAbilities.MOD_ID);
             return null;
         }
 

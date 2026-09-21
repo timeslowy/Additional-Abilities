@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.common.network;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.ClientBlockQuakeState;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -24,7 +24,7 @@ public record BlockQuakePayload(long[] positions, float height, int durationTick
     public static final int MAX_POSITIONS = 256;
 
     public static final CustomPacketPayload.Type<BlockQuakePayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "block_quake"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "block_quake"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, BlockQuakePayload> STREAM_CODEC =
             StreamCodec.of(BlockQuakePayload::encode, BlockQuakePayload::decode);

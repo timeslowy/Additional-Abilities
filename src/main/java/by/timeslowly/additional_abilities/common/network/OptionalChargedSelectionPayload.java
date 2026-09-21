@@ -1,7 +1,7 @@
 package by.timeslowly.additional_abilities.common.network;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.ChargedCasts;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record OptionalChargedSelectionPayload(ResourceKey<DragonAbility> ability, int selectedLevel) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<OptionalChargedSelectionPayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "optional_charged_selection"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "optional_charged_selection"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, OptionalChargedSelectionPayload> STREAM_CODEC = StreamCodec.composite(
             ResourceKey.streamCodec(DragonAbility.REGISTRY), OptionalChargedSelectionPayload::ability,

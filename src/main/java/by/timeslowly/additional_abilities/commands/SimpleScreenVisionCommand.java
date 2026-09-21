@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.commands;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.network.ScreenVisionClearPayload;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -31,7 +31,7 @@ import java.util.Collection;
  * <p>
  * 权限等级 2（与 {@code /effect clear} 同档），单机存档的拥有者默认满足。
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class SimpleScreenVisionCommand {
     private static final String ROOT = "simple-screen-vision";
     private static final String CLEAR = "clear";

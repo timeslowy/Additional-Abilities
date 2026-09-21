@@ -3,7 +3,7 @@ package by.timeslowly.additional_abilities.common.network;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.ChargedCasts;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -48,7 +48,7 @@ public record ChargedReleasePayload(ResourceKey<DragonAbility> ability, int char
     public static final int CANCEL = 0;
 
     public static final CustomPacketPayload.Type<ChargedReleasePayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Additional_abilities.MOD_ID, "charged_release"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_release"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ChargedReleasePayload> STREAM_CODEC = StreamCodec.composite(
             ResourceKey.streamCodec(DragonAbility.REGISTRY), ChargedReleasePayload::ability,

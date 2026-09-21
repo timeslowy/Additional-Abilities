@@ -6,7 +6,7 @@ import by.dragonsurvivalteam.dragonsurvival.config.ClientConfig;
 import by.dragonsurvivalteam.dragonsurvival.input.Keybind;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.OptionalChargedSelection;
 import by.timeslowly.additional_abilities.common.network.ChargedReleasePayload;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
@@ -78,7 +78,7 @@ import org.jetbrains.annotations.NotNull;
  *         本类在入口就返回了。</li>
  * </ul>
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public final class ChargedCastClientHandler {
     /** 与 DS {@code ClientCastingHandler} 中的槽位键位表保持一致。 */
     private static final Keybind[] SLOT_KEYBINDS = {

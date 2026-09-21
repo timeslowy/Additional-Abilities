@@ -18,16 +18,16 @@ import org.slf4j.Logger;
 // TODO：给测试技能补上简单图标
 // TODO：决定使用的协议？
 // TODO:优化加载性能开销？疑似会使得同个实例初次进入世界时卡顿？
-@Mod(Additional_abilities.MOD_ID)
-public class Additional_abilities {
+@Mod(AdditionalAbilities.MOD_ID)
+public class AdditionalAbilities {
     // 定义模组ID以供他处调用
     public static final String MOD_ID = "additional_abilities";
     // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
 
     // 注册模组加载的通用内容设置（部分需要顺序）
-    public Additional_abilities(IEventBus modEventBus, @NotNull ModContainer modContainer) {
+    public AdditionalAbilities(IEventBus modEventBus, @NotNull ModContainer modContainer) {
         // 注册实体附加数据（伤害反震参数载体）
         AAAttachments.register(modEventBus);
         // 注册自定义伤害类型

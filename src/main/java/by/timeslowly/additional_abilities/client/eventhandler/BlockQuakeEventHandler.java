@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.client.eventhandler;
 
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.ClientBlockQuakeState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * 假身位置每刻更新一次，渲染时的位置插值由原版实体负责，因此不需要监听渲染事件。
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public class BlockQuakeEventHandler {
     @SubscribeEvent
     public static void onClientTick(final @NotNull ClientTickEvent.Post event) {

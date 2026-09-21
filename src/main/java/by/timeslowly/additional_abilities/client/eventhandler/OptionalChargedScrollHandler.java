@@ -3,7 +3,7 @@ package by.timeslowly.additional_abilities.client.eventhandler;
 import by.dragonsurvivalteam.dragonsurvival.common.capability.DragonStateProvider;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
-import by.timeslowly.additional_abilities.Additional_abilities;
+import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.OptionalChargedSelection;
 import by.timeslowly.additional_abilities.common.network.OptionalChargedSelectionPayload;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
  * 这里额外同步一次到服务端，只为让 {@code /dragon-ability query … current_selected_level} 可读，
  * 因此<b>只在档位真正变化时发送</b>（一次施法内至多几次）。
  */
-@EventBusSubscriber(modid = Additional_abilities.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public final class OptionalChargedScrollHandler {
     /** 选档反馈音的音量。 */
     private static final float SELECT_VOLUME = 0.6F;
