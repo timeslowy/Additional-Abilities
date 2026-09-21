@@ -32,6 +32,8 @@ public class AdditionalAbilities {
         AAAttachments.register(modEventBus);
         // 注册自定义伤害类型
         AADamageTypes.register(modEventBus);
+        // 注册自定义属性
+        AAAttributes.register(modEventBus);
         // 注册龙之技能自定义实体效果类型（DragonSurvival ability_entity_effect 注册表）
         AAAbilityEntityEffects.register(modEventBus);
         // 注册龙之技能自定义方块效果类型（DragonSurvival ability_block_effect 注册表）
@@ -43,10 +45,8 @@ public class AdditionalAbilities {
         // 注册龙之技能自定义被动触发类型（DragonSurvival activation_trigger 注册表，trigger_type）
         AAAbilityTriggers.register(modEventBus);
         // 接线：放置方块事件 → 本模组 additional_abilities:on_block_placed 触发器分发
-        // （触发器自身不订阅事件，需自行接线；DS 内置触发器同样集中在主类构造函数里挂）
         NeoForge.EVENT_BUS.addListener(OnBlockPlaced::trigger);
         // 接线：使用物品完成事件 → 本模组 additional_abilities:on_item_consumed 触发器分发
-        // （LivingEntityUseItemEvent.Finish 对全部生物抛出，触发器内部自行筛「服务端玩家 + 龙形态」）
         NeoForge.EVENT_BUS.addListener(OnItemConsumed::trigger);
         // 注册网络通道（屏幕视觉 / 方块震动 的服务端 → 客户端同步）
         modEventBus.addListener(AANetwork::register);

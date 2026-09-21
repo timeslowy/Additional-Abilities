@@ -6,7 +6,7 @@
   ============================================================
 -->
 
-**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 143 行起）
+**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 163 行起）
 
 ---
 
@@ -16,7 +16,7 @@
 
 > 适用版本：Minecraft `1.21.1` · NeoForge · **Additional Abilities for DS `2.0.0`**
 > 前置：Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-> 最后核对：2026-09-20（对照本工作空间源码）
+> 最后核对：2026-09-21（对照本工作空间源码）
 
 本模组给 Dragon Survival 补了两类东西：
 
@@ -61,6 +61,24 @@
 | `/simple-screen-vision clear <targets>` | 清空目标玩家身上的屏幕视觉 | [06](doc/中文/06-调试与查询指令.md) |
 | `/dragon-ability query <目标> <技能> current_charged_level` | 查询蓄力档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
 | `/dragon-ability query <目标> <技能> current_selected_level` | 查询滚轮选定的释放档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
+
+### 随附的属性与附魔
+
+「龙息范围收束」把龙息目标选择器的判定区从**轴对齐包围盒**换成**贴着视线的光束**（旋转长方体）：
+截面变窄、沿视线拉长，瞄哪儿打哪儿。玩家戴上附魔头盔即可获得该属性。
+
+| 类型 | 注册 id | 说明 |
+|---|---|---|
+| 属性 | `additional_abilities:dragon_breath_restriction` | 百分比属性，默认 0、上限 0.8；**只注册到玩家身上** |
+| 附魔 | `additional_abilities:dragon_breath_restrictor`（束息） | 头盔附魔、4 级、每级 **+0.15** 属性值（4 级共 +0.6） |
+
+- 附魔定义在 `src/main/resources/data/additional_abilities/enchantment/dragon_breath_restrictor.json`，
+  适用 `#minecraft:enchantable/head_armor`、槽位 `head`，可由附魔台与图书管理员提供；
+  获取途径由 `data/minecraft/tags/enchantment/` 下的 `in_enchanting_table` 与 `tradeable` 两个标签决定。
+- 数值（每级增量、成本曲线、权重）全部写在该 JSON 里，可按需调整 ——
+  **本功能第 2 轮实现后只改动过该 JSON 的数值，其余部分未作改动**。
+- 收束生效时按 `F3+B` 会同时看到两个框：DS 的**红色**包围盒是「粗筛范围」（斜视时会明显偏大），
+  本模组新增的**洋红**光束才是**真实判定范围**。
 
 ### 内置数据包（默认不启用）
 
@@ -148,7 +166,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 
 > Applies to: Minecraft `1.21.1` · NeoForge · **Additional Abilities for DS `2.0.0`**
 > Requirements: Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-> Last verified: 2026-09-20 (against this workspace's source)
+> Last verified: 2026-09-21 (against this workspace's source)
 
 This mod adds two kinds of things to Dragon Survival:
 
@@ -194,6 +212,27 @@ The values added by this mod are:
 | `/simple-screen-vision clear <targets>` | Clear screen vision from the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/dragon-ability query <target> <ability> current_charged_level` | Query the charge tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/dragon-ability query <target> <ability> current_selected_level` | Query the wheel-picked release tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
+
+### Bundled attribute and enchantment
+
+"Dragon Breath Restriction" turns the dragon breath selection area from a **box-aligned AABB** into a
+**beam that follows your line of sight** (a rotated box): narrower cross-section, longer reach, and it hits
+exactly where you aim. Wearing the enchanted helmet grants the attribute.
+
+| Kind | Registry id | Notes |
+|---|---|---|
+| Attribute | `additional_abilities:dragon_breath_restriction` | A percentage attribute, default 0, capped at 0.8; registered on **players only** |
+| Enchantment | `additional_abilities:dragon_breath_restrictor` (束息, Breath Constrictor) | Helmet enchantment, 4 levels, **+0.15** per level (+0.6 at level 4) |
+
+- The enchantment definition lives in `src/main/resources/data/additional_abilities/enchantment/dragon_breath_restrictor.json`;
+  it applies to `#minecraft:enchantable/head_armor` in the `head` slot, and can be offered by the enchanting
+  table and by librarians — availability is decided by the `in_enchanting_table` and `tradeable` tags under
+  `data/minecraft/tags/enchantment/`.
+- Every number (per-level amount, cost curve, weight) is written in that JSON and can be tuned freely —
+  **after the second implementation pass, only those values in that JSON were changed; nothing else was touched**.
+- While the restriction is active, `F3+B` shows two boxes: DS's **red** box is the *broad-phase range*
+  (it grows noticeably when you aim diagonally), and the **magenta** beam added by this mod is the
+  *actual selection volume*.
 
 ### Bundled datapacks (off by default)
 

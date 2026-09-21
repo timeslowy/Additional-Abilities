@@ -5,7 +5,9 @@ import by.dragonsurvivalteam.dragonsurvival.common.codecs.ability.ActionContaine
 import by.dragonsurvivalteam.dragonsurvival.compat.Compat;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
+import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.targeting.DragonBreathTarget;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
+import by.timeslowly.additional_abilities.common.ability.geometry.BreathBeam;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AnnulusTarget;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AntiDragonBreathTarget;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -25,13 +27,21 @@ import org.jetbrains.annotations.NotNull;
  * 在 <b>F3+B</b>（碰撞箱显示）开启时，用线框画出本模组目标选择器的实际作用箱体：
  * <ul>
  *     <li>{@code additional_abilities:anti_dragon_breath} —— 单个包围盒，黄；</li>
- *     <li>{@code additional_abilities:annulus} —— 内外双包围盒，青（外框）/ 暗青（内框）。</li>
+ *     <li>{@code additional_abilities:annulus} —— 内外双包围盒，青（外框）/ 暗青（内框）；</li>
+ *     <li>{@code dragonsurvival:dragon_breath} <b>处于收束状态</b>时 —— 真正的判定光束，洋红。</li>
  * </ul>
  * <p>
  * 对应 DS 侧的实现在 {@code ClientDragonRenderer#renderAbilityHitbox(RenderLevelStageEvent)}
  * —— 它用一个 {@code targeting instanceof XxxTarget} 的分支链渲染内置的 5 种目标类型，
  * 附属模组的类型不在其中。DS 那个分派是硬编码的、没有扩展点，所以这里<b>另起一个同款监听器</b>
  * 补齐本模组的类型，而不是去 Mixin 改 DS 的私有方法。
+ *
+ * <h2>第三条分支（龙息收束光束）为什么必要</h2>
+ * 「龙息范围收束」生效后，DS 画的那个红框已经**不再是判定区**，而只是服务端的「粗筛范围」
+ * （一个必须包住斜向光束的轴对齐盒，斜视时会明显偏大）。
+ * 若只有红框，玩家会以为判定区真的那么大 —— 这正是收束第一版暴露出来的误读来源。
+ * 因此这里把真正的判定体（{@link BreathBeam} 的旋转长方体）单独画出来：
+ * 洋红色 12 条棱，与 DS 的红/蓝/绿、本模组的黄/青全部错开。
  *
  * <h2>复刻的 DS 做法（四点缺一不可）</h2>
  * <ol>
@@ -50,7 +60,7 @@ import org.jetbrains.annotations.NotNull;
  * 不会把背包/热键栏里所有技能的范围一起糊在屏幕上。
  * <p>
  * <b>刻意使用与 DS 不同的颜色</b>：DS 内置目标类型的调试箱是红（dragon_breath）、蓝（area）、
- * 绿（looking_at / disc）。本模组取黄（反向龙息锥形）与青 / 暗青（环形）。
+ * 绿（looking_at / disc）。本模组取黄（反向龙息锥形）、青 / 暗青（环形）与洋红（收束光束）。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public class AbilityHitboxEventHandler {
@@ -68,6 +78,11 @@ public class AbilityHitboxEventHandler {
     private static final float ANNULUS_INNER_R = 0.0F;
     private static final float ANNULUS_INNER_G = 0.45F;
     private static final float ANNULUS_INNER_B = 0.45F;
+
+    /** 调试箱颜色（洋红）：龙息收束后的真实判定光束，与上面全部错开 */
+    private static final float BEAM_R = 1.0F;
+    private static final float BEAM_G = 0.2F;
+    private static final float BEAM_B = 1.0F;
 
     @SubscribeEvent
     public static void onRenderLevelStage(final @NotNull RenderLevelStageEvent event) {
@@ -127,9 +142,60 @@ public class AbilityHitboxEventHandler {
                     LevelRenderer.renderLineBox(pose, buffer, annulus.calculateArea(origin, inner, height),
                             ANNULUS_INNER_R, ANNULUS_INNER_G, ANNULUS_INNER_B, 1.0F);
                 }
+            } else if (action.effect() instanceof DragonBreathTarget breath) {
+                // 收束生效时 DS 的红框只剩「粗筛区」的含义（斜视时会明显偏大），
+                // 真正的判定体是这个旋转长方体，必须单独画出来，否则「看到的框 ≠ 判定范围」。
+                BreathBeam beam = BreathBeam.restricted(player, breath.rangeMultiplier(), ability.level());
+
+                if (beam != null) {
+                    renderBeam(pose, buffer, beam);
+                }
             }
         }
 
         pose.popPose();
+    }
+
+    /**
+     * 画旋转长方体的 12 条棱。
+     * <p>
+     * {@link LevelRenderer#renderLineBox} 只吃轴对齐盒，所以这里自行写顶点：
+     * {@link RenderType#LINES} 的顶点格式是 {@code POSITION_COLOR_NORMAL}，
+     * 三个属性必须齐全（法线用该棱的方向，对线段渲染没有实际影响，仅占位）。
+     */
+    private static void renderBeam(final PoseStack pose, final VertexConsumer buffer, final @NotNull BreathBeam beam) {
+        Vec3 forward = beam.direction().scale(beam.length());
+        Vec3 side = beam.right().scale(beam.halfWidth());
+        Vec3 vertical = beam.up().scale(beam.halfHeight());
+
+        // 位编码：bit0 = 横向 ±，bit1 = 纵向 ±，bit2 = 近端(0) / 远端(1)
+        Vec3[] corners = new Vec3[8];
+
+        for (int index = 0; index < 8; index++) {
+            corners[index] = beam.origin()
+                    .add(forward.scale((index & 4) == 0 ? 0.0 : 1.0))
+                    .add(side.scale((index & 1) == 0 ? -1.0 : 1.0))
+                    .add(vertical.scale((index & 2) == 0 ? -1.0 : 1.0));
+        }
+
+        int[][] edges = {
+                {0, 1}, {1, 3}, {3, 2}, {2, 0},     // 近端面
+                {4, 5}, {5, 7}, {7, 6}, {6, 4},     // 远端面
+                {0, 4}, {1, 5}, {2, 6}, {3, 7}};    // 四条侧棱
+
+        for (int[] edge : edges) {
+            line(pose, buffer, corners[edge[0]], corners[edge[1]]);
+        }
+    }
+
+    private static void line(final @NotNull PoseStack pose, final VertexConsumer buffer, final Vec3 from, final @NotNull Vec3 to) {
+        PoseStack.Pose last = pose.last();
+        Vec3 normal = to.subtract(from).normalize();
+
+        for (Vec3 point : new Vec3[]{from, to}) {
+            buffer.addVertex(last, (float) point.x, (float) point.y, (float) point.z)
+                    .setColor(BEAM_R, BEAM_G, BEAM_B, 1.0F)
+                    .setNormal(last, (float) normal.x, (float) normal.y, (float) normal.z);
+        }
     }
 }
