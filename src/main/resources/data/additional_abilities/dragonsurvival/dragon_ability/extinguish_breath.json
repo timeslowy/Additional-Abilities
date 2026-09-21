@@ -14,6 +14,7 @@
                   "per_level_above_first": 200.0
                 },
                 "effects": "minecraft:fire_resistance",
+                "show_icon": true,
                 "probability": 1
               }
             }
@@ -40,15 +41,8 @@
         "applied_effects": {
           "block_effect": [
             {
-              "effect_type": "dragonsurvival:block_break",
-              "probability": 1.0,
-              "valid_blocks": {
-                "type": "minecraft:matching_blocks",
-                "blocks": [
-                  "minecraft:fire",
-                  "minecraft:soul_fire"
-                ]
-              }
+              "effect_type": "additional_abilities:extinguish",
+              "extinguish_probability": 1.0
             }
           ]
         },
@@ -61,50 +55,6 @@
       "target_selection": {
         "applied_effects": {
           "block_effect": [
-            {
-              "conversion_data": [
-                {
-                  "blocks_to": [
-                    {
-                      "state": {
-                        "Name": "minecraft:campfire",
-                        "Properties": {
-                          "lit": "false"
-                        }
-                      },
-                      "weight": 25
-                    }
-                  ],
-                  "from_predicate": {
-                    "type": "minecraft:matching_blocks",
-                    "blocks": [
-                      "minecraft:campfire"
-                    ]
-                  }
-                },
-                {
-                  "blocks_to": [
-                    {
-                      "state": {
-                        "Name": "minecraft:soul_campfire",
-                        "Properties": {
-                          "lit": "false"
-                        }
-                      },
-                      "weight": 25
-                    }
-                  ],
-                  "from_predicate": {
-                    "type": "minecraft:matching_blocks",
-                    "blocks": [
-                      "minecraft:soul_campfire"
-                    ]
-                  }
-                }
-              ],
-              "effect_type": "dragonsurvival:conversion",
-              "probability": 0.5
-            },
             {
               "duration": 80.0,
               "effect_type": "dragonsurvival:area_cloud",
@@ -182,23 +132,23 @@
     "texture_entries": [
       {
         "from_level": 0,
-        "texture_resource": "dragonsurvival:abilities/sea/outfire_breath_0"
+        "texture_resource": "dragonsurvival:abilities/sea/extinguish_breath_0"
       },
       {
         "from_level": 1,
-        "texture_resource": "dragonsurvival:abilities/sea/outfire_breath_1"
+        "texture_resource": "dragonsurvival:abilities/sea/extinguish_breath_1"
       },
       {
         "from_level": 2,
-        "texture_resource": "dragonsurvival:abilities/sea/outfire_breath_2"
+        "texture_resource": "dragonsurvival:abilities/sea/extinguish_breath_2"
       },
       {
         "from_level": 3,
-        "texture_resource": "dragonsurvival:abilities/sea/outfire_breath_3"
+        "texture_resource": "dragonsurvival:abilities/sea/extinguish_breath_3"
       },
       {
         "from_level": 4,
-        "texture_resource": "dragonsurvival:abilities/sea/outfire_breath_4"
+        "texture_resource": "dragonsurvival:abilities/sea/extinguish_breath_4"
       }
     ]
   },

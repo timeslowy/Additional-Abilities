@@ -23,7 +23,7 @@ data and functions, so **Wing Kirin is a hard dependency**.
 
 | Ability id | Name | Species | Activation | Max level | Unlock / upgrade |
 |---|---|---|---|---|---|
-| `additional_abilities:outfire_breath` | Outfire Breath | Sea Dragon, Wing Kirin | `channeled` continuous breath | 4 | Experience levels `0 / 10 / 20 / 40` |
+| `additional_abilities:extinguish_breath` | Extinguish Breath | Sea Dragon, Wing Kirin | `channeled` continuous breath | 4 | Experience levels `0 / 10 / 20 / 40` |
 | `additional_abilities:smoke_breath` | Smoke Breath | Cave Dragon, Wing Kirin | `channeled` continuous breath | 3 | Experience levels `0 / 10 / 20` |
 | `additional_abilities:piercing_eye` | Piercing Eye | Cave Dragon, Wing Kirin | `passive` | 1 (no upgrade) | Active as soon as the ability is present |
 | `additional_abilities:explosion_arrow` | Explosion Arrow | Wing Kirin | `simple` cast | 1 | Complete the "Return to Sender" advancement |
@@ -38,7 +38,7 @@ dragon_ability.additional_abilities.<ability id>.desc     → description
 
 ---
 
-## Outfire Breath — `outfire_breath`
+## Extinguish Breath — `extinguish_breath`
 
 > "Breathe a deluge of water vapour that extinguishes fire (including burning mobs)."
 > "Its range depends on age, and the duration of effect depends on the experience level."

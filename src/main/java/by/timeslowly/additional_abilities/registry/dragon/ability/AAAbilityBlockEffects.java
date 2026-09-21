@@ -3,6 +3,7 @@ package by.timeslowly.additional_abilities.registry.dragon.ability;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.block_effects.AbilityBlockEffect;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.block_effects.BlockQuakeEffect;
+import by.timeslowly.additional_abilities.registry.dragon.ability.block_effects.ExtinguishEffect;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.RegisterEvent;
@@ -25,5 +26,10 @@ public class AAAbilityBlockEffects {
         event.register(AbilityBlockEffect.REGISTRY_KEY,
                 ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "block_quake"),
                 () -> BlockQuakeEffect.CODEC);
+
+        // 方块熄灭：additional_abilities:extinguish
+        event.register(AbilityBlockEffect.REGISTRY_KEY,
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "extinguish"),
+                () -> ExtinguishEffect.CODEC);
     }
 }

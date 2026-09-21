@@ -1,7 +1,7 @@
 {
 
-"dragon_ability.additional_abilities.outfire_breath": "Outfire Breath",
-"dragon_ability.additional_abilities.outfire_breath.desc": "■ Breathe a deluge of water vapour that extinguishes fire (including burning mobs).\n\n■ Its §fRange§r§7 depends on the age, and the §fduration of effect§r§7 depends on the experience level.\n\n■ §8Cannot be used §4under lava.§r\n\n§7(Cannot extinguish candles)" ,
+"dragon_ability.additional_abilities.extinguish_breath": "Extinguish Breath",
+"dragon_ability.additional_abilities.extinguish_breath.desc": "■ Breathe a deluge of water vapour that extinguishes fire (including burning mobs).\n\n■ Its §fRange§r§7 depends on the age, and the §fduration of effect§r§7 depends on the experience level.\n\n■ §8Cannot be used §4under lava.§r\n\n§7(Cannot extinguish candles)" ,
 "dragon_ability.additional_abilities.piercing_eye": "Piercing Eye",
 "dragon_ability.additional_abilities.piercing_eye.desc": "■ Living in lava has given you innate§2 immunity to blindness.\n\n§7Of course, this ability cannot make you immune to darkness, because cave dragons have never had any relationship with Wardens",
 "dragon_ability.additional_abilities.smoke_breath": "Smoke Breath",
@@ -27,6 +27,8 @@
 
 "additional_abilities.ability.block_quake.description": "§6■ Causes affected blocks to hop %s blocks into the air (%s)%s",
 "additional_abilities.ability.block_quake.chance": " with a %s chance",
+"additional_abilities.ability.extinguish.description": "§6■ Extinguishes fire, campfires and candles in the affected area%s",
+"additional_abilities.ability.extinguish.chance": " with a %s chance",
 
 "item.additional_abilities.the_way_elixir": "Elixir",
 "item.additional_abilities.the_way_elixir.desc": "Test Item.",

@@ -1,7 +1,7 @@
 {
 
-"dragon_ability.additional_abilities.outfire_breath": "止火之息",
-"dragon_ability.additional_abilities.outfire_breath.desc": "■喷吐大量水汽，浇灭所及之处的火焰，亦包括失火的生物。\n\n■§f射程§r§7取决于年龄，§f抗火时间§r§7则取决于经验等级。\n\n■§8无法在§4熔岩里§r使用。\n\n§7（不能熄灭蜡烛）",
+"dragon_ability.additional_abilities.extinguish_breath": "止火之息",
+"dragon_ability.additional_abilities.extinguish_breath.desc": "■喷吐大量水汽，浇灭所及之处的火焰，亦包括失火的生物。\n\n■§f射程§r§7取决于年龄，§f抗火时间§r§7则取决于经验等级。\n\n■§8无法在§4熔岩里§r使用。\n\n§7（不能熄灭蜡烛）",
 "dragon_ability.additional_abilities.piercing_eye": "火眼金睛",
 "dragon_ability.additional_abilities.piercing_eye.desc": "■在熔岩里的生活使你练就了一双§c火眼金睛§r，让目光能穿过迷雾§2（免疫失明）§r。\n\n■§7当然，此效果不能免疫§4黑暗§r，毕竟洞穴龙和坚守者没有打过“半毛钱”交道",
 "dragon_ability.additional_abilities.smoke_breath": "障目之息",
@@ -27,6 +27,8 @@
 
 "additional_abilities.ability.block_quake.description": "§6■ 使所及方块跃起 %s 格（%s）%s",
 "additional_abilities.ability.block_quake.chance": "，生效概率 %s",
+"additional_abilities.ability.extinguish.description": "§6■ 熄灭所及的火、营火与蜡烛%s",
+"additional_abilities.ability.extinguish.chance": "，生效概率 %s",
 
 "item.additional_abilities.the_way_elixir": "丹",
 "item.additional_abilities.the_way_elixir.desc": "仅测试用，无实际意义",
