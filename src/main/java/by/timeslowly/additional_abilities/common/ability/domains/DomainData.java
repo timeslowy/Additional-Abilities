@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -134,5 +135,33 @@ public class DomainData {
     /** 仅用于调试 / 查询指令：本维度当前存活领域数。 */
     public int size() {
         return domains.size();
+    }
+
+    /**
+     * 移除本维度中所有由给定施法者建立的领域（走与自然到期相同的收尾路径）。
+     * <p>
+     * 供调试指令 {@code /additional-abilities domain clear <targets>} 使用。
+     * 由于领域按维度存在，指令侧需要遍历所有维度逐个调用本方法
+     * （施法者换维度后旧维度里的领域并不会自动消失）。
+     *
+     * @param casters 施法者 UUID 集合；为空直接返回
+     * @return 实际移除的数量（用于指令反馈与 {@code /execute store result}）
+     */
+    public int clearByCasters(final ServerLevel level, final Set<UUID> casters) {
+        if (domains.isEmpty() || casters.isEmpty()) {
+            return 0;
+        }
+
+        int removed = 0;
+
+        // 遍历快照：remove() 内部会调用 end()，而收尾会执行任意技能效果（可能反过来触发新施法）
+        for (DomainInstance domain : new ArrayList<>(domains)) {
+            if (casters.contains(domain.casterUUID())) {
+                remove(level, domain);
+                removed++;
+            }
+        }
+
+        return removed;
     }
 }

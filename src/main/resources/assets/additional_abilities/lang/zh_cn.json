@@ -27,6 +27,7 @@
 "attribute.additional_abilities.dragon_breath_restriction": "龙息范围收束",
 "attribute.additional_abilities.dragon_breath_restriction.desc": "按比例收束龙息的作用范围：截面变窄、沿视线方向拉长，如同给龙息装上收束器",
 
+"commands.additional_abilities.domain.clear.success": "已清除 %1$s 名玩家建立的 %2$s 个领域",
 "commands.additional_abilities.simple_screen_vision.clear.success": "已清除 %s 名玩家身上的简单视觉效果",
 
 "damage_type.additional_abilities.counter_shock": "震伤",

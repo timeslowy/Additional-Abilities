@@ -184,6 +184,6 @@ The two variables available inside the expression:
   within 5 ticks unless the strength increased. A strength increase always goes through.
 - Presentation details: 5-tick fade-in, 10-tick fade-out, so nothing snaps on or off; the shake phase is
   driven by the local tick count, so it is **frame-rate independent**.
-- **To clear it immediately** (debugging): `/simple-screen-vision clear <targets>`, see
+- **To clear it immediately** (debugging): `/additional-abilities simple-screen-vision clear <targets>`, see
   [06-Debug-and-Query-Commands.md](06-Debug-and-Query-Commands.md). Note that a passive ability will simply
   re-send on the next tick, so clearing only affects the current moment.

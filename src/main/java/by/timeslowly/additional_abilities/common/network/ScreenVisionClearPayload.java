@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * 屏幕视觉的「立即清空」包（服务端 → 客户端，<b>无字段</b>）。
  * <p>
  * 视觉状态只存在于客户端（{@link ClientScreenVisionState}），服务端没有可清的东西，
- * 因此调试指令 {@code /simple-screen-vision clear <targets>} 只能通过本包让目标玩家自行清空。
+ * 因此调试指令 {@code /additional-abilities simple-screen-vision clear <targets>} 只能通过本包让目标玩家自行清空。
  * <p>
  * 注意：被动技能会在下一拍重新下发，清空只对"当前这一刻"有效 —— 要让效果彻底不再出现得停用技能。
  */

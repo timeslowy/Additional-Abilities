@@ -2,21 +2,28 @@
 
 > Applies to: Additional Abilities for DS `2.0.0`
 
-This mod adds 1 standalone command and **appends** 1 query sub-command to Dragon Survival's command tree.
-Both require **permission level 2** (the same as `/effect clear`; the owner of a single-player world has it
-by default).
+This mod adds one standalone command tree, **`/additional-abilities`** (with 2 debug sub-commands), and
+**appends** 2 query sub-commands to Dragon Survival's command tree. All of them require
+**permission level 2** (the same as `/effect clear`; the owner of a single-player world has it by default);
+for the standalone tree the check is applied once, on the **root** node.
+
+```
+/additional-abilities
+ ├─ simple-screen-vision clear <targets>      Clear simple screen vision from the targeted players
+ └─ domain clear <targets>                    Clear the domains left behind by the targeted players
+```
 
 ---
 
-## 1. `/simple-screen-vision clear <targets>`
+## 1. `/additional-abilities simple-screen-vision clear <targets>`
 
 Clears **all** simple screen vision effects (both `shake` and `blur` from `simple_screen_vision`) from the
 targeted players.
 
 ```
-/simple-screen-vision clear Steve
-/simple-screen-vision clear @a
-/simple-screen-vision clear @a[distance=..10]
+/additional-abilities simple-screen-vision clear Steve
+/additional-abilities simple-screen-vision clear @a
+/additional-abilities simple-screen-vision clear @a[distance=..10]
 ```
 
 | Argument | Notes |
@@ -24,6 +31,11 @@ targeted players.
 | `<targets>` | Uses Vanilla's player-selector argument, so **player name / target selector / UUID** all work |
 
 On success it reports: `Cleared simple screen vision from %s player(s)`.
+
+> **Path change**: earlier versions registered this as a standalone root command, `/simple-screen-vision`.
+> It has now been **moved verbatim** under `/additional-abilities` — the sub-command name, arguments,
+> behaviour, message and return value are all unchanged, the path simply gained one level.
+> The old `/simple-screen-vision` is **no longer registered**.
 
 ### Things to know
 
@@ -36,7 +48,53 @@ On success it reports: `Cleared simple screen vision from %s player(s)`.
 
 ---
 
-## 2. `/dragon-ability query <target> <ability> current_charged_level`
+## 2. `/additional-abilities domain clear <targets>`
+
+Clears **every domain that the targeted players created as the caster** and that is still alive
+(the areas left behind by the `additional_abilities:domain` target type — see
+[03-Target-Type.md](03-Target-Type.md)).
+
+```
+/additional-abilities domain clear Steve
+/additional-abilities domain clear @a
+/additional-abilities domain clear @p[distance=..32]
+```
+
+| Argument | Notes |
+|---|---|
+| `<targets>` | Same as the previous section: **player name / target selector / UUID** all work |
+
+On success it reports: `Cleared %2$s domain(s) created by %1$s player(s)`.
+The **command's return value is the number of domains actually removed**, so it can be consumed by
+`/execute store result`; if the players own no living domain it returns `0`.
+
+### What exactly it clears
+
+- It goes through **exactly the same removal path as natural expiry**, so a domain configured with
+  `remove_effects_on_end: true` also runs its closing `remove` on the entities inside
+  (immediately reverting potions / attribute modifiers and the like).
+- It does **not** retroactively undo timed effects already sitting on targets: what a domain did to them is
+  decided entirely by whatever Dragon Survival effect types were written into `applied_effects`, and there is
+  no generic ledger of "which domain applied what to whom" to reverse. The reliable meaning of
+  "clear the domain" is therefore **make the area stop existing** — it no longer settles and no longer
+  refreshes anything, while effects already applied expire on their own `duration`.
+- **It scans every dimension**: domains live on per-dimension data, and when the caster switches dimension a
+  domain in the old dimension does **not** disappear on its own (it is merely skipped because the caster is
+  unavailable, while its timer keeps running). So this command walks all levels instead of only the caster's
+  current one.
+- Counting is **by domain**: for a given ability "one cast = one domain" (multiple actions merge into the
+  same one), so the number tracks casts, not the number of actions.
+
+### When to use it
+
+- Domains are **not persisted** — they are pure in-memory objects that vanish on server restart — but a
+  domain with a long `duration` does slow down debugging; use this to finish it off instead of waiting.
+- Verify that `remove_effects_on_end` behaves as expected.
+- Confirm that "casting again evicts the old domain": `clear` first, cast, then compare the return values.
+
+---
+
+## 3. `/dragon-ability query <target> <ability> current_charged_level`
 
 One of the two **sub-commands appended** to Dragon Survival's own ability query, covering the charged-tier
 family (`additional_abilities:charged` and `additional_abilities:optional_charged`):
@@ -66,7 +124,7 @@ The output reuses Dragon Survival's own query result message, so it is **formatt
 
 ---
 
-## 3. `/dragon-ability query <target> <ability> current_selected_level`
+## 4. `/dragon-ability query <target> <ability> current_selected_level`
 
 Works with `additional_abilities:optional_charged` (the optional charged-tier type) and its wheel picking:
 
@@ -100,7 +158,7 @@ of every cast (release or cancel), so it never leaks into the next one.
 
 ---
 
-## 4. For reference: Dragon Survival's own query entries
+## 5. For reference: Dragon Survival's own query entries
 
 Under `/dragon-ability query <target> <ability>` these sub-entries already exist and can be mixed with the ones
 above:
@@ -117,7 +175,7 @@ above:
 
 ---
 
-## 5. Granting abilities by hand (Dragon Survival's own, not added by this mod)
+## 6. Granting abilities by hand (Dragon Survival's own, not added by this mod)
 
 This mod's `test_*` abilities are not attached to any species, so grant them manually while debugging:
 
@@ -132,3 +190,7 @@ This mod's `test_*` abilities are not attached to any species, so grant them man
   conditions);
 - `remove` takes it away;
 - `refresh` reloads ability data from the datapack — use it after editing JSON.
+
+> When debugging `additional_abilities:domain`, keep in mind that **a level-0 active ability cannot be cast**
+> (Dragon Survival's pre-cast validation blocks it). So after granting `test_domain` you still have to raise
+> its level first, or temporarily switch it to `passive`.

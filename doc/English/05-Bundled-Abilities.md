@@ -15,7 +15,8 @@ data and functions, so **Wing Kirin is a hard dependency**.
 > `test_domain` / `test_on_block_placed` / `test_on_item_consumed`) for development and
 > debugging only.
 > They are **not attached to any species** and must be granted with a command.
-> See the [README](../../README.md) quick-reference table for which custom type each one exercises.
+> See the [README](../../README.md) quick-reference table for which custom type each one exercises.  
+> ***Tips: Due to requirements of test, test abilities are not all consistent with description partically. Subject to actual.***
 
 ---
 

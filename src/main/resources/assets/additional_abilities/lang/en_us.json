@@ -27,6 +27,7 @@
 "attribute.additional_abilities.dragon_breath_restriction": "Dragon Breath Restriction",
 "attribute.additional_abilities.dragon_breath_restriction.desc": "Narrows the dragon breath area: the cross-section shrinks while the beam extends along your line of sight",
 
+"commands.additional_abilities.domain.clear.success": "Cleared %2$s domain(s) created by %1$s player(s)",
 "commands.additional_abilities.simple_screen_vision.clear.success": "Cleared simple screen vision from %s player(s)",
 
 "damage_type.additional_abilities.counter_shock": "Counter Shock",

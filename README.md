@@ -6,7 +6,7 @@
   ============================================================
 -->
 
-**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 164 行起）
+**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 165 行起）
 
 ---
 
@@ -18,7 +18,7 @@
 > 前置：Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
 > 最后核对：2026-09-21（对照本工作空间源码）
 
-本模组给 Dragon Survival 补了两类东西：
+本模组给 [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival) 补了两类东西：
 
 1. **可复用的自定义技能组件**（`entity_effect` / `block_effect` / `target_type` / `activation_type` /
    `trigger_type`）
@@ -59,7 +59,8 @@
 
 | 指令 | 用途 | 文档 |
 |---|---|---|
-| `/simple-screen-vision clear <targets>` | 清空目标玩家身上的屏幕视觉 | [06](doc/中文/06-调试与查询指令.md) |
+| `/additional-abilities simple-screen-vision clear <targets>` | 清空目标玩家身上的屏幕视觉 | [06](doc/中文/06-调试与查询指令.md) |
+| `/additional-abilities domain clear <targets>` | 清除目标玩家留下的领域 | [06](doc/中文/06-调试与查询指令.md) |
 | `/dragon-ability query <目标> <技能> current_charged_level` | 查询蓄力档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
 | `/dragon-ability query <目标> <技能> current_selected_level` | 查询滚轮选定的释放档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
 
@@ -77,7 +78,6 @@
   适用 `#minecraft:enchantable/head_armor`、槽位 `head`，可由附魔台与图书管理员提供；
   获取途径由 `data/minecraft/tags/enchantment/` 下的 `in_enchanting_table` 与 `tradeable` 两个标签决定。
 - 数值（每级增量、成本曲线、权重）全部写在该 JSON 里，可按需调整 ——
-  **本功能第 2 轮实现后只改动过该 JSON 的数值，其余部分未作改动**。
 - 收束生效时按 `F3+B` 会同时看到两个框：DS 的**红色**包围盒是「粗筛范围」（斜视时会明显偏大），
   本模组新增的**洋红**光束才是**真实判定范围**。
 
@@ -85,9 +85,9 @@
 
 | 包名 | 显示名 | 作用 | 文档 |
 |---|---|---|---|
-| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 | 用本模组的自定义组件重做 Wing Kirin 的「定身术」与「龙吼功」 | [07](doc/中文/07-内置数据包.md) |
+| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 | 用本模组的自定义组件重做[翼麒麟](https://www.curseforge.com/minecraft/mc-mods/wing-kirin)的一些技能 | [07](doc/中文/07-内置数据包.md) |
 
-> 启用时**不要**加 `first`（会变成最低优先级、静默失效），且启用后要**退出世界重进**。
+> 启用后要**退出世界重进**。  
 > 详见 [07](doc/中文/07-内置数据包.md)。
 
 ---
@@ -104,7 +104,7 @@ data/<命名空间>/dragonsurvival/dragon_ability/<技能ID>.json
 
 ### 2. 「等级数值」怎么写
 
-下面各文档的字段表里，凡是标注**等级数值**的字段，用的都是 Dragon Survival 的 `LevelBasedValue`，
+下面各文档的字段表里，凡是标注**等级数值**的字段，用的都是自 Minecraft Java Edition 自`1.21`版本加入的**等级依赖函数**`LevelBasedValue`，
 也就是「按技能等级求值的一个函数」。三种常见写法：
 
 ```jsonc
@@ -118,8 +118,8 @@ data/<命名空间>/dragonsurvival/dragon_ability/<技能ID>.json
 "damage": { "type": "minecraft:lookup", "values": [5, 10, 20], "fallback": 40 }
 ```
 
-求值时用的「等级」= 该技能实例当时的等级。**注意**：如果技能用的是
-`additional_abilities:charged` 激活类型，求值等级会临时被换成**蓄力档位**（见 [04](doc/中文/04-激活类型.md)）。
+求值时用的「等级」= 该技能实例当时的等级。  
+**注意**：如果技能用的是`additional_abilities:charged` 激活类型，求值等级会临时被换成**蓄力档位**（见 [04](doc/中文/04-激活类型.md)）。
 
 > `LevelBasedValue` 以 **1** 为最低计算等级，所以查表写法的 `values[0]` 对应 1 级，写 0 级会越界。
 
@@ -151,7 +151,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 | [03-目标选择器.md](doc/中文/03-目标选择器.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-激活类型.md](doc/中文/04-激活类型.md) | `charged`（含蓄力档位换算、HUD 表现、查询指令） |
 | [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 5 个技能、所属龙种、解锁方式 |
-| [06-调试与查询指令.md](doc/中文/06-调试与查询指令.md) | 两条调试 / 查询指令的用法 |
+| [06-调试与查询指令.md](doc/中文/06-调试与查询指令.md) | 独立指令树 `/additional-abilities` 与 DS 查询追加项的用法 |
 | [07-内置数据包.md](doc/中文/07-内置数据包.md) | 内置的可选数据包、启用方法与改动明细 |
 | [08-触发类型.md](doc/中文/08-触发类型.md) | `on_block_placed`（放置方块时）、`on_item_consumed`（消耗物品时）、`on_ability_cast`（主动技能结算后），含覆盖范围与谓词写法 |
 
@@ -169,7 +169,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 > Requirements: Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
 > Last verified: 2026-09-21 (against this workspace's source)
 
-This mod adds two kinds of things to Dragon Survival:
+This mod adds two kinds of things to [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival):
 
 1. **Reusable custom ability components** (`entity_effect` / `block_effect` / `target_type` /
    `activation_type` / `trigger_type`) — for datapacks and other add-ons to call directly from their own
@@ -211,7 +211,8 @@ The values added by this mod are:
 
 | Command | Purpose | Doc |
 |---|---|---|
-| `/simple-screen-vision clear <targets>` | Clear screen vision from the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
+| `/additional-abilities simple-screen-vision clear <targets>` | Clear screen vision from the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
+| `/additional-abilities domain clear <targets>` | Clear the domains left behind by the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/dragon-ability query <target> <ability> current_charged_level` | Query the charge tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/dragon-ability query <target> <ability> current_selected_level` | Query the wheel-picked release tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
 
@@ -231,7 +232,6 @@ exactly where you aim. Wearing the enchanted helmet grants the attribute.
   table and by librarians — availability is decided by the `in_enchanting_table` and `tradeable` tags under
   `data/minecraft/tags/enchantment/`.
 - Every number (per-level amount, cost curve, weight) is written in that JSON and can be tuned freely —
-  **after the second implementation pass, only those values in that JSON were changed; nothing else was touched**.
 - While the restriction is active, `F3+B` shows two boxes: DS's **red** box is the *broad-phase range*
   (it grows noticeably when you aim diagonally), and the **magenta** beam added by this mod is the
   *actual selection volume*.
@@ -240,10 +240,9 @@ exactly where you aim. Wearing the enchanted helmet grants the attribute.
 
 | Pack | Display name | Purpose | Doc |
 |---|---|---|---|
-| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 (Innovative WingKirin's Abilities) | Reworks Wing Kirin's "Spell Binder" and "Thunderous Shout" with this mod's custom components | [07](doc/English/07-Bundled-Datapacks.md) |
+| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 (Innovative WingKirin's Abilities) | Reworks some [Wing Kirin](https://www.curseforge.com/minecraft/mc-mods/wing-kirin)'s abilities with this mod's custom components | [07](doc/English/07-Bundled-Datapacks.md) |
 
-> When enabling it, do **not** add `first` (that makes it the lowest priority and fails silently), and you
-> must **leave and re-enter the world** afterwards. See [07](doc/English/07-Bundled-Datapacks.md).
+> When enabling it, you must **leave and re-enter the world** afterwards. See [07](doc/English/07-Bundled-Datapacks.md).
 
 ---
 
@@ -259,8 +258,7 @@ This mod's own abilities live in `data/additional_abilities/dragonsurvival/drago
 
 ### 2.2 How to write a "level value"
 
-In the field tables throughout this documentation, any field marked **level value** uses Dragon Survival's
-`LevelBasedValue` — a function evaluated against the ability level. Three common forms:
+In the field tables throughout this documentation, any field marked **level value** uses `LevelBasedValue` — a function which has been added at Minecraft Java Edition `1.21` evaluated against the ability level. Three common forms:
 
 ```jsonc
 // 1. Constant: just write the number
@@ -309,7 +307,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 | [03-Target-Type.md](doc/English/03-Target-Type.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-Activation-Type.md](doc/English/04-Activation-Type.md) | `charged` (tier conversion, HUD behaviour, query command) |
 | [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 5 bundled abilities, their species and unlock conditions |
-| [06-Debug-and-Query-Commands.md](doc/English/06-Debug-and-Query-Commands.md) | Usage of the two debug / query commands |
+| [06-Debug-and-Query-Commands.md](doc/English/06-Debug-and-Query-Commands.md) | Usage of the standalone `/additional-abilities` tree and the appended Dragon Survival query entries |
 | [07-Bundled-Datapacks.md](doc/English/07-Bundled-Datapacks.md) | The bundled optional datapack, how to enable it, and what it changes |
 | [08-Trigger-Type.md](doc/English/08-Trigger-Type.md) | `on_block_placed` (on placing a block), `on_item_consumed` (on consuming an item) and `on_ability_cast` (after an active ability's cast settles), including coverage and predicate syntax |
 
