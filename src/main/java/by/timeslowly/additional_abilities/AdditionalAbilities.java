@@ -1,6 +1,7 @@
 package by.timeslowly.additional_abilities;
 
 import by.timeslowly.additional_abilities.common.AAClientSetup;
+import by.timeslowly.additional_abilities.common.eventhandler.abilities.DomainTickHandler;
 import by.timeslowly.additional_abilities.common.network.AANetwork;
 import by.timeslowly.additional_abilities.registry.*;
 import by.timeslowly.additional_abilities.registry.dragon.ability.*;
@@ -48,6 +49,8 @@ public class AdditionalAbilities {
         NeoForge.EVENT_BUS.addListener(OnBlockPlaced::trigger);
         // 接线：使用物品完成事件 → 本模组 additional_abilities:on_item_consumed 触发器分发
         NeoForge.EVENT_BUS.addListener(OnItemConsumed::trigger);
+        // 接线：维度 tick 末尾 → 推进本模组 additional_abilities:domain 建立的领域（按维度分区）
+        NeoForge.EVENT_BUS.addListener(DomainTickHandler::onLevelTick);
         // 注册网络通道（屏幕视觉 / 方块震动 的服务端 → 客户端同步）
         modEventBus.addListener(AANetwork::register);
         // 注册客户端专属内容（蓄力档位 HUD 图层；内部自带物理端判定，服务端不会加载客户端类型）

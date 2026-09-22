@@ -10,6 +10,7 @@ import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.geometry.BreathBeam;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AnnulusTarget;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AntiDragonBreathTarget;
+import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.DomainTarget;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
  * <ul>
  *     <li>{@code additional_abilities:anti_dragon_breath} —— 单个包围盒，黄；</li>
  *     <li>{@code additional_abilities:annulus} —— 内外双包围盒，青（外框）/ 暗青（内框）；</li>
+ *     <li>{@code additional_abilities:domain} —— 单个包围盒，橙（画在玩家当前脚下，
+ *         表示"现在施法会在原地留下多大的领域"）；</li>
  *     <li>{@code dragonsurvival:dragon_breath} <b>处于收束状态</b>时 —— 真正的判定光束，洋红。</li>
  * </ul>
  * <p>
@@ -83,6 +86,11 @@ public class AbilityHitboxEventHandler {
     private static final float BEAM_R = 1.0F;
     private static final float BEAM_G = 0.2F;
     private static final float BEAM_B = 1.0F;
+
+    /** 调试箱颜色（橙）：领域目标的粗筛盒，与上面全部错开 */
+    private static final float DOMAIN_R = 1.0F;
+    private static final float DOMAIN_G = 0.55F;
+    private static final float DOMAIN_B = 0.0F;
 
     @SubscribeEvent
     public static void onRenderLevelStage(final @NotNull RenderLevelStageEvent event) {
@@ -142,6 +150,13 @@ public class AbilityHitboxEventHandler {
                     LevelRenderer.renderLineBox(pose, buffer, annulus.calculateArea(origin, inner, height),
                             ANNULUS_INNER_R, ANNULUS_INNER_G, ANNULUS_INNER_B, 1.0F);
                 }
+            } else if (action.effect() instanceof DomainTarget domain) {
+                // 领域真正的锚点是"首次结算瞬间的位置"，客户端拿不到那次施法的坐标，
+                // 因此这里与 DS 对 area / disc 的调试画法同一思路：以玩家当前脚下为锚点画粗筛盒，
+                // 表达的是"现在施法会留下多大的领域"。球形/柱形的盒内还有一次形状精筛
+                // （球会切掉 8 个角、柱形会切掉水平四角），所以线框比真实判定区略大，属预期。
+                LevelRenderer.renderLineBox(pose, buffer, domain.calculateArea(player.position(), ability),
+                        DOMAIN_R, DOMAIN_G, DOMAIN_B, 1.0F);
             } else if (action.effect() instanceof DragonBreathTarget breath) {
                 // 收束生效时 DS 的红框只剩「粗筛区」的含义（斜视时会明显偏大），
                 // 真正的判定体是这个旋转长方体，必须单独画出来，否则「看到的框 ≠ 判定范围」。

@@ -1,0 +1,124 @@
+{
+  "actions": [
+    {
+      "target_selection": {
+        "applied_effects": {
+          "entity_effect": [
+            {
+              "effect_type": "dragonsurvival:potion",
+              "potion": {
+                "amplifier": 0.0,
+                "duration": 60.0,
+                "effect_particles": true,
+                "effects": "minecraft:regeneration",
+                "probability": 1.0
+              }
+            },
+            {
+              "effect_type": "dragonsurvival:modifier",
+              "modifiers": [
+                {
+                  "base": {
+                    "id": "additional_abilities:test",
+                    "duration": 60
+                  },
+                  "modifiers": [
+                    {
+                      "attribute": "minecraft:generic.scale",
+                      "amount": 0.3,
+                      "operation": "add_value"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "effect_type": "dragonsurvival:run_function",
+              "function": "additional_abilities:test"
+            }
+          ],
+          "targeting_mode": "allies_and_self"
+        },
+        "anchor": "casting_position",
+        "apply_interval": 20.0,
+        "duration": 200.0,
+        "max_domains": 1,
+        "radius": 10.0,
+        "remove_effects_on_end": false,
+        "shape": "cube",
+        "target_type": "additional_abilities:domain"
+      }
+    },
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "effect_type": "dragonsurvival:particle",
+              "particle_count": 1.0,
+              "particle_data": {
+                "horizontal_position": {
+                  "type": "in_bounding_box"
+                },
+                "horizontal_velocity": {
+                  "base": 0.0
+                },
+                "particle": {
+                  "type": "minecraft:end_rod"
+                },
+                "speed": 0.0,
+                "vertical_position": {
+                  "type": "in_bounding_box"
+                },
+                "vertical_velocity": {
+                  "base": 0.0
+                }
+              }
+            }
+          ]
+        },
+        "anchor": "casting_position",
+        "apply_interval": 20.0,
+        "duration": 200.0,
+        "max_domains": 1,
+        "radius": 10.0,
+        "remove_effects_on_end": false,
+        "shape": "cube",
+        "target_type": "additional_abilities:domain"
+      }
+    }
+  ],
+  "activation": {
+    "activation_type": "dragonsurvival:simple",
+    "cast_time": 20.0,
+    "cooldown": 400.0,
+    "initial_mana_cost": 3.0
+  },
+  "icon": {
+    "texture_entries": [
+      {
+        "from_level": 0,
+        "texture_resource": "additional_abilities:test"
+      }
+    ]
+  },
+  "upgrade": {
+    "level_requirement": {
+      "type": "minecraft:lookup",
+      "fallback": {
+        "type": "minecraft:linear",
+        "base": 15.0,
+        "per_level_above_first": 15.0
+      },
+      "values": [
+        10,
+        20,
+        30,
+        40,
+        50
+      ]
+    },
+    "maximum_level": 5,
+    "upgrade_type": "dragonsurvival:experience_levels"
+  }
+}

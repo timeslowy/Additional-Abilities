@@ -52,7 +52,7 @@ public record BreathBeam(Vec3 origin, Vec3 direction, Vec3 right, Vec3 up,
     private static final double EPSILON = 1.0E-4;
 
     /** 收束属性的上限（{@code AAAttributes.DRAGON_BREATH_RESTRICTION} 的 max） */
-    private static final double MAX_RESTRICTION = 0.8;
+    private static final double MAX_RESTRICTION = 0.9;
 
     /** 截面系数的下限 = 1 - MAX_RESTRICTION */
     private static final double MIN_FACTOR = 1.0 - MAX_RESTRICTION;

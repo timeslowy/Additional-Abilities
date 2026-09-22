@@ -48,12 +48,12 @@ public class AAAttributes {
 
     /**
      * 龙息范围收束：{@code additional_abilities:dragon_breath_restriction}。
-     * 默认 0、最小 0、最大 0.8（= 截面收窄至 20%、前伸拉长至 5 倍）。
+     * 默认 0、最小 0、最大 0.9（= 截面收窄至 10%、前伸拉长至 10 倍）。
      */
     public static final DeferredHolder<Attribute, Attribute> DRAGON_BREATH_RESTRICTION =
             ATTRIBUTES.register("dragon_breath_restriction", () -> new PercentageAttribute(
                     "attribute." + AdditionalAbilities.MOD_ID + ".dragon_breath_restriction",
-                    0.0, 0.0, 0.8).setSyncable(true));
+                    0.0, 0.0, 0.9).setSyncable(true));
 
     public static void register(final @NotNull IEventBus modEventBus) {
         ATTRIBUTES.register(modEventBus);

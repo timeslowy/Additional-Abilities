@@ -6,7 +6,7 @@
   ============================================================
 -->
 
-**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 163 行起）
+**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 164 行起）
 
 ---
 
@@ -42,6 +42,7 @@
 | 方块效果 | `effect_type` | `additional_abilities:extinguish` | 扑灭所及的火、营火与蜡烛（`fire` 的反向版） | [02](doc/中文/02-方块效果.md) |
 | 目标选择器 | `target_type` | `additional_abilities:anti_dragon_breath` | 龙息锥形，但朝施法者**身后**延伸 | [03](doc/中文/03-目标选择器.md) |
 | 目标选择器 | `target_type` | `additional_abilities:annulus` | 环形（圆盘挖空内圈） | [03](doc/中文/03-目标选择器.md) |
+| 目标选择器 | `target_type` | `additional_abilities:domain` | 领域 —— 在施法处留下一块持续存在的区域，按间隔反复作用 | [03](doc/中文/03-目标选择器.md) |
 | 激活类型 | `activation_type` | `additional_abilities:charged` | 按住蓄力，松手按蓄到的档位释放 | [04](doc/中文/04-激活类型.md) |
 | 激活类型 | `activation_type` | `additional_abilities:optional_charged` | 同上，但蓄力期间可用滚轮挑档位（含取消） | [04](doc/中文/04-激活类型.md) |
 | 触发器 | `trigger_type` | `additional_abilities:on_block_placed` | **放下**方块时触发（`on_block_break` 的反向版） | [08](doc/中文/08-触发类型.md) |
@@ -69,7 +70,7 @@
 
 | 类型 | 注册 id | 说明 |
 |---|---|---|
-| 属性 | `additional_abilities:dragon_breath_restriction` | 百分比属性，默认 0、上限 0.8；**只注册到玩家身上** |
+| 属性 | `additional_abilities:dragon_breath_restriction` | 百分比属性，默认 0、上限 0.9；**只注册到玩家身上** |
 | 附魔 | `additional_abilities:dragon_breath_restrictor`（束息） | 头盔附魔、4 级、每级 **+0.15** 属性值（4 级共 +0.6） |
 
 - 附魔定义在 `src/main/resources/data/additional_abilities/enchantment/dragon_breath_restrictor.json`，
@@ -147,7 +148,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 |---|---|
 | [01-实体效果.md](doc/中文/01-实体效果.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` |
 | [02-方块效果.md](doc/中文/02-方块效果.md) | `block_quake` / `extinguish` |
-| [03-目标选择器.md](doc/中文/03-目标选择器.md) | `anti_dragon_breath` / `annulus` |
+| [03-目标选择器.md](doc/中文/03-目标选择器.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-激活类型.md](doc/中文/04-激活类型.md) | `charged`（含蓄力档位换算、HUD 表现、查询指令） |
 | [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 5 个技能、所属龙种、解锁方式 |
 | [06-调试与查询指令.md](doc/中文/06-调试与查询指令.md) | 两条调试 / 查询指令的用法 |
@@ -193,6 +194,7 @@ The values added by this mod are:
 | Block effect | `effect_type` | `additional_abilities:extinguish` | Put out fire, campfires and candles in the affected area (mirror of `fire`) | [02](doc/English/02-Block-Effect.md) |
 | Target type | `target_type` | `additional_abilities:anti_dragon_breath` | A dragon breath cone, but extending **behind** the caster | [03](doc/English/03-Target-Type.md) |
 | Target type | `target_type` | `additional_abilities:annulus` | A ring — a disc with the inner circle hollowed out | [03](doc/English/03-Target-Type.md) |
+| Target type | `target_type` | `additional_abilities:domain` | A domain — a persistent area left at the casting spot that keeps acting on an interval | [03](doc/English/03-Target-Type.md) |
 | Activation type | `activation_type` | `additional_abilities:charged` | Hold to charge, release to fire at the tier you reached | [04](doc/English/04-Activation-Type.md) |
 | Activation type | `activation_type` | `additional_abilities:optional_charged` | Same, but you pick the tier with the mouse wheel (cancel included) | [04](doc/English/04-Activation-Type.md) |
 | Trigger | `trigger_type` | `additional_abilities:on_block_placed` | Fires when a block is **placed** (the mirror of `on_block_break`) | [08](doc/English/08-Trigger-Type.md) |
@@ -304,7 +306,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 |---|---|
 | [01-Entity-Effect.md](doc/English/01-Entity-Effect.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` |
 | [02-Block-Effect.md](doc/English/02-Block-Effect.md) | `block_quake` / `extinguish` |
-| [03-Target-Type.md](doc/English/03-Target-Type.md) | `anti_dragon_breath` / `annulus` |
+| [03-Target-Type.md](doc/English/03-Target-Type.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-Activation-Type.md](doc/English/04-Activation-Type.md) | `charged` (tier conversion, HUD behaviour, query command) |
 | [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 5 bundled abilities, their species and unlock conditions |
 | [06-Debug-and-Query-Commands.md](doc/English/06-Debug-and-Query-Commands.md) | Usage of the two debug / query commands |

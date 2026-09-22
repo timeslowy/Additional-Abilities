@@ -4,6 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.targeting.Ab
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AnnulusTarget;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AntiDragonBreathTarget;
+import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.DomainTarget;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.RegisterEvent;
@@ -44,5 +45,13 @@ public class AAAbilityTargets {
         event.register(AbilityTargeting.REGISTRY_KEY,
                 ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "annulus"),
                 () -> AnnulusTarget.CODEC);
+
+        // 领域（施法处留下持续一段时间的区域，按 apply_interval 反复结算）：
+        // additional_abilities:domain
+        // 字段为 applied_effects + radius / duration / shape / height / height_starts_below /
+        // apply_interval / anchor / max_domains / remove_effects_on_end
+        event.register(AbilityTargeting.REGISTRY_KEY,
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "domain"),
+                () -> DomainTarget.CODEC);
     }
 }
