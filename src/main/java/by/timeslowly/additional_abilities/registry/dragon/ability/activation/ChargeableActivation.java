@@ -28,7 +28,10 @@ import java.util.Optional;
  *         —— 这就是"最高等级所需蓄力时长不得超过 {@code cast_time}"的落地点。</li>
  *     <li>一直按到 {@code cast_time}：{@link #canChargeExceedCastTime()} 为 {@code false} 时由
  *         DS 原生流程自动释放；为 {@code true} 时由
- *         {@code mixins.DragonAbilityInstanceMixin} 撑开完成判定，可一直按住不释放。</li>
+ *         {@code mixins.DragonAbilityInstanceMixin} 撑开完成判定，可以继续按住 ——
+ *         这段"超限窗口"的长度由 {@link #maxOverchargedDuration()} 给出上限，
+ *         到点仍会回到 DS 原生流程自动释放（见 {@link #getHoldLimitTicks(int)}）；
+ *         不配置该字段则无限按住。</li>
  * </ul>
  *
  * <h2>等级传递</h2>
@@ -64,6 +67,39 @@ public interface ChargeableActivation extends Activation {
                     ? DataResult.success(value)
                     : DataResult.error(() -> "Chargeable activation requires a positive [cast_time] (it is the maximum charge duration)"));
 
+    /**
+     * 超限窗口长度（tick），对应 JSON {@code max_overcharged_duration}；可选，
+     * 只在 {@link #canChargeExceedCastTime()} 为 {@code true} 时才有意义。
+     * <p>
+     * 必须为正 —— 它回答的是"按满 {@code cast_time} 之后还能再按住多久"，
+     * 取 0 意味着窗口根本不存在（此时该字段毫无意义，而且会把最高档的落点压在 DS
+     * 完成判定的那一帧上，满档数字与提示音永远不会出现），因此在解析期直接拦下；
+     * 想要"没有超限窗口"应当不开启 {@code can_charge_exceed_cast_time}。
+     */
+    Codec<LevelBasedValue> MAX_OVERCHARGED_DURATION_CODEC = LevelBasedValue.CODEC.validate(value ->
+            value.calculate(DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) > 0
+                    ? DataResult.success(value)
+                    : DataResult.error(() -> "Chargeable activation requires a positive [max_overcharged_duration] (it is how long you may keep charging past [cast_time])"));
+
+    /**
+     * 跨字段校验：超限窗口建立在"允许按过 {@code cast_time} 仍不释放"这个前提之上，
+     * 因此"写了 {@code max_overcharged_duration} 却没开 {@code can_charge_exceed_cast_time}"
+     * 属于配置自相矛盾 —— 在数据包加载期直接报错，而不是留到运行时静默失效。
+     * <p>
+     * 由两个实现的 {@code CODEC} 经 {@code MapCodec#validate} 调用。
+     *
+     * @param activation 待校验的蓄力档位激活类型
+     * @param <T>        具体实现类型，便于直接以方法引用形式充当校验器
+     * @return 校验通过时原样返回，否则给出报错信息
+     */
+    static <T extends ChargeableActivation> DataResult<T> validateOverchargeSupport(final @NotNull T activation) {
+        if (!activation.canChargeExceedCastTime() && activation.maxOverchargedDuration().isPresent()) {
+            return DataResult.error(() -> "Chargeable activation cannot use [max_overcharged_duration] while [can_charge_exceed_cast_time] is [false] (there would be no overcharge window)");
+        }
+
+        return DataResult.success(activation);
+    }
+
     /** 本类激活类型没有"引导期"，故禁 {@code looping} 音效（与 {@code dragonsurvival:simple} 一致）。 */
     Codec<Sound> SOUND_CODEC = Sound.CODEC.validate(sound ->
             sound.looping().isPresent()
@@ -89,9 +125,21 @@ public interface ChargeableActivation extends Activation {
     /**
      * 是否允许蓄力按住超过上限而不释放，对应 {@code can_charge_exceed_cast_time}。
      * <p>
-     * 开启后由 {@code mixins.DragonAbilityInstanceMixin} 撑开 DS 的完成判定。
+     * 开启后由 {@code mixins.DragonAbilityInstanceMixin} 撑开 DS 的完成判定，
+     * 撑开的幅度由 {@link #maxOverchargedDuration()} 决定（见 {@link #getHoldLimitTicks(int)}）。
      */
     boolean canChargeExceedCastTime();
+
+    /**
+     * 超限窗口长度（tick），对应 JSON {@code max_overcharged_duration}；缺省表示"无限按住"，
+     * 即保持该字段引入之前的原有行为。
+     * <p>
+     * 只在 {@link #canChargeExceedCastTime()} 为 {@code true} 时才有意义，此时
+     * {@code cast_time + 该值} 就是按住释放的上限（见 {@link #getHoldLimitTicks(int)}）。
+     * 它<b>不</b>抬高档位阈值上限 {@link #chargeCapTicks(int)} —— 超限窗口里档位不再提升，
+     * 只是"保持满档、可松手、可滚轮挑档"的那段窗口。
+     */
+    Optional<LevelBasedValue> maxOverchargedDuration();
 
     /** 冷却时间（tick），按档位求值。 */
     Optional<LevelBasedValue> cooldown();
@@ -135,10 +183,63 @@ public interface ChargeableActivation extends Activation {
      * "仍在蓄力"的状态观察不到那一帧；若把上限压在 {@code cast_time}，
      * 最高档的落点就在客户端看不到的那一帧（满档数字与提示音永远不会出现），
      * 而且"最后一刻松手"会比"按满自动释放"低一档，自相矛盾。
+     * <p>
+     * 注意本值只管<b>档位阈值</b>，与超限窗口无关：窗口内档位不再提升，
+     * "还能按住多久"是另一个量，见 {@link #getHoldLimitTicks(int)}。
      */
     default int chargeCapTicks(final int level) {
         int castTimeTicks = Math.max(1, getCastTime(level));
         return canChargeExceedCastTime() ? castTimeTicks : Math.max(1, castTimeTicks - 1);
+    }
+
+    /**
+     * 超限窗口长度（tick）：按满 {@code cast_time} 之后还允许继续按住的时长。
+     *
+     * @param level 求值等级
+     * @return 未配置 {@link #maxOverchargedDuration()} 时为 {@code 0}
+     */
+    default int getOverchargeTicks(final int level) {
+        return maxOverchargedDuration().map(value -> Math.max(0, (int) value.calculate(level))).orElse(0);
+    }
+
+    /**
+     * 按住释放的上限：到达这一刻，DS 就会走原生"读条完成"流程自动释放
+     * （以玩家自身等级执行一次动作、扣初始魔力、进冷却）。
+     * <ul>
+     *     <li>{@link #canChargeExceedCastTime()} 为 {@code false} → 不适用，
+     *         返回 {@code cast_time} 本身（DS 自己在那一刻完成释放）；</li>
+     *     <li>为 {@code true} 且未配置 {@link #maxOverchargedDuration()} → {@link Integer#MAX_VALUE}，
+     *         即按满后可以无限按住，只有松手才释放；</li>
+     *     <li>为 {@code true} 且配置了该字段 → {@code cast_time + max_overcharged_duration}，到点自动释放
+     *         （并保证严格晚于 {@link #chargeCapTicks(int)}，见下）。</li>
+     * </ul>
+     * 该值被 {@code mixins.DragonAbilityInstanceMixin} 用作 {@code tickActions} 的完成判定阈值，
+     * 因此"到点自动释放"完全走 DS 原生路径，本模组不需要额外接管。
+     * <p>
+     * <b>不变量</b>：该值严格大于 {@link #chargeCapTicks(int)}。DS 在到达该值的那一帧才释放，
+     * 所以只有"阈值上限 + 1 ≤ 释放点"才能保证最高档在释放之前至少有一帧是可以被看到、可以被松手放出的。
+     * <p>
+     * 与 {@link #getRequiredChargeTicks(int)} 的区别：后者是<b>档位阈值</b>（超限窗口里不再增长），
+     * 前者是<b>按住时长上限</b>。
+     *
+     * @param level 求值等级（DS 完成判定用的是玩家自身的技能升级等级）
+     * @return DS 完成判定的阈值（游戏刻）
+     */
+    default int getHoldLimitTicks(final int level) {
+        if (!canChargeExceedCastTime()) {
+            // 不适用：DS 自己在 cast_time 当刻完成释放（本方法只被"允许超限蓄力"的技能用到）
+            return Math.max(1, getCastTime(level));
+        }
+
+        if (maxOverchargedDuration().isEmpty()) {
+            return Integer.MAX_VALUE;
+        }
+
+        // 释放点必须严格晚于档位阈值上限，否则最高档的落点就落在释放那一帧上（数字与提示音永远看不到）；
+        // 超限窗口把它推得更远。两者取大，顺带兜住"逐档求值把窗口算成 0"的极端配置。
+        // 用 long 计算再钳回 int：cast_time 与超限窗口都允许配得很大，避免溢出成负数
+        long limit = Math.max((long) chargeCapTicks(level) + 1, (long) getCastTime(level) + getOverchargeTicks(level));
+        return (int) Math.min(limit, Integer.MAX_VALUE);
     }
 
     /**

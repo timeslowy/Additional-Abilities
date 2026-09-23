@@ -91,11 +91,24 @@ public final class AAClientConfig {
     /** 每升一档的默认音高增量（旧版行为）。 */
     private static final double LEVEL_UP_PITCH_PER_LEVEL_DEFAULT = 0.12;
 
+    /**
+     * 超限窗口临界警示的默认阈值：<b>剩余比例</b> ≤ 0.3（即只剩下一半）时转红。
+     * <p>
+     * 用比例而不是绝对刻数，是为了自动适配各技能各自不同的窗口长度
+     * （窗口 20 刻与 200 刻的技能可以用同一个配置）。
+     */
+    private static final double OVERCHARGE_WARNING_DEFAULT = 0.3;
+
+    /** 临界警示阈值的取值区间；{@link #OVERCHARGE_WARNING_MIN} 同时就是"不转红"的取值。 */
+    private static final double OVERCHARGE_WARNING_MIN = 0.0;
+    private static final double OVERCHARGE_WARNING_MAX = 1.0;
+
     public static final ModConfigSpec SPEC;
 
     private static final ModConfigSpec.EnumValue<IndicatorAnchor> INDICATOR_ANCHOR;
     private static final ModConfigSpec.IntValue INDICATOR_OFFSET_X;
     private static final ModConfigSpec.IntValue INDICATOR_OFFSET_Y;
+    private static final ModConfigSpec.DoubleValue OVERCHARGE_WARNING_RATIO;
     private static final ModConfigSpec.BooleanValue PLAY_SOUND;
     private static final ModConfigSpec.DoubleValue SOUND_VOLUME;
     private static final ModConfigSpec.EnumValue<LevelUpSound> LEVEL_UP_SOUND;
@@ -138,6 +151,20 @@ public final class AAClientConfig {
                         "Vertical shift in GUI-scaled pixels applied on top of the placement (positive = down).")
                 .translation(LANG_PREFIX + "offset_y")
                 .defineInRange("offset_y", 0, -OFFSET_LIMIT, OFFSET_LIMIT);
+
+        OVERCHARGE_WARNING_RATIO = builder
+                .comment(
+                        "超限窗口的临界限（剩余比例）：剩余量占窗口总长的比例不超过它时，读数区的超限行转红。",
+                        "范围 0.0 ~ 1.0；0.5 = 只剩下一半时转红，0.0 = 不转红（超限行始终用常态色）。",
+                        "用比例而非绝对刻数，可自动适配各技能不同的窗口时长。该项只改颜色，不发声。",
+                        "Warning threshold for the overcharge window (as a fraction of the window): the overcharge row",
+                        "of the readout turns red once the remaining fraction is at or below it.",
+                        "Range 0.0 - 1.0; 0.5 turns red at the halfway point, 0.0 disables the warning colour.",
+                        "A fraction rather than a tick count, so one setting fits every window length.",
+                        "Colour only — this option plays no sound.")
+                .translation(LANG_PREFIX + "overcharge_warning_ratio")
+                .defineInRange("overcharge_warning_ratio", OVERCHARGE_WARNING_DEFAULT,
+                        OVERCHARGE_WARNING_MIN, OVERCHARGE_WARNING_MAX);
 
         PLAY_SOUND = builder
                 .comment(
@@ -232,6 +259,23 @@ public final class AAClientConfig {
     /** 读数区纵向偏移（GUI 缩放后的像素，向下为正）。 */
     public static int indicatorOffsetY() {
         return SPEC.isLoaded() ? INDICATOR_OFFSET_Y.get() : 0;
+    }
+
+    /**
+     * 超限窗口的临界警示阈值（<b>剩余比例</b>）：读数区的超限行在剩余量占比 ≤ 该值时转红。
+     * <p>
+     * 取值 {@code [0.0, 1.0]}，{@link #OVERCHARGE_WARNING_MIN}（= {@code 0}）表示不转红
+     * （超限行始终用常态色）。配置尚未加载时返回 {@link #OVERCHARGE_WARNING_DEFAULT}
+     * （剩下一半时转红）—— 与"配置没读出来也不该静默改变观感"的既有约定一致。
+     * <p>
+     * 为什么用比例而不是绝对刻数：超限窗口的长度由各技能自己的 {@code max_overcharged_duration} 决定，
+     * 彼此可能相差一个数量级；比例让同一个配置对所有技能都成立，也不必再为"刻数上限该给多少"做取舍。
+     * <p>
+     * 本项<b>只改颜色、不发声</b>：听觉提示需要额外的节流与音效设计，且容易与 DS 自己的蓄力音、
+     * 本模组的档位提示音互相打架，本次有意不做。
+     */
+    public static double overchargeWarningRatio() {
+        return SPEC.isLoaded() ? OVERCHARGE_WARNING_RATIO.get() : OVERCHARGE_WARNING_DEFAULT;
     }
 
     /**

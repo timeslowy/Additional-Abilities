@@ -69,6 +69,7 @@ import java.util.Optional;
  * "notification":               { "not_enough_mana": …, "usage_blocked": … }                             // 可选
  * "can_move_while_casting":     false                                                                    // 可选，默认 true
  * "can_charge_exceed_cast_time": true                                                                    // 可选，默认 false，见下文
+ * "max_overcharged_duration":   20                                                                       // 可选，超限窗口长度（tick），必须为正；不填则无限按住
  * "sound":                      { "start": …, "charging": …, "end": … }                                  // 可选，禁 looping
  * "animations":                 { "start_and_charging": …, "end": … }                                     // 可选，禁 looping
  * </pre>
@@ -90,7 +91,11 @@ import java.util.Optional;
  * @param castTime                总蓄力上限（tick），对应 {@code cast_time}；必填且必须为正
  * @param canChargeExceedCastTime 是否允许蓄力按住超过上限而不释放，对应
  *                                {@code can_charge_exceed_cast_time}（默认 {@code false}）；
- *                                开启后由 {@code mixins.DragonAbilityInstanceMixin} 撑开 DS 的完成判定
+ *                                开启后由 {@code mixins.DragonAbilityInstanceMixin} 撑开 DS 的完成判定，
+ *                                可以一直按住
+ * @param maxOverchargedDuration  超限窗口长度（tick），对应 {@code max_overcharged_duration}；
+ *                                仅当 {@code canChargeExceedCastTime} 为 {@code true} 时可配置，
+ *                                未配置表示无限按住，配置后按满最多再按住这么久
  * @param cooldown                冷却时间（tick），按档位求值
  * @param initialManaCost         初始魔力消耗，按档位求值
  * @param notification            魔力不足 / 被禁用时的提示文案
@@ -98,11 +103,11 @@ import java.util.Optional;
  * @param sound                   音效组（本类型禁 {@code looping}）
  * @param animations              动画组（本类型禁 {@code looping}）
  */
-// TODO:或许可以设置超过施法时长的蓄力时长上限
 public record ChargedActivation(
         LevelBasedValue chargedDurationPerLevel,
         LevelBasedValue castTime,
         boolean canChargeExceedCastTime,
+        Optional<LevelBasedValue> maxOverchargedDuration,
         Optional<LevelBasedValue> cooldown,
         Optional<LevelBasedValue> initialManaCost,
         Notification notification,
@@ -110,17 +115,32 @@ public record ChargedActivation(
         Optional<Sound> sound,
         Optional<Animations> animations
 ) implements ChargeableActivation {
-    public static final MapCodec<ChargedActivation> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            LevelBasedValue.CODEC.fieldOf("charged_duration_per_level").forGetter(ChargedActivation::chargedDurationPerLevel),
-            ChargeableActivation.CAST_TIME_CODEC.fieldOf("cast_time").forGetter(ChargedActivation::castTime),
-            Codec.BOOL.optionalFieldOf("can_charge_exceed_cast_time", false).forGetter(ChargedActivation::canChargeExceedCastTime),
-            LevelBasedValue.CODEC.optionalFieldOf("cooldown").forGetter(ChargedActivation::cooldown),
-            LevelBasedValue.CODEC.optionalFieldOf("initial_mana_cost").forGetter(ChargedActivation::initialManaCost),
-            Notification.CODEC.optionalFieldOf("notification", Notification.DEFAULT).forGetter(ChargedActivation::notification),
-            Codec.BOOL.optionalFieldOf("can_move_while_casting", true).forGetter(ChargedActivation::canMoveWhileCasting),
-            ChargeableActivation.SOUND_CODEC.optionalFieldOf("sound").forGetter(ChargedActivation::sound),
-            ChargeableActivation.ANIMATIONS_CODEC.optionalFieldOf("animations").forGetter(ChargedActivation::animations)
-    ).apply(instance, ChargedActivation::new));
+    public static final MapCodec<ChargedActivation> CODEC = createCodec();
+
+    /**
+     * 基础 codec + 跨字段校验（{@code max_overcharged_duration} 以 {@code can_charge_exceed_cast_time} 为前提）。
+     * <p>
+     * 刻意先落一个局部变量再调 {@code validate}，而不是直接在链式调用末尾追加：
+     * 接收者本身是个泛型方法调用（{@code RecordCodecBuilder.mapCodec(...)}）时，
+     * javac 无法把外层的目标类型传进去，会把接收者推断成 {@code MapCodec<Object>} 而编译失败。
+     */
+    private static MapCodec<ChargedActivation> createCodec() {
+        MapCodec<ChargedActivation> base = RecordCodecBuilder.mapCodec(instance -> instance.group(
+                LevelBasedValue.CODEC.fieldOf("charged_duration_per_level").forGetter(ChargedActivation::chargedDurationPerLevel),
+                ChargeableActivation.CAST_TIME_CODEC.fieldOf("cast_time").forGetter(ChargedActivation::castTime),
+                Codec.BOOL.optionalFieldOf("can_charge_exceed_cast_time", false).forGetter(ChargedActivation::canChargeExceedCastTime),
+                // 缺省 = 无限按住（保持该字段引入之前的行为）
+                ChargeableActivation.MAX_OVERCHARGED_DURATION_CODEC.optionalFieldOf("max_overcharged_duration").forGetter(ChargedActivation::maxOverchargedDuration),
+                LevelBasedValue.CODEC.optionalFieldOf("cooldown").forGetter(ChargedActivation::cooldown),
+                LevelBasedValue.CODEC.optionalFieldOf("initial_mana_cost").forGetter(ChargedActivation::initialManaCost),
+                Notification.CODEC.optionalFieldOf("notification", Notification.DEFAULT).forGetter(ChargedActivation::notification),
+                Codec.BOOL.optionalFieldOf("can_move_while_casting", true).forGetter(ChargedActivation::canMoveWhileCasting),
+                ChargeableActivation.SOUND_CODEC.optionalFieldOf("sound").forGetter(ChargedActivation::sound),
+                ChargeableActivation.ANIMATIONS_CODEC.optionalFieldOf("animations").forGetter(ChargedActivation::animations)
+        ).apply(instance, ChargedActivation::new));
+
+        return base.validate(ChargeableActivation::validateOverchargeSupport);
+    }
 
     @Override
     public Type type() {

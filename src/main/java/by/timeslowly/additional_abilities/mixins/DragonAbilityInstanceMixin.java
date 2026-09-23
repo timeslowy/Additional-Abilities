@@ -34,6 +34,12 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
  * 蓄力按满后继续按住时，{@code currentTick} 会一直增长（越过真实 {@code cast_time}），
  * 于是 HUD 上的满档数字会一直保持、蓄力条保持满格，直到玩家松手才由
  * {@code ChargedCasts#fire} 按档位（{@code optional_charged} 下为玩家滚轮指定的档位）释放。
+ * <p>
+ * 撑开的幅度由技能的 {@code max_overcharged_duration} 决定（见
+ * {@link ChargeableActivation#getHoldLimitTicks(int)}）：配置了该字段就只撑到
+ * {@code cast_time + 超限窗口长度}，到点回到 DS 原生完成流程自动释放
+ * （以玩家自身最高档执行一次，与"读条完成"完全一致）；未配置则撑到
+ * {@code Integer.MAX_VALUE}，即无限按住、只有松手才释放。
  *
  * <h2>副作用（已在收尾路径上处理）</h2>
  * {@code currentTick} 越过 {@code cast_time} 会让 {@code DragonAbilityInstance#isApplyingEffects()}
@@ -51,7 +57,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class DragonAbilityInstanceMixin {
     /**
      * @param castTime {@code tickActions} 里的完成判定阈值（局部量序号 0）
-     * @return 撑开后的阈值：{@code Integer.MAX_VALUE} 表示"永远不完成"
+     * @return 撑开后的阈值：{@code cast_time + max_overcharged_duration}；
+     *         未配置超限窗口时为 {@code Integer.MAX_VALUE}（"永远不完成"）
      */
     @ModifyVariable(method = "tickActions", at = @At("STORE"), name = "castTime")
     private int additional_abilities$holdChargePastCastTime(final int castTime) {
@@ -67,7 +74,8 @@ public abstract class DragonAbilityInstanceMixin {
             return castTime;
         }
 
-        // currentTick 永远小于它 -> 一直停留在"蓄力中"分支，不会被自动释放
-        return Integer.MAX_VALUE;
+        // 未配置超限窗口 -> Integer.MAX_VALUE：currentTick 永远小于它，一直停留在"蓄力中"分支；
+        // 配置了超限窗口 -> cast_time + 窗口长度：到达该刻会回到 DS 原生完成流程自动释放
+        return chargeable.getHoldLimitTicks(self.level());
     }
 }

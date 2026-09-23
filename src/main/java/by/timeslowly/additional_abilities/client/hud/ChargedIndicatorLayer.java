@@ -65,13 +65,26 @@ import org.jetbrains.annotations.NotNull;
  * 默认的"右侧"复现旧版硬编码的坐标，因此完全不配置时观感与升级前一致；
  * 想再微调就用偏移量（GUI 缩放后的像素，向右 / 向下为正）。改完立即生效，无需重启。
  *
- * <h2>读数区：两行</h2>
+ * <h2>读数区：两行 + 超限窗口第三块</h2>
  * <ul>
  *     <li><b>第一行</b>：档位文本左对齐 + 百分比右对齐，两端顶在固定宽度的读数区上，
  *         因此档位位数变化时数字与进度条都<b>不会横向跳动</b>；</li>
- *     <li><b>第二行</b>：当前档位区间内的细进度条（{@link #WIDGET_WIDTH} × {@link #BAR_HEIGHT}）。</li>
+ *     <li><b>第二行</b>：当前档位区间内的细进度条（{@link #WIDGET_WIDTH} × {@link #BAR_HEIGHT}）；</li>
+ *     <li><b>第三块</b>（仅配了 {@code max_overcharged_duration} 的技能才有）：超限窗口的剩余量，
+ *         形态与前两行一致 —— 一行 {@code 剩余/总窗口} 文字 + 一根按剩余比例填充的细条。</li>
  * </ul>
- * 两行合起来在蓄力条高度内垂直居中。
+ * 整个读数区（含第三块）在蓄力条高度内垂直居中。
+ *
+ * <h2>第三块的三个关键决定</h2>
+ * <ol>
+ *     <li><b>是否预留这一块，按"该技能有没有超限窗口"决定，而不是按"当前是否在窗口里"</b>：
+ *         后者会让读数区在每次施法刚进入窗口的那一刻上下跳一行。前者在一次施法内高度恒定
+ *         —— 配了窗口的技能恒为 {@code 2 × (fontHeight + ROW_GAP) + 2 × BAR_HEIGHT}，未配的技能维持两行。</li>
+ *     <li><b>只在已进入窗口时绘制内容</b>（{@code currentTick ≥ cast_time}）：未进入时
+ *         {@code 按住上限 − 已蓄刻数} 会大于窗口总长（例如 {@code 30/20}），那不是"剩余窗口"，画出来会误导。</li>
+ *     <li><b>纯数字、不带文字标签</b>：沿用本 HUD"不做本地化文案、宽度不随语言变"的既有原则
+ *         —— 与"档位 0 只用数字表达取消（语义由红色承载）"同一思路。</li>
+ * </ol>
  *
  * <h2>第一行的两种形态</h2>
  * <ul>
@@ -193,7 +206,13 @@ public final class ChargedIndicatorLayer {
 
         Minecraft instance = Minecraft.getInstance();
         int fontHeight = instance.font.lineHeight;
-        int blockHeight = fontHeight + ROW_GAP + BAR_HEIGHT;
+
+        // 第三块只在"该技能配了超限窗口"时预留（判据是技能配置，而不是"当前是否在窗口里"）——
+        // 这样同一次施法内读数区高度恒定，不会在刚进入窗口那一刻上下跳，见类注释
+        boolean hasOverchargeRow = chargeable.canChargeExceedCastTime()
+                && chargeable.getOverchargeTicks(playerLevel) > 0;
+        int blockHeight = fontHeight + ROW_GAP + BAR_HEIGHT
+                + (hasOverchargeRow ? ROW_GAP + fontHeight + ROW_GAP + BAR_HEIGHT : 0);
 
         // 位置完全交给客户端配置：方位基准位 + 偏移（默认方位即旧版硬编码坐标）
         int[] origin = resolveOrigin(graphics, blockHeight);
@@ -204,7 +223,8 @@ public final class ChargedIndicatorLayer {
 
         // 用 partialTick 插值让条逐帧推进（与 DS 自己的蓄力条同一手法）；
         // 档位数字仍取整数，避免刚跨过阈值时数字来回跳
-        float progress = progressOf(casting, chargeable, level, tracker.getGameTimeDeltaPartialTick(false));
+        float partialTick = tracker.getGameTimeDeltaPartialTick(false);
+        float progress = progressOf(casting, chargeable, level, partialTick);
 
         // 第二行：底槽 + 填充
         graphics.fill(widgetLeft, barTop, widgetLeft + WIDGET_WIDTH, barTop + BAR_HEIGHT, COLOR_BAR_TRACK);
@@ -221,6 +241,60 @@ public final class ChargedIndicatorLayer {
         String percentage = Math.round(progress * 100.0F) + "%";
         int percentageLeft = Math.max(textRight, widgetLeft + WIDGET_WIDTH - instance.font.width(percentage));
         graphics.drawString(instance.font, percentage, percentageLeft, blockTop, color, true);
+
+        // 第三块：超限窗口剩余量（只有"配了窗口"的技能才预留了这块位置）
+        if (hasOverchargeRow) {
+            drawOverchargeRow(graphics, instance, chargeable, casting, playerLevel,
+                    widgetLeft, blockTop + fontHeight + ROW_GAP + BAR_HEIGHT + ROW_GAP, partialTick);
+        }
+    }
+
+    /**
+     * 画超限窗口那一块：{@code 剩余/总窗口} 文字 + 下方一根按剩余比例填充的细条。
+     * <p>
+     * 条是<b>递减</b>的（剩余越少越短），与"还剩多久"的语义一致；
+     * 剩余<b>比例</b> ≤ {@link AAClientConfig#overchargeWarningRatio()} 时文字与条一起转红。
+     * <p>
+     * 只在<b>已进入窗口</b>时绘制：进入之前 {@code 按住上限 − 已蓄刻数} 大于窗口总长
+     * （例如 {@code 30/20}），那不是"剩余窗口"，画出来会误导。窗口到点自动释放后本方法自然不再被调用
+     * （{@code MagicData#isCasting()} 已为 false，{@link #render} 在入口就返回了）。
+     * <p>
+     * 剩余量用 {@code partialTick} 插值驱动条、数字向上取整 —— 于是进入窗口那一刻显示的正是完整窗口长度。
+     *
+     * @param blockTop 第三块<b>文字</b>的顶边（屏幕坐标，由 {@link #resolveOrigin} 定好整块基准后算出）
+     */
+    private static void drawOverchargeRow(final @NotNull GuiGraphics graphics, final @NotNull Minecraft instance,
+                                          final @NotNull ChargeableActivation chargeable,
+                                          final @NotNull DragonAbilityInstance casting, final int playerLevel,
+                                          final int left, final int blockTop, final float partialTick) {
+        int windowTicks = chargeable.getOverchargeTicks(playerLevel);
+
+        // 未配窗口（理论不可达：调用方已判过）、或还没蓄满 cast_time → 该行留空
+        if (windowTicks <= 0 || casting.getCurrentTick() < chargeable.getCastTime(playerLevel)) {
+            return;
+        }
+
+        float remaining = Math.max(0.0F, chargeable.getHoldLimitTicks(playerLevel)
+                - (casting.getCurrentTick() + partialTick));
+        int remainingTicks = (int) Math.ceil(remaining);
+        float ratio = Mth.clamp(remaining / windowTicks, 0.0F, 1.0F);
+
+        // 临界判定用"显示出来的那个数字"（向上取整后的剩余）折算比例，而不是未取整值 ——
+        // 这样红色与数字本身永远一致：窗口 15 刻、阈值 0.5 时，显示 8/15 不该是红的（8 > 7.5）
+        double warning = AAClientConfig.overchargeWarningRatio();
+        float displayedRatio = (float) remainingTicks / windowTicks;
+        int color = warning > 0.0 && displayedRatio <= warning ? COLOR_CANCEL : COLOR_CHARGING;
+
+        graphics.drawString(instance.font, remainingTicks + "/" + windowTicks, left, blockTop, color, true);
+
+        int barTop = blockTop + instance.font.lineHeight + ROW_GAP;
+        graphics.fill(left, barTop, left + WIDGET_WIDTH, barTop + BAR_HEIGHT, COLOR_BAR_TRACK);
+
+        int filled = Math.round(WIDGET_WIDTH * ratio);
+
+        if (filled > 0) {
+            graphics.fill(left, barTop, left + filled, barTop + BAR_HEIGHT, color);
+        }
     }
 
     /**
@@ -235,7 +309,8 @@ public final class ChargedIndicatorLayer {
      * 偏移量在最后统一叠加，两个方向都是向右 / 向下为正 —— 因此可以先把读数区摆到合适的一侧，
      * 再用偏移精调，不必自己算"蓄力条到底在哪"。
      *
-     * @param blockHeight 读数区整块的高度（第一行文字 + 行间距 + 第二行进度条），
+     * @param blockHeight 读数区整块的高度（第一行文字 + 行间距 + 第二行进度条；配了超限窗口的技能
+     *                    再加上第三块的"行间距 + 文字 + 行间距 + 进度条"），
      *                    参与"垂直居中 / 贴上方"的计算
      * @return 复用的静态数组，长度为 2：{@code [left, top]}
      */

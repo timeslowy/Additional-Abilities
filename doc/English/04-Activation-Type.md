@@ -24,6 +24,7 @@ you had reached.
 | `charged_duration_per_level` | level value | ✅ | — | Charge time required per tier (ticks). Tier L uses the value of this function at L |
 | `cast_time` | level value | ✅ | — | Total charge cap (ticks). **Required and must be positive** — 0 or negative fails datapack loading outright |
 | `can_charge_exceed_cast_time` | boolean | ❌ | `false` | Whether you may keep holding past the cap, see below |
+| `max_overcharged_duration` | level value | ❌ | unset (= hold indefinitely) | Length of the **overcharge window** (ticks): how long you may keep holding past `cast_time` before it fires automatically. **Must be positive**, and it may only be written **while `can_charge_exceed_cast_time` is on** — otherwise datapack loading fails |
 | `cooldown` | level value | ❌ | `0` | Resolved **against the final tier** |
 | `initial_mana_cost` | level value | ❌ | `0` | Resolved **against the final tier** |
 | `notification` | object | ❌ | same as Dragon Survival | Messages for "not enough mana" / "usage blocked" |
@@ -82,6 +83,11 @@ interaction on top.
 > fire. With `false`, Dragon Survival releases automatically at the player's highest tier the moment
 > `currentTick == cast_time`, leaving no time to pick. The field can still be written as `false`
 > explicitly, but then picking only works within `[0, cast_time - 1]`.
+>
+> **Setting `max_overcharged_duration` truncates the picking window**: when the window runs out the native
+> flow fires, using the **player's own highest tier** — so a lower picked tier (or even "picked `0` =
+> cancel") no longer applies. To guarantee the player can always release at their own pick, leave the field
+> unset (unset = hold indefinitely, release only by letting go).
 
 ### Wheel interaction
 
@@ -145,6 +151,28 @@ which is self-contradictory. Moving the cap back by one tick removes the mismatc
 growing past `cast_time`, the cap becomes `cast_time` itself, and the top tier stays on the HUD until you
 release.
 
+That "keep holding" stretch (the **overcharge window**) can itself be bounded with
+`max_overcharged_duration`:
+
+```
+release tick = cast_time + max_overcharged_duration     with the field set
+             = unbounded                                without it (hold as long as you like)
+
+inside the window: the tier no longer climbs (the cap is still `cast_time`) —
+                   it is just the window where you park at max, may let go,
+                   or may pick a tier with the wheel
+```
+
+- When the window runs out the native "casting complete" flow fires it, at **the player's own highest tier**:
+  actions run once, the initial mana is spent, the cooldown applies — identical to firing at the cap, with no
+  extra handling in this mod.
+- The field **only bounds how long you may hold**; it does not raise the **charge cap** (the tier threshold
+  ceiling is still `cast_time`).
+- Two **load-time checks**: it **must be positive** (`0` means there is no window at all, and it would also park
+  the top tier on the release frame, so its number and cue would never appear); and it **requires
+  `can_charge_exceed_cast_time` to be on**. Both are self-contradictory configs and fail datapack loading, for
+  the same reason `cast_time` must be positive — catch it at load time instead of silently misbehaving later.
+
 ---
 
 ## Behaviour at a glance
@@ -155,6 +183,7 @@ release.
 | Released at or beyond tier 1 | Fires once at the current tier: spend initial mana → run the actions → resolve cooldown / ending sound / ending animation against that tier |
 | Charged all the way to `cast_time` | Dragon Survival's native "casting complete" releases it automatically, at the player's own upgrade level (max tier) |
 | `can_charge_exceed_cast_time` enabled | You may hold past the cap indefinitely; the tier parks at your own maximum and **only releasing fires it — nothing is automatic** |
+| ... enabled **and** `max_overcharged_duration` set | You may hold past the cap for at most that long, then it **fires automatically at the player's highest tier** (identical to "hold until it fires") |
 | `optional_charged`: released with a picked tier | Fires at the **picked tier** (this cell is always "the reached tier" for `charged`) |
 | `optional_charged`: released with tier `0` picked | **Cast cancelled**: no actions run, no initial mana spent, **no cooldown**, looping sound and animation cleared |
 
@@ -214,6 +243,30 @@ below keep their meaning):
 
 Each wheel step that actually changes the tier plays a click (pitch rises with the tier; picking `0` uses a
 lower pitch so it stands out). Both cues share one toggle and one volume — see "Tier sounds" below.
+
+#### Remaining overcharge window
+
+When an ability sets `max_overcharged_duration`, the readout gains an **overcharge row** below the usual two:
+a `remaining/total window` string (e.g. `18/20`) with a thin bar underneath that **drains** as the window runs out.
+
+| Colour | Meaning |
+|---|---|
+| White | Inside the overcharge window, plenty of time left |
+| Red | Remaining **fraction** ≤ `overcharge_warning_ratio` (default `0.3`, i.e. 30 percentage ) — the automatic release is close |
+
+| Option | Default | Notes |
+|---|---|---|
+| `charged_indicator.overcharge_warning_ratio` | `0.3` | The overcharge row turns red once the remaining fraction of the window is at or below this value (`0.0` - `1.0`; `0` disables it). A fraction rather than a tick count, so it adapts to each ability's window length |
+
+- **Before the window starts this block is blank**: the readout's height is decided by "does this ability have an
+  overcharge window", so it stays constant for the whole cast instead of jumping — the price is the reserved
+  blank space before the window begins.
+- Content is drawn **only once inside the window** (charge has reached `cast_time`); before that the "remaining"
+  value would exceed the window's total length (e.g. `30/20`), which would be meaningless.
+- **Abilities without `max_overcharged_duration` (including every default-mode ability) keep the two-row readout**,
+  exactly as before.
+- This option **only changes colour — it plays no sound**: the window ends in an automatic release and the visual
+  countdown already covers it; adding audio would fight Dragon Survival's own charging sound and this mod's tier cue.
 
 ### Indicator position (client config)
 
@@ -347,7 +400,7 @@ The **first line** of the **Info** side panel (expanded by holding `Shift`) show
 | Ability id | Config | Purpose |
 |---|---|---|
 | `additional_abilities:test_charged` | `cast_time: 50`, `can_charge_exceed_cast_time` off | Default mode: fires automatically at the cap, all 5 tiers reachable |
-| `additional_abilities:test_charged_hold` | `cast_time: 60`, `can_charge_exceed_cast_time: true` | Past-the-cap charging: hold at max tier as long as you like |
+| `additional_abilities:test_charged_hold` | `cast_time: 60`, `can_charge_exceed_cast_time: true`, `max_overcharged_duration: 20` | **Overcharge window**: hold at most 20 ticks past the cap, then it fires automatically at the player's highest tier |
 | `additional_abilities:test_optional_charged` | `cast_time: 60`, type `optional_charged` | Wheel picking: scroll to pick a tier, pick `0` to cancel |
 
 None is attached to any species; grant them with `/dragon-ability add <target> <ability>`.

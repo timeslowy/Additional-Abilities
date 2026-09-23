@@ -44,6 +44,11 @@ import java.util.Optional;
  * 但关闭它之后，DS 会在 {@code currentTick == cast_time} 当刻以玩家自身最高档自动释放，
  * <b>选档将失去介入机会</b>（只有 {@code [0, cast_time - 1]} 这段窗口可用）。
  * 需要选档能力时请保持其为默认值 {@code true}。
+ * <p>
+ * 同理，{@code max_overcharged_duration} 会把"选档窗口"截断在 {@code cast_time + 该值} 那一刻：
+ * 窗口到点由 DS 原生流程自动释放，且用的是<b>玩家自身的最高档</b> ——
+ * 此时滚轮选定的低档（乃至"选定 0 = 取消"）都不再生效。
+ * 若希望玩家始终有机会按自己的选定释放，就不要配置该字段（不配置 = 无限按住，只有松手才释放）。
  *
  * <h2>与其他类型的一致性</h2>
  * 本类型的"已达档位"始终独立于"选定档位"存在：例如已蓄到 5 档、滚轮下调到 3 档后继续按住，
@@ -59,6 +64,7 @@ import java.util.Optional;
  *   "charged_duration_per_level": { "type": "minecraft:linear", "base": 10.0, "per_level_above_first": 10.0 },
  *   "cast_time": 60,
  *   "can_charge_exceed_cast_time": true,   // 可省略，默认即 true
+ *   "max_overcharged_duration": 20,        // 可省略：超限窗口长度（tick）；不填则无限按住
  *   "cooldown": 60,
  *   "initial_mana_cost": 1,
  *   "can_move_while_casting": false,
@@ -77,6 +83,9 @@ import java.util.Optional;
  * @param canChargeExceedCastTime 是否允许蓄力按住超过上限而不释放，对应
  *                                {@code can_charge_exceed_cast_time}（本类型默认 {@code true}）；
  *                                开启后由 {@code mixins.DragonAbilityInstanceMixin} 撑开 DS 的完成判定
+ * @param maxOverchargedDuration  超限窗口长度（tick），对应 {@code max_overcharged_duration}；
+ *                                仅当 {@code canChargeExceedCastTime} 为 {@code true} 时可配置，
+ *                                未配置表示无限按住，配置后窗口到点会以玩家最高档自动释放
  * @param cooldown                冷却时间（tick），按最终释放档位求值
  * @param initialManaCost         初始魔力消耗，按最终释放档位求值
  * @param notification            魔力不足 / 被禁用时的提示文案
@@ -88,6 +97,7 @@ public record OptionalChargedActivation(
         LevelBasedValue chargedDurationPerLevel,
         LevelBasedValue castTime,
         boolean canChargeExceedCastTime,
+        Optional<LevelBasedValue> maxOverchargedDuration,
         Optional<LevelBasedValue> cooldown,
         Optional<LevelBasedValue> initialManaCost,
         Notification notification,
@@ -95,18 +105,33 @@ public record OptionalChargedActivation(
         Optional<Sound> sound,
         Optional<Animations> animations
 ) implements ChargeableActivation {
-    public static final MapCodec<OptionalChargedActivation> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            LevelBasedValue.CODEC.fieldOf("charged_duration_per_level").forGetter(OptionalChargedActivation::chargedDurationPerLevel),
-            ChargeableActivation.CAST_TIME_CODEC.fieldOf("cast_time").forGetter(OptionalChargedActivation::castTime),
-            // 与 charged 的唯一差异：默认 true —— 否则满档那一帧会被 DS 原生路径自动释放，玩家来不及选档
-            Codec.BOOL.optionalFieldOf("can_charge_exceed_cast_time", true).forGetter(OptionalChargedActivation::canChargeExceedCastTime),
-            LevelBasedValue.CODEC.optionalFieldOf("cooldown").forGetter(OptionalChargedActivation::cooldown),
-            LevelBasedValue.CODEC.optionalFieldOf("initial_mana_cost").forGetter(OptionalChargedActivation::initialManaCost),
-            Notification.CODEC.optionalFieldOf("notification", Notification.DEFAULT).forGetter(OptionalChargedActivation::notification),
-            Codec.BOOL.optionalFieldOf("can_move_while_casting", true).forGetter(OptionalChargedActivation::canMoveWhileCasting),
-            ChargeableActivation.SOUND_CODEC.optionalFieldOf("sound").forGetter(OptionalChargedActivation::sound),
-            ChargeableActivation.ANIMATIONS_CODEC.optionalFieldOf("animations").forGetter(OptionalChargedActivation::animations)
-    ).apply(instance, OptionalChargedActivation::new));
+    public static final MapCodec<OptionalChargedActivation> CODEC = createCodec();
+
+    /**
+     * 基础 codec + 跨字段校验（{@code max_overcharged_duration} 以 {@code can_charge_exceed_cast_time} 为前提）。
+     * <p>
+     * 刻意先落一个局部变量再调 {@code validate}，而不是直接在链式调用末尾追加：
+     * 接收者本身是个泛型方法调用（{@code RecordCodecBuilder.mapCodec(...)}）时，
+     * javac 无法把外层的目标类型传进去，会把接收者推断成 {@code MapCodec<Object>} 而编译失败。
+     */
+    private static MapCodec<OptionalChargedActivation> createCodec() {
+        MapCodec<OptionalChargedActivation> base = RecordCodecBuilder.mapCodec(instance -> instance.group(
+                LevelBasedValue.CODEC.fieldOf("charged_duration_per_level").forGetter(OptionalChargedActivation::chargedDurationPerLevel),
+                ChargeableActivation.CAST_TIME_CODEC.fieldOf("cast_time").forGetter(OptionalChargedActivation::castTime),
+                // 与 charged 的唯一差异：默认 true —— 否则满档那一帧会被 DS 原生路径自动释放，玩家来不及选档
+                Codec.BOOL.optionalFieldOf("can_charge_exceed_cast_time", true).forGetter(OptionalChargedActivation::canChargeExceedCastTime),
+                // 缺省 = 无限按住（选档窗口不受截断）
+                ChargeableActivation.MAX_OVERCHARGED_DURATION_CODEC.optionalFieldOf("max_overcharged_duration").forGetter(OptionalChargedActivation::maxOverchargedDuration),
+                LevelBasedValue.CODEC.optionalFieldOf("cooldown").forGetter(OptionalChargedActivation::cooldown),
+                LevelBasedValue.CODEC.optionalFieldOf("initial_mana_cost").forGetter(OptionalChargedActivation::initialManaCost),
+                Notification.CODEC.optionalFieldOf("notification", Notification.DEFAULT).forGetter(OptionalChargedActivation::notification),
+                Codec.BOOL.optionalFieldOf("can_move_while_casting", true).forGetter(OptionalChargedActivation::canMoveWhileCasting),
+                ChargeableActivation.SOUND_CODEC.optionalFieldOf("sound").forGetter(OptionalChargedActivation::sound),
+                ChargeableActivation.ANIMATIONS_CODEC.optionalFieldOf("animations").forGetter(OptionalChargedActivation::animations)
+        ).apply(instance, OptionalChargedActivation::new));
+
+        return base.validate(ChargeableActivation::validateOverchargeSupport);
+    }
 
     /**
      * 本类型在松手时使用玩家指定的档位，而不是"已达档位"。
