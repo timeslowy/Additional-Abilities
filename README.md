@@ -224,7 +224,7 @@ exactly where you aim. Wearing the enchanted helmet grants the attribute.
 
 | Kind | Registry id | Notes |
 |---|---|---|
-| Attribute | `additional_abilities:dragon_breath_restriction` | A percentage attribute, default 0, capped at 0.8; registered on **players only** |
+| Attribute | `additional_abilities:dragon_breath_restriction` | A percentage attribute, default 0, capped at 0.9; registered on **players only** |
 | Enchantment | `additional_abilities:dragon_breath_restrictor` (束息, Breath Constrictor) | Helmet enchantment, 4 levels, **+0.15** per level (+0.6 at level 4) |
 
 - The enchantment definition lives in `src/main/resources/data/additional_abilities/enchantment/dragon_breath_restrictor.json`;

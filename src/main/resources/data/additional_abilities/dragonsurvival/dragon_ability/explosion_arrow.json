@@ -57,11 +57,11 @@
         "texture_entries": [
             {
                 "from_level": 0,
-                "texture_resource": "dragonsurvival:abilities/wing_kirin/explosion_arrow/explosion_arrow_0"
+                "texture_resource": "wing_kirin:abilities/explosion_arrow/explosion_arrow_0"
             },
             {
                 "from_level": 1,
-                "texture_resource": "dragonsurvival:abilities/wing_kirin/explosion_arrow/explosion_arrow_1"
+                "texture_resource": "wing_kirin:abilities/explosion_arrow/explosion_arrow_1"
             }
         ]
     },

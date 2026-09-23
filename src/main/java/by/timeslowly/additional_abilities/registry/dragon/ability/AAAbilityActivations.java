@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  *         （可为 0 = 取消）。两者共用 {@code activation.ChargeableActivation} 的档位换算。</li>
  * </ul>
  */
+// TODO：（Mixin）在技能详细信息面板上显示激活类型
 public class AAAbilityActivations {
     public static void register(final @NotNull IEventBus modEventBus) {
         modEventBus.addListener(AAAbilityActivations::registerEntries);

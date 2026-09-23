@@ -3,11 +3,10 @@
 > Applies to: Additional Abilities for DS `2.0.0`
 > Requirements: Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
 
-This mod ships 5 abilities. Two of them — Explosion Arrow and Entity Marker — call Wing Kirin's projectile
+FIXME:  This mod ships 5 abilities. Two of them — Explosion Arrow and Entity Marker — call Wing Kirin's projectile
 data and functions, so **Wing Kirin is a hard dependency**.
 
-> This mod also bundles an **optional datapack** that reworks Wing Kirin's "Spell Binder" and
-> "Thunderous Shout" using this mod's own custom components. It is **off by default**; see
+> This mod also bundles an **optional datapack** that reworks some Wing Kirin's abilities using this mod's own custom components. It is **off by default**; see
 > [07-Bundled-Datapacks.md](07-Bundled-Datapacks.md) for what it changes and how to enable it.
 
 > There is also a set of `test_*` abilities (`test_charged` / `test_charged_hold` / `test_optional_charged` /
@@ -24,17 +23,17 @@ data and functions, so **Wing Kirin is a hard dependency**.
 
 | Ability id | Name | Species | Activation | Max level | Unlock / upgrade |
 |---|---|---|---|---|---|
-| `additional_abilities:extinguish_breath` | Extinguish Breath | Sea Dragon, Wing Kirin | `channeled` continuous breath | 4 | Experience levels `0 / 10 / 20 / 40` |
-| `additional_abilities:smoke_breath` | Smoke Breath | Cave Dragon, Wing Kirin | `channeled` continuous breath | 3 | Experience levels `0 / 10 / 20` |
-| `additional_abilities:piercing_eye` | Piercing Eye | Cave Dragon, Wing Kirin | `passive` | 1 (no upgrade) | Active as soon as the ability is present |
+| `sea_dragon:extinguish_breath` | Extinguish Breath | Sea Dragon| `channeled` continuous breath | 4 | Experience levels `0 / 10 / 20 / 40` |
+| `cave_dragon:smoke_breath` | Smoke Breath | Cave Dragon, `channeled` continuous breath | 3 | Experience levels `0 / 10 / 20` |
+| `cave_dragon:piercing_eye` | Piercing Eye | Cave Dragon | `passive` | 1 (no upgrade) | Active as soon as the ability is present |
 | `additional_abilities:explosion_arrow` | Explosion Arrow | Wing Kirin | `simple` cast | 1 | Complete the "Return to Sender" advancement |
 | `additional_abilities:entity_marker` | Entity Marker | Wing Kirin | `passive` + key trigger (left mouse button) | 2 | Complete the "Glow and Behold!" advancement; upgraded with experience points |
 
 Localisation keys for each ability's name and description:
 
 ```
-dragon_ability.additional_abilities.<ability id>          → name
-dragon_ability.additional_abilities.<ability id>.desc     → description
+dragon_ability.<namespace>.<ability id>          → name
+dragon_ability.<namespace>.<ability id>.desc     → description
 ```
 
 ---

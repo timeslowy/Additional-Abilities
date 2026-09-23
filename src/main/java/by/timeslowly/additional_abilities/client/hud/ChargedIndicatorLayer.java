@@ -73,7 +73,8 @@ import org.jetbrains.annotations.NotNull;
  * 不需要发给其他玩家）。滚轮选档时另有一声更短的点击音，见
  * {@code client.eventhandler.OptionalChargedScrollHandler}。
  */
-// TODO:可能支持充能声音可选；甚至可能把播放声音分离出去（HUD里面顺便放声音有点怪，故思降低耦合度）
+// TODO：可能支持充能声音可选；甚至可能把播放声音分离出去（HUD里面顺便放声音有点怪，故思降低耦合度）
+// TODO：将蓄力条位置设置为可客户端配置化
 public final class ChargedIndicatorLayer {
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_indicator");

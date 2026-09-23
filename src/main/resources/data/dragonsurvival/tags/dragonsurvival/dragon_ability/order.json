@@ -3,8 +3,8 @@
     "values": [
         "additional_abilities:entity_marker",
         "additional_abilities:explosion_arrow",
-        "additional_abilities:extinguish_breath",
-        "additional_abilities:smoke_breath",
-        "additional_abilities:piercing_eye"
+        "sea_dragon:extinguish_breath",
+        "cave_dragon:smoke_breath",
+        "cave_dragon:piercing_eye"
     ]
 }

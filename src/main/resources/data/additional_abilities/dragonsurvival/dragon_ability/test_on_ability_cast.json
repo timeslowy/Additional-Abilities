@@ -57,7 +57,7 @@
     "texture_entries": [
       {
         "from_level": 0,
-        "texture_resource": "additional_abilities:test"
+        "texture_resource": "additional_abilities:abilities/test/on_ability_cast"
       }
     ]
   }

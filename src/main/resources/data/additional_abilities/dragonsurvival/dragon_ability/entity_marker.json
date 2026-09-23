@@ -50,15 +50,15 @@
     "icon": {
         "texture_entries": [
             {
-                "texture_resource": "dragonsurvival:abilities/wing_kirin/entity_marker/entity_marker_0",
+                "texture_resource": "wing_kirin:abilities/entity_marker/entity_marker_0",
                 "from_level": 0
             },
             {
-                "texture_resource": "dragonsurvival:abilities/wing_kirin/entity_marker/entity_marker_1",
+                "texture_resource": "wing_kirin:abilities/entity_marker/entity_marker_1",
                 "from_level": 1
             },
             {
-                "texture_resource": "dragonsurvival:abilities/wing_kirin/entity_marker/entity_marker_2",
+                "texture_resource": "wing_kirin:abilities/entity_marker/entity_marker_2",
                 "from_level": 2
             }
         ]
