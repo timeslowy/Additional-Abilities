@@ -1,12 +1,12 @@
 package by.timeslowly.additional_abilities;
 
 import by.timeslowly.additional_abilities.common.AAClientSetup;
+import by.timeslowly.additional_abilities.common.config.AAClientConfig;
 import by.timeslowly.additional_abilities.common.eventhandler.abilities.DomainTickHandler;
 import by.timeslowly.additional_abilities.common.network.AANetwork;
 import by.timeslowly.additional_abilities.registry.*;
 import by.timeslowly.additional_abilities.registry.dragon.ability.*;
-import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnBlockPlaced;
-import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnItemConsumed;
+import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.*;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -27,6 +27,9 @@ public class AdditionalAbilities {
 
     // 注册模组加载的通用内容设置（部分需要顺序）
     public AdditionalAbilities(IEventBus modEventBus, @NotNull ModContainer modContainer) {
+        // 登记客户端配置（config/additional_abilities-client.toml：蓄力读数区位置等）
+        // 该配置类不引用任何客户端专属类型，故无需物理端判定；NeoForge 自身保证 CLIENT 类型只在客户端加载
+        AAClientConfig.register(modContainer);
         // 注册实体附加数据（伤害反震参数载体）
         AAAttachments.register(modEventBus);
         // 注册自定义伤害类型
@@ -51,8 +54,9 @@ public class AdditionalAbilities {
         NeoForge.EVENT_BUS.addListener(DomainTickHandler::onLevelTick);
         // 注册网络通道（屏幕视觉 / 方块震动 的服务端 → 客户端同步）
         modEventBus.addListener(AANetwork::register);
-        // 注册客户端专属内容（蓄力档位 HUD 图层；内部自带物理端判定，服务端不会加载客户端类型）
-        AAClientSetup.register(modEventBus);
+        // 注册客户端专属内容（蓄力档位 HUD 图层 + 配置界面扩展点；
+        // 内部自带物理端判定，服务端不会加载客户端类型）
+        AAClientSetup.register(modEventBus, modContainer);
     }
 
 }

@@ -12,6 +12,7 @@
 "additional_abilities.ability.simple_screen_vision.type.blur": "blur",
 "additional_abilities.ability.simple_screen_vision.type.shake": "shake",
 
+"additional_abilities.gui.ability.activation_type": "§6■ Activation type:§r %s",
 "additional_abilities.gui.ability_target.annulus.block": "Targets an annulus around you (inner radius: %s / width: %s / height: %s)",
 "additional_abilities.gui.ability_target.annulus.entity": "Targets %s in an annulus around you (inner radius: %s / width: %s / height: %s)",
 "additional_abilities.gui.ability_target.domain.anchor.caster": "caster",
@@ -73,8 +74,28 @@
 
 "enchantment.additional_abilities.dragon_breath_restrictor": "Breath Constrictor",
 
+"activation_type.additional_abilities.charged": "Charged",
+"activation_type.additional_abilities.optional_charged": "Optional Charged",
+"activation_type.dragonsurvival.channeled": "Channeled",
+"activation_type.dragonsurvival.passive": "Passive",
+"activation_type.dragonsurvival.simple": "Simple",
+
 "trigger_type.additional_abilities.on_ability_cast": "On Ability Cast: %s",
 "trigger_type.additional_abilities.on_ability_cast.any": "Any Ability",
 "trigger_type.additional_abilities.on_block_placed": "On Block Place",
-"trigger_type.additional_abilities.on_item_consumed": "On Item Consumed"
+"trigger_type.additional_abilities.on_item_consumed": "On Item Consumed",
+
+"additional_abilities.configuration.charged_indicator": "Charge indicator position",
+"additional_abilities.configuration.charged_indicator.anchor": "Placement",
+"additional_abilities.configuration.charged_indicator.anchor.cast_bar_above": "Above the cast bar",
+"additional_abilities.configuration.charged_indicator.anchor.cast_bar_below": "Below the cast bar",
+"additional_abilities.configuration.charged_indicator.anchor.cast_bar_left": "Left of the cast bar",
+"additional_abilities.configuration.charged_indicator.anchor.cast_bar_right": "Right of the cast bar (default)",
+"additional_abilities.configuration.charged_indicator.anchor.tooltip": "Which side of the cast bar the indicator sits on. All four follow the cast bar, so if you move the Dragon Survival cast bar the indicator moves with it.",
+"additional_abilities.configuration.charged_indicator.offset_x": "Horizontal offset",
+"additional_abilities.configuration.charged_indicator.offset_x.tooltip": "Pixels to shift the indicator horizontally on top of the chosen placement (GUI-scaled pixels; positive is right).",
+"additional_abilities.configuration.charged_indicator.offset_y": "Vertical offset",
+"additional_abilities.configuration.charged_indicator.offset_y.tooltip": "Pixels to shift the indicator vertically on top of the chosen placement (GUI-scaled pixels; positive is down).",
+"additional_abilities.configuration.section.additional.abilities.client.toml": "Client config",
+"additional_abilities.configuration.section.additional.abilities.client.toml.title": "%s client config"
 }

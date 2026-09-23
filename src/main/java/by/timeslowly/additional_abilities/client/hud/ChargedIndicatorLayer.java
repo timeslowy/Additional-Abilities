@@ -6,6 +6,8 @@ import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.OptionalChargedSelection;
+import by.timeslowly.additional_abilities.common.config.AAClientConfig;
+import by.timeslowly.additional_abilities.common.config.IndicatorAnchor;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -34,13 +36,20 @@ import org.jetbrains.annotations.NotNull;
  * {@link by.timeslowly.additional_abilities.common.AAClientSetup} 手动注册
  * （该类的方法体里才引用本类，专用服务端不会加载到这里的客户端类型）。
  *
- * <h2>坐标怎么来的</h2>
- * {@code MagicHUD} 画蓄力条时把 pose 缩放为 0.5 后 translate(startX, startY)，再以
- * (startX, startY) 为起点贴 196×47 的贴图 —— 经过 0.5 缩放后，蓄力条在屏幕上的实际矩形是
- * {@code [startX, startX + 98] × [startY, startY + 23.5]}，其中
+ * <h2>坐标怎么来的（位置可客户端配置）</h2>
+ * 读数区左上角的屏幕坐标 = <b>配置方位的基准位 + 配置偏移</b>，两者都来自客户端配置
+ * {@code config/additional_abilities-client.toml}（见 {@link AAClientConfig}）。
+ * <p>
+ * 基准位是相对"蓄力条在屏幕上的实际矩形"算的：{@code MagicHUD} 画蓄力条时把 pose 缩放为 0.5 后
+ * translate(startX, startY)，再以 (startX, startY) 为起点贴 196×47 的贴图 —— 经过 0.5 缩放后，
+ * 蓄力条在屏幕上的实际矩形是 {@code [startX, startX + 98] × [startY, startY + 23.5]}，其中
  * {@code startX = guiWidth / 2 - 49 + castbarXOffset}、{@code startY = guiHeight - 96 + castbarYOffset}。
- * 因此"蓄力条右侧"= {@code startX + 98 + 间距}。
- * DS 把这两个偏移量暴露为 public static，直接读它们就能跟随玩家的自定义位置。
+ * DS 把这两个偏移量暴露为 public static，直接读它们就能跟随玩家在 DS 配置里设的自定义位置。
+ * <p>
+ * 方位只有四个（{@link IndicatorAnchor}：右 / 左 / 上 / 下），全部由那条矩形推出：
+ * 左右为"贴边 + 与蓄力条垂直居中"，上下为"贴边 + 与蓄力条水平对齐"。
+ * 默认的"右侧"复现旧版硬编码的坐标，因此完全不配置时观感与升级前一致；
+ * 想再微调就用偏移量（GUI 缩放后的像素，向右 / 向下为正）。改完立即生效，无需重启。
  *
  * <h2>读数区：两行</h2>
  * <ul>
@@ -74,7 +83,6 @@ import org.jetbrains.annotations.NotNull;
  * {@code client.eventhandler.OptionalChargedScrollHandler}。
  */
 // TODO：可能支持充能声音可选；甚至可能把播放声音分离出去（HUD里面顺便放声音有点怪，故思降低耦合度）
-// TODO：将蓄力条位置设置为可客户端配置化
 public final class ChargedIndicatorLayer {
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_indicator");
@@ -86,11 +94,12 @@ public final class ChargedIndicatorLayer {
     private static final float LEVEL_UP_PITCH_PER_LEVEL = 0.12F;
     private static final float LEVEL_UP_MAX_PITCH = 2.0F;
 
-    /** 蓄力条在屏幕上的宽度：196 的贴图经过 0.5 缩放后为 98。 */
+    /**
+     * 蓄力条在屏幕上的宽度：196 的贴图经过 0.5 缩放后为 98。
+     * 与 {@link #CAST_BAR_HEIGHT} 一起描述"蓄力条矩形"，交给 {@link IndicatorAnchor} 算方位基准位。
+     */
     private static final int CAST_BAR_WIDTH = 98;
-    /** 读数区与蓄力条右边缘的间距（GUI 缩放后的像素）。 */
-    private static final int TEXT_GAP = 6;
-    /** 蓄力条在屏幕上的实际高度（196×47 的贴图经 0.5 缩放后约 23.5，取整为 24），用于垂直居中。 */
+    /** 蓄力条在屏幕上的实际高度（196×47 的贴图经 0.5 缩放后约 23.5，取整为 24）。 */
     private static final int CAST_BAR_HEIGHT = 24;
 
     /**
@@ -121,6 +130,12 @@ public final class ChargedIndicatorLayer {
 
     /** 上一帧显示的"已达成档位"，用于判断"是否刚刚跨过一级"。仅渲染线程访问。 */
     private static int lastRenderedLevel = ChargeableActivation.NO_CHARGED_LEVEL;
+
+    /**
+     * {@link #resolveOrigin} 的复用返回值（{@code [left, top]}）。
+     * 只在渲染线程、每帧一次，复用以免每帧产生垃圾对象。
+     */
+    private static final int[] ORIGIN = new int[2];
 
     private ChargedIndicatorLayer() {
         // 图层与事件订阅类
@@ -181,9 +196,12 @@ public final class ChargedIndicatorLayer {
 
         Minecraft instance = Minecraft.getInstance();
         int fontHeight = instance.font.lineHeight;
-        int widgetLeft = graphics.guiWidth() / 2 - 49 + castbarOffsetX() + CAST_BAR_WIDTH + TEXT_GAP;
-        int blockTop = graphics.guiHeight() - 96 + castbarOffsetY()
-                + (CAST_BAR_HEIGHT - (fontHeight + ROW_GAP + BAR_HEIGHT)) / 2;
+        int blockHeight = fontHeight + ROW_GAP + BAR_HEIGHT;
+
+        // 位置完全交给客户端配置：方位基准位 + 偏移（默认方位即旧版硬编码坐标）
+        int[] origin = resolveOrigin(graphics, blockHeight);
+        int widgetLeft = origin[0];
+        int blockTop = origin[1];
         int barTop = blockTop + fontHeight + ROW_GAP;
         int color = colorFor(selected, level, playerLevel, manual);
 
@@ -206,6 +224,34 @@ public final class ChargedIndicatorLayer {
         String percentage = Math.round(progress * 100.0F) + "%";
         int percentageLeft = Math.max(textRight, widgetLeft + WIDGET_WIDTH - instance.font.width(percentage));
         graphics.drawString(instance.font, percentage, percentageLeft, blockTop, color, true);
+    }
+
+    /**
+     * 算出读数区左上角的屏幕坐标 = 配置方位的基准位 + 配置偏移。
+     *
+     * <h2>基准位</h2>
+     * 先把 DS 蓄力条在屏幕上的矩形还原出来（固定的中心 / 底部基准，叠加玩家在 DS 配置里设的自定义偏移），
+     * 再交给 {@link IndicatorAnchor#left} / {@link IndicatorAnchor#top} 按方位摆放：
+     * 右 / 左是"贴边 + 垂直居中"，上 / 下是"水平对齐 + 贴边"。
+     * 默认方位 {@code CAST_BAR_RIGHT} 的结果与旧版硬编码的坐标<b>逐像素一致</b>。
+     * <p>
+     * 偏移量在最后统一叠加，两个方向都是向右 / 向下为正 —— 因此可以先把读数区摆到合适的一侧，
+     * 再用偏移精调，不必自己算"蓄力条到底在哪"。
+     *
+     * @param blockHeight 读数区整块的高度（第一行文字 + 行间距 + 第二行进度条），
+     *                    参与"垂直居中 / 贴上方"的计算
+     * @return 复用的静态数组，长度为 2：{@code [left, top]}
+     */
+    private static int[] resolveOrigin(final @NotNull GuiGraphics graphics, final int blockHeight) {
+        // DS 蓄力条在屏幕上的左边缘 / 上边缘：固定基准再叠加玩家的自定义偏移
+        int castBarLeft = graphics.guiWidth() / 2 - 49 + castbarOffsetX();
+        int castBarTop = graphics.guiHeight() - 96 + castbarOffsetY();
+        IndicatorAnchor anchor = AAClientConfig.indicatorAnchor();
+
+        ORIGIN[0] = anchor.left(castBarLeft, CAST_BAR_WIDTH, WIDGET_WIDTH) + AAClientConfig.indicatorOffsetX();
+        ORIGIN[1] = anchor.top(castBarTop, CAST_BAR_HEIGHT, blockHeight) + AAClientConfig.indicatorOffsetY();
+
+        return ORIGIN;
     }
 
     /**

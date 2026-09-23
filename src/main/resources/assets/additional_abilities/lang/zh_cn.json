@@ -12,6 +12,7 @@
 "additional_abilities.ability.simple_screen_vision.type.blur": "模糊",
 "additional_abilities.ability.simple_screen_vision.type.shake": "抖动",
 
+"additional_abilities.gui.ability.activation_type": "§6■ 激活类型：§r %s",
 "additional_abilities.gui.ability_target.annulus.block": "影响你周围环形范围内的方块（内半径：%s / 环宽：%s / 高度：%s）",
 "additional_abilities.gui.ability_target.annulus.entity": "影响你周围环形范围内的%s（内半径：%s / 环宽：%s / 高度：%s）",
 "additional_abilities.gui.ability_target.domain.anchor.caster": "施法者",
@@ -75,8 +76,28 @@
 
 "projectile.wing_kirin.explosion_arrow": "箭雷",
 
+"activation_type.additional_abilities.charged": "蓄力",
+"activation_type.additional_abilities.optional_charged": "可选性蓄力",
+"activation_type.dragonsurvival.channeled": "引导",
+"activation_type.dragonsurvival.passive": "被动",
+"activation_type.dragonsurvival.simple": "简单",
+
 "trigger_type.additional_abilities.on_ability_cast": "使用技能后：%s",
 "trigger_type.additional_abilities.on_ability_cast.any": "任意技能",
 "trigger_type.additional_abilities.on_block_placed": "放置方块时",
-"trigger_type.additional_abilities.on_item_consumed": "消耗物品时"
+"trigger_type.additional_abilities.on_item_consumed": "消耗物品时",
+
+"additional_abilities.configuration.charged_indicator": "蓄力档位读数区位置",
+"additional_abilities.configuration.charged_indicator.anchor": "摆放方位",
+"additional_abilities.configuration.charged_indicator.anchor.cast_bar_above": "蓄力条上方",
+"additional_abilities.configuration.charged_indicator.anchor.cast_bar_below": "蓄力条下方",
+"additional_abilities.configuration.charged_indicator.anchor.cast_bar_left": "蓄力条左侧",
+"additional_abilities.configuration.charged_indicator.anchor.cast_bar_right": "蓄力条右侧（默认）",
+"additional_abilities.configuration.charged_indicator.anchor.tooltip": "读数区贴在蓄力条的哪一侧。四个方位都跟随蓄力条的位置，所以你在龙之生存里把蓄力条挪走时，读数区也会跟着走。",
+"additional_abilities.configuration.charged_indicator.offset_x": "横向偏移",
+"additional_abilities.configuration.charged_indicator.offset_x.tooltip": "在所选方位之上再横向平移的像素数（GUI 缩放后的像素），向右为正。",
+"additional_abilities.configuration.charged_indicator.offset_y": "纵向偏移",
+"additional_abilities.configuration.charged_indicator.offset_y.tooltip": "在所选方位之上再纵向平移的像素数（GUI 缩放后的像素），向下为正。",
+"additional_abilities.configuration.section.additional.abilities.client.toml": "客户端配置",
+"additional_abilities.configuration.section.additional.abilities.client.toml.title": "%s 客户端配置"
 }

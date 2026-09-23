@@ -192,7 +192,7 @@ evaluated per level to produce the thresholds).
 
 ### On-screen indicator
 
-A **tier number** is drawn to the right of the cast bar:
+A **tier number** is drawn to the right of the cast bar (**its position is configurable** — see below):
 
 | Colour | Meaning |
 |---|---|
@@ -214,6 +214,41 @@ below keep their meaning):
 
 Each wheel step that actually changes the tier plays a click (pitch rises with the tier; picking `0` uses a
 lower pitch so it stands out).
+
+### Indicator position (client config)
+
+By default the readout sits on the **right side** of the cast bar, vertically centred on it. Its position can be
+changed in `config/additional_abilities-client.toml`, or straight from the in-game
+**Mods → Additional Abilities for DS → Config** screen — either way it **applies immediately**, with no restart
+and no need to re-enter the world.
+
+| Option | Default | Notes |
+|---|---|---|
+| `charged_indicator.anchor` | `CAST_BAR_RIGHT` | Which side of the cast bar the readout sits on (see below) |
+| `charged_indicator.offset_x` | `0` | Pixels to shift horizontally on top of the chosen placement (positive = right) |
+| `charged_indicator.offset_y` | `0` | Pixels to shift vertically on top of the chosen placement (positive = down) |
+
+The four placements (all of them follow the cast bar — move the cast bar in DS and the readout moves with it):
+
+| `anchor` value | Placement |
+|---|---|
+| `CAST_BAR_RIGHT` | **Right** of the cast bar, vertically centred on it (default = the old behaviour) |
+| `CAST_BAR_LEFT` | **Left** of the cast bar, vertically centred on it |
+| `CAST_BAR_ABOVE` | **Above** the cast bar, horizontally aligned with it |
+| `CAST_BAR_BELOW` | **Below** the cast bar, horizontally aligned with it |
+
+Every placement leaves a 6-pixel gap between the readout and the cast bar.
+
+- Offering only these four sides is deliberate: while casting your eyes are already on the cast bar, so an
+  indicator hugging it costs you no glance away. "Screen corner / screen centre" presets look flexible but
+  nobody actually uses them in combat. Need a little more clearance? Use the offsets (up to ±4000 pixels).
+- Coordinates are in **GUI-scaled pixels**, the same units as the game UI — changing the GUI scale moves the
+  readout's absolute position, but a placement's meaning does not change.
+- Left / above / below all subtract the readout's own width and height first, so it is **the whole readout**
+  that sits flush — never half of it hanging off-screen.
+- This config is **client-only**: it takes no part in any server-side decision and is not synced to other players.
+- The in-game config screen renders the placement as a dropdown, so you never have to type these values; if you
+  do edit the file by hand, use the uppercase enum names, e.g. `CAST_BAR_LEFT`.
 
 ### Query command
 
@@ -241,6 +276,32 @@ lower pitch so it stands out).
 > is perfectly computable only misleads debugging.
 > There is also no state of "manually picked exactly the reached tier" that would need to be told apart from
 > auto-follow — the two are identical in effect.
+
+---
+
+## Ability info panel (activation type)
+
+The **first line** of the **Info** side panel (expanded by holding `Shift`) shows the ability's activation type:
+
+| Activation type | Shown in the panel |
+|---|---|
+| `dragonsurvival:passive` | Passive |
+| `dragonsurvival:simple` | Active |
+| `dragonsurvival:channeled` | Channeled |
+| `additional_abilities:charged` | Charged |
+| `additional_abilities:optional_charged` | Optional Charged |
+
+- The line exists to **tell `charged` and `optional_charged` apart**: Dragon Survival sees both as
+  `dragonsurvival:simple` (the panel header always reads "Active Ability") even though they behave
+  completely differently — and DS itself **never** shows the activation type, it only shows a "Trigger"
+  line for passive abilities.
+- The name is looked up from the activation type's **own registry id** (translation key
+  `activation_type.<namespace>.<path>`), so **activation types registered by other mods show up
+  automatically** — this mod needs no code change when upstream adds or removes one.
+- When no translation exists the **raw id** is shown instead (e.g. `some_mod:my_type`), so a machine key
+  name is never drawn into the UI.
+- The line is **client-side only**: it takes no part in any server-side decision and is not part of the
+  ability description text.
 
 ---
 

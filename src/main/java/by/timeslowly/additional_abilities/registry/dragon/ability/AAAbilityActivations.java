@@ -23,8 +23,17 @@ import org.jetbrains.annotations.NotNull;
  *     <li>{@code additional_abilities:optional_charged} —— 可选性蓄力档位，蓄力期间用鼠标滚轮指定释放档位
  *         （可为 0 = 取消）。两者共用 {@code activation.ChargeableActivation} 的档位换算。</li>
  * </ul>
+ *
+ * <h2>激活类型的界面显示</h2>
+ * 龙生本体只对<b>被动</b>技能显示「触发条件」，从不显示 {@code activation.activation_type} 本身，
+ * 于是 {@code charged} 与 {@code optional_charged} 在界面上都只是「主动能力」，玩家看不出区别。
+ * 因此本模组用 {@link by.timeslowly.additional_abilities.mixins.DragonAbilityInfoMixin}
+ * 往技能信息面板的<b>首行</b>补一行「激活类型」。
+ * <p>
+ * 该行对<b>全部</b>激活类型通用（龙生内置三种 + 上方两种 + 未来任何附属模组注册的类型），
+ * 因为类型名是从 {@code Activation.REGISTRY} 按其自身 ID 反查的；
+ * 译名键为 {@code activation_type.<命名空间>.<路径>}，缺译名时退回显示原始 ID。
  */
-// TODO：（Mixin）在技能详细信息面板上显示激活类型
 public class AAAbilityActivations {
     public static void register(final @NotNull IEventBus modEventBus) {
         modEventBus.addListener(AAAbilityActivations::registerEntries);

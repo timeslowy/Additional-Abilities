@@ -66,7 +66,6 @@ import org.jetbrains.annotations.NotNull;
  *         与目标类型无关（与 DS 其它目标类型同理）。</li>
  * </ul>
  */
-// TODO:反向吐息粒子（不一定）
 public record AntiDragonBreathTarget(Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> target,
                                      LevelBasedValue rangeMultiplier) implements AbilityTargeting {
     /** 方块分支目标描述：Targets a %s block cone behind you */
