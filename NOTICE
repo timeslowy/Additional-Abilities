@@ -1,0 +1,24 @@
+Additional Abilities for DS
+Copyright 2026 timeslowly
+
+This product is licensed under the Apache License, Version 2.0.
+The full license text is in the LICENSE file.
+
+------------------------------------------------------------------------
+Dependencies and attribution
+
+Dragon Survival (external dependency, not bundled)
+  This mod is an add-on for Dragon Survival. It is not affiliated with,
+  endorsed by, or sponsored by the Dragon Survival project or its author,
+  Black Aures. "Dragon Survival" and its names, logos, and assets remain
+  the property of their respective owner.
+  No code, texture, model, sound, or data file originating from Dragon
+  Survival is included in this work. Dragon Survival is used only as an
+  external, separately distributed dependency. Assets this project places
+  under the "dragonsurvival" namespace are original works of this project;
+  that path is required by Dragon Survival's ability icon lookup, it does
+  not imply reuse of Dragon Survival assets.
+
+Wing Kirin (optional external dependency, by the same author)
+  Textures added by this project under the "wing_kirin" namespace are
+  original works of this project and are not copies of Wing Kirin assets.

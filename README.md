@@ -6,7 +6,7 @@
   ============================================================
 -->
 
-**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 165 行起）
+**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 196 行起）
 
 ---
 
@@ -16,7 +16,8 @@
 
 > 适用版本：Minecraft `1.21.1` · NeoForge · **Additional Abilities for DS `2.0.0`**
 > 前置：Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-> 最后核对：2026-09-23（对照本工作空间源码）
+> 最后核对：2026-09-23（对照本工作空间源码）  
+> 授权：**Apache-2.0** —— 可自由使用、修改与再发布（含闭源）。本模组是独立第三方附属，与 Dragon Survival 官方**无隶属关系**
 
 本模组给 [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival) 补了两类东西：
 
@@ -24,6 +25,8 @@
    `trigger_type`）
    —— 供数据包或其它附属模组直接在自己的技能 JSON 里调用；
 2. **随附的技能内容** —— 给几种龙加的新技能。
+
+> **所有想法均为原创。如有雷同，纯属巧合。**
 
 本文档是第 1 类的**字段手册**，以及第 2 类的**内容清单**。
 
@@ -159,6 +162,36 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 > 下的 `test_*.json` —— 每个自定义类型都有对应的测试技能。
 
 ---
+
+## 四、授权与再分发
+
+本模组以 **Apache License 2.0** 发布，全文见仓库根目录的 [`LICENSE`](LICENSE)。
+
+**你可以**：使用、修改、再发布本模组（整合包、商业服务器、闭源项目都算）；把本模组提供的
+自定义组件接口（`entity_effect` / `block_effect` / `target_type` / `activation_type` /
+`trigger_type`）用在你自己的技能或附属模组里 —— 都不需要事先申请。
+
+**你必须**：保留版权声明、`LICENSE` 与 `NOTICE` 三个文件；在改动过的文件里注明改了什么。
+
+### 搬运与移植政策
+
+下面是**社区约定**，不是协议条款（Apache-2.0 本身不强制署名），但我们希望照此执行：
+
+- 允许移植到其它 Minecraft 版本、其它加载器或其它平台，**只要**在项目页面显著位置注明原作者
+  `timeslowly` 并链接到原帖；
+- 请勿使用本模组的名称或图标发布衍生版本，以免与官方版本混淆；
+- 只想收录进整合包的话，不必另行申请，直接收录即可。
+
+### 关于 Dragon Survival
+
+- 本模组是 [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival)
+  的**第三方附属**，与其官方及作者 Black Aures **无隶属、无赞助、无背书**关系。
+- 本模组**不包含** Dragon Survival 的任何代码、贴图、模型、音效或数据文件，仅将其作为
+  **外部独立依赖**引用。`dragonsurvival:` 命名空间下的资源均为本模组原创 ——
+  该路径是 Dragon Survival 加载技能图标所要求的存放位置，不代表复用了它的素材。
+- "Dragon Survival" 及其相关名称、图标与素材的一切权利归其原作者所有。
+
+---
 ---
 
 <a id="lang-en"></a>
@@ -167,7 +200,8 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 
 > Applies to: Minecraft `1.21.1` · NeoForge · **Additional Abilities for DS `2.0.0`**
 > Requirements: Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-> Last verified: 2026-09-23 (against this workspace's source)
+> Last verified: 2026-09-23 (against this workspace's source)  
+> License: **Apache-2.0** — free to use, modify and redistribute, including in closed-source form. An independent third-party add-on, **not affiliated with** the Dragon Survival project
 
 This mod adds two kinds of things to [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival):
 
@@ -175,6 +209,8 @@ This mod adds two kinds of things to [Dragon Survival](https://www.curseforge.co
    `activation_type` / `trigger_type`) — for datapacks and other add-ons to call directly from their own
    ability JSON;
 2. **Bundled ability content** — new abilities for several dragon species.
+
+> **All ideas are original. Any similarities are purely coincidental.**
 
 This documentation is the **field manual** for the first category and the **content list** for the second.
 
@@ -314,3 +350,40 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 > For a runnable ability to copy from, look at the `test_*.json` files under
 > `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/` —
 > every custom type has a matching test ability.
+
+---
+
+## 4. License and redistribution
+
+This mod is released under the **Apache License 2.0**; the full text is in [`LICENSE`](LICENSE) at
+the repository root.
+
+**You may** use, modify and redistribute this mod (modpacks, commercial servers and closed-source
+projects included), and call the custom component interfaces it provides (`entity_effect` /
+`block_effect` / `target_type` / `activation_type` / `trigger_type`) from your own abilities or
+add-ons — no permission required.
+
+**You must** keep the copyright notice, `LICENSE` and `NOTICE`, and state which files you changed.
+
+### Porting and redistribution policy
+
+What follows is a **community convention**, not a license term (Apache-2.0 itself does not require
+attribution), but we ask you to honour it:
+
+- Porting to another Minecraft version, another mod loader or another platform is allowed **as long
+  as** you credit the original author `timeslowly` prominently on the project page and link back to
+  the original post;
+- Please do not publish derivative versions under this mod's name or icon, to avoid confusion with
+  the official release;
+- If all you want is to include this mod in a modpack, no permission is needed — just go ahead.
+
+### About Dragon Survival
+
+- This mod is a **third-party add-on** for
+  [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival). It is **not
+  affiliated with, sponsored by, or endorsed by** that project or its author, Black Aures.
+- This mod contains **no** code, texture, model, sound or data file from Dragon Survival; Dragon
+  Survival is referenced only as an **external, separately distributed dependency**. Assets this mod
+  places under the `dragonsurvival:` namespace are original — that path is simply where Dragon
+  Survival requires ability icons to live.
+- "Dragon Survival" and its related names, icons and assets belong to their respective owner.

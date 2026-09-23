@@ -33,11 +33,7 @@
                 "transition_length": 2
             }
         },
-        "initial_mana_cost": {
-            "type": "minecraft:linear",
-            "base": 4,
-            "per_level_above_first": 4
-        },
+        "initial_mana_cost": 24,
         "sound": {
             "charging": "block.amethyst_block.break",
             "end": "block.respawn_anchor.deplete"

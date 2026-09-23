@@ -115,7 +115,7 @@
 "additional_abilities.configuration.charged_indicator.offset_y": "纵向偏移",
 "additional_abilities.configuration.charged_indicator.offset_y.tooltip": "在所选方位之上再纵向平移的像素数（GUI 缩放后的像素），向下为正。",
 "additional_abilities.configuration.charged_indicator.overcharge_warning_ratio": "超限窗口临界限（剩余比例）",
-"additional_abilities.configuration.charged_indicator.overcharge_warning_ratio.tooltip": "超限窗口的剩余量占窗口总长的比例不超过它时，读数区的超限行转红，提示快到点了；0. = 只剩下三成时转红，0 则永不转红。用比例可自动适配各技能不同的窗口时长。该项只改颜色，不发声。",
+"additional_abilities.configuration.charged_indicator.overcharge_warning_ratio.tooltip": "超限窗口的剩余量占窗口总长的比例不超过它时，读数区的超限行转红，提示快到点了；0.3 = 只剩下三成时转红，0 则永不转红。用比例可自动适配各技能不同的窗口时长。该项只改颜色，不发声。",
 "additional_abilities.configuration.charged_indicator.play_sound": "播放档位提示音",
 "additional_abilities.configuration.charged_indicator.play_sound.tooltip": "蓄力时每升一档播放一次提示音；用滚轮选档时另有一声更短的点击音。关掉后两个声音一起静音（不影响龙之生存自己的蓄力 / 释放音效）。",
 "additional_abilities.configuration.charged_indicator.sound_volume": "提示音音量（倍率）",

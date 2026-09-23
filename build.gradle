@@ -108,6 +108,16 @@ sourceSets {
     }
 }
 
+// Apache-2.0 第 4(a) 条要求向接收者随附协议副本，而 jar 就是分发物。
+// 仓库根是唯一真源（GitHub 也靠它识别协议），这里只做构建期复制，省掉两份手工副本漂移的麻烦。
+tasks.named('processResources', ProcessResources) {
+    from(project.rootDir) {
+        include 'LICENSE'
+        include 'NOTICE'
+        into 'META-INF'
+    }
+}
+
 repositories {
     mavenLocal()
     maven {

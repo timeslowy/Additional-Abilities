@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 // 必须匹配 META-INF/neoforge.mods.toml file
-// TODO:优化加载性能开销？疑似会使得同个实例初次进入世界时卡顿？
+// TODO:优化加载性能开销？
 @Mod(AdditionalAbilities.MOD_ID)
 public class AdditionalAbilities {
     // 定义模组ID以供他处调用
