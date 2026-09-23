@@ -200,7 +200,7 @@ A **tier number** is drawn to the right of the cast bar (**its position is confi
 | White | Charging |
 | Gold | The player's own maximum level reached |
 
-A note-block cue plays each time a tier is crossed, rising in pitch with the tier.
+A cue plays each time a tier is crossed, rising in pitch with the tier (**both the sound and the pitch curve are configurable — see "Tier sounds" below**).
 **The number shown is exactly the tier that will be used on release.**
 
 Under `optional_charged` the readout changes shape with the selection (the progress bar and its percentage
@@ -213,7 +213,7 @@ below keep their meaning):
 | Manual pick set to cancel | `0/reached`, e.g. `0/5` | **red** |
 
 Each wheel step that actually changes the tier plays a click (pitch rises with the tier; picking `0` uses a
-lower pitch so it stands out).
+lower pitch so it stands out). Both cues share one toggle and one volume — see "Tier sounds" below.
 
 ### Indicator position (client config)
 
@@ -249,6 +249,43 @@ Every placement leaves a 6-pixel gap between the readout and the cast bar.
 - This config is **client-only**: it takes no part in any server-side decision and is not synced to other players.
 - The in-game config screen renders the placement as a dropdown, so you never have to type these values; if you
   do edit the file by hand, use the uppercase enum names, e.g. `CAST_BAR_LEFT`.
+
+### Tier sounds (client config)
+
+Both cues play locally only (they are "your own" tier feedback and are never sent to other players), and they
+share a single toggle and a single volume multiplier:
+
+| Option | Default | Notes |
+|---|---|---|
+| `charged_indicator.play_sound` | `true` | Whether to play the cues: the **tier sound** (one per tier gained) and the **wheel click** (one per actual tier change) are switched together |
+| `charged_indicator.sound_volume` | `1.0` | Master multiplier (`0.0` - `1.0`) applied on top of each sound's own **base volume** (`0.7` for the tier sound, `0.6` for the wheel click) |
+| `charged_indicator.level_up_sound` | `NOTE_PLING` | Which sound the tier cue uses. **Eight fixed presets** (dropdown); the default is the old note-block "pling" |
+| `charged_indicator.level_up_sound_pitch` | `0.9` | Pitch at tier 1 (`0.5` - `2.0`; `1.0` is the sound's original pitch) |
+| `charged_indicator.level_up_sound_pitch_per_level` | `0.12` | Pitch added per tier gained (`0.0` - `1.0`; `0` keeps a single pitch for every tier) |
+| `charged_indicator.level_up_sound_max_pitch` | `2.0` | Pitch ceiling (`0.5` - `2.0`) |
+
+- The two base volumes differ **on purpose** (the wheel click is shorter and lighter) and the multiplier does not
+  flatten them; the default `1.0` matches the pre-update loudness exactly.
+- Turning the toggle off only affects these two cues: **Dragon Survival's own** charging sound (`sound.charging`)
+  and its start / end sounds still play.
+- The volume option cannot be greyed out in step with the toggle (NeoForge 21.1's config screen has no such feature
+  yet), so it stays editable while the toggle is off — it simply has no effect.
+- **Eight presets is a hard limit of the config system**: `ModConfigSpec` supports only primitives and enums —
+  there is no registry-object type — and vanilla alone ships **1486** sound events, far too many for a dropdown.
+  Offering any registered sound would require a custom search screen (none exists yet).
+- The **pitch curve** is `min(base pitch + per-tier step x tier, ceiling)` and applies to the tier cue **only**
+  (the wheel click keeps its own fixed curve). The sound engine clamps pitch to `[0.5, 2.0]`, so the ceiling cannot
+  go higher. Short percussive sounds take pitch-shifting well; long or ambient ones distort audibly — retune the
+  curve after switching sounds.
+
+- If a sound id maps to **several audio variants** (vanilla `sounds.json` lets one id point at multiple files and
+  the game picks one at random per play), the tier sound here is **locked to a single fixed variant**, so a given
+  tier always sounds exactly the same. The wheel click is not locked.
+
+> **Behaviour change**: hiding the HUD with `F1` **no longer** mutes the tier sounds.
+> Previously the "did a tier get crossed?" check lived inside the HUD layer's render callback, so hiding the HUD
+> skipped it and silently killed the sound along with the picture. The cues are now driven by the **client tick**
+> (once per tick, independent of frame rate) and are fully decoupled from HUD visibility.
 
 ### Query command
 

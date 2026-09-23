@@ -12,10 +12,7 @@ import by.timeslowly.additional_abilities.registry.dragon.ability.activation.Cha
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -35,6 +32,23 @@ import org.jetbrains.annotations.NotNull;
  * {@code @EventBusSubscriber#bus()}，因此改由主类经
  * {@link by.timeslowly.additional_abilities.common.AAClientSetup} 手动注册
  * （该类的方法体里才引用本类，专用服务端不会加载到这里的客户端类型）。
+ *
+ * <h2>为什么本类必须自检 {@code hideGui}（F1）</h2>
+ * 「按 F1 隐藏 HUD」在原版只作用于<b>原版自家</b>的两组图层：{@code Gui} 构造里写的是
+ * {@code layerManager.add(layereddraw, () -> !options.hideGui)}，而
+ * {@code GuiLayerManager#add(child, shouldRender)} 会把子图层<b>扁平化复制</b>进父列表并逐个包上该判断。
+ * 模组图层走的是另一条路 —— {@code Gui#initModdedOverlays()} → <b>父</b>
+ * {@code layerManager.initModdedLayers()}，被 append 到父列表<b>末尾</b>，<b>不经过</b>那层包装。
+ * 也就是说：<b>模组图层在 F1 下仍会被调用</b>（也因此天然画在原版 HUD 之上），
+ * 隐藏与否只能由图层自己判断 —— DS 的 {@code MagicHUD} 同样自检。
+ *
+ * <h2>本类是纯只读视图</h2>
+ * 上面那个早退<b>不再清理任何状态</b>：档位提示音与"未施法即清空选档"的职责都已移出本类，
+ * 交给 {@code client.eventhandler.ChargedLevelSoundHandler}（客户端刻驱动）。
+ * 本类只负责"把当前状态画出来"，不持有跨帧状态、也不改交互状态。
+ * <p>
+ * 由此产生一处<b>有意的行为变更</b>：按 F1 隐藏 HUD 不再静音档位提示音 ——
+ * 隐藏画面本就不该顺带改变听觉反馈（旧版那个联动是耦合带出来的副作用，从未被设计过）。
  *
  * <h2>坐标怎么来的（位置可客户端配置）</h2>
  * 读数区左上角的屏幕坐标 = <b>配置方位的基准位 + 配置偏移</b>，两者都来自客户端配置
@@ -77,22 +91,16 @@ import org.jetbrains.annotations.NotNull;
  * 未达标位 1 时区间取 {@code [0, 最低蓄力时长]}，正好回答"还差多久才可用"。
  * 已达自身最高档时没有"下一档"，条显示满格并整体转为金色，语义为"已无可蓄"。
  *
- * <h2>提示音</h2>
- * 档位每跨升一级播一次，音高随档位递增；只在客户端本地播放（属于"给自己听的档位提示"，
- * 不需要发给其他玩家）。滚轮选档时另有一声更短的点击音，见
- * {@code client.eventhandler.OptionalChargedScrollHandler}。
+ * <h2>提示音（不在本类）</h2>
+ * 档位提升音由 {@code client.eventhandler.ChargedLevelSoundHandler} 播（每跨升一级一声、音高随档位递增），
+ * 滚轮选档音仍在 {@code client.eventhandler.OptionalChargedScrollHandler}；
+ * 两者共用客户端配置里的「播放提示音」开关与音量倍率
+ * （{@link AAClientConfig#playSound()} / {@link AAClientConfig#soundVolume()}），且都只在本地播放
+ * —— 属于"给自己听的档位提示"，不需要发给其他玩家。
  */
-// TODO：可能支持充能声音可选；甚至可能把播放声音分离出去（HUD里面顺便放声音有点怪，故思降低耦合度）
 public final class ChargedIndicatorLayer {
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_indicator");
-
-    /** 档位提升提示音，复用原版音符盒资源，不新增音频文件。 */
-    private static final SoundEvent LEVEL_UP_SOUND = SoundEvents.NOTE_BLOCK_PLING.value();
-    private static final float LEVEL_UP_VOLUME = 0.7F;
-    private static final float LEVEL_UP_BASE_PITCH = 0.9F;
-    private static final float LEVEL_UP_PITCH_PER_LEVEL = 0.12F;
-    private static final float LEVEL_UP_MAX_PITCH = 2.0F;
 
     /**
      * 蓄力条在屏幕上的宽度：196 的贴图经过 0.5 缩放后为 98。
@@ -128,9 +136,6 @@ public final class ChargedIndicatorLayer {
     /** 选定为"取消"（档位 0）时的颜色。 */
     private static final int COLOR_CANCEL = 0xFFFF5252;
 
-    /** 上一帧显示的"已达成档位"，用于判断"是否刚刚跨过一级"。仅渲染线程访问。 */
-    private static int lastRenderedLevel = ChargeableActivation.NO_CHARGED_LEVEL;
-
     /**
      * {@link #resolveOrigin} 的复用返回值（{@code [left, top]}）。
      * 只在渲染线程、每帧一次，复用以免每帧产生垃圾对象。
@@ -147,29 +152,27 @@ public final class ChargedIndicatorLayer {
     }
 
     public static void render(final @NotNull GuiGraphics graphics, final @NotNull DeltaTracker tracker) {
+        // 模组图层不受原版 !hideGui 门控（见类注释），这一早退是必需的；
+        // 它只跳过绘制，不清理任何状态
         if (Minecraft.getInstance().options.hideGui) {
-            reset();
             return;
         }
 
         Player player = Minecraft.getInstance().player;
 
         if (player == null || player.isSpectator() || !DragonStateProvider.isDragon(player)) {
-            reset();
             return;
         }
 
         MagicData magic = MagicData.getData(player);
 
         if (!magic.isCasting()) {
-            reset();
             return;
         }
 
         DragonAbilityInstance casting = magic.getCurrentlyCasting();
 
         if (casting == null || !(casting.value().activation() instanceof ChargeableActivation chargeable)) {
-            reset();
             return;
         }
 
@@ -178,18 +181,12 @@ public final class ChargedIndicatorLayer {
         // 与客户端松手拦截用同一套换算，因此这里显示的数字就是松手时实际会用的档位
         int level = chargeable.getChargedLevel(casting.getCurrentTick(), playerLevel);
 
-        if (level > lastRenderedLevel) {
-            playLevelUpSound(level);
-        }
-
-        lastRenderedLevel = level;
-
-        // 可选性蓄力：读取滚轮选定的档位。同时完成"切换施法技能即清空选档"的对齐
+        // 可选性蓄力：读取滚轮选定的档位。
+        // 选档状态的归属对齐与清理由 ChargedLevelSoundHandler 在客户端刻里完成，本类只读
         int selected = level;
         boolean manual = false;
 
         if (chargeable.selectsReleaseLevel()) {
-            OptionalChargedSelection.onCasting(casting.key());
             selected = OptionalChargedSelection.displayLevel(level);
             manual = OptionalChargedSelection.isManual();
         }
@@ -336,18 +333,6 @@ public final class ChargedIndicatorLayer {
         }
 
         return achieved >= playerLevel ? COLOR_MAXIMUM : COLOR_CHARGING;
-    }
-
-    private static void playLevelUpSound(final int level) {
-        float pitch = Math.min(LEVEL_UP_BASE_PITCH + LEVEL_UP_PITCH_PER_LEVEL * level, LEVEL_UP_MAX_PITCH);
-        Minecraft.getInstance().getSoundManager()
-                .play(SimpleSoundInstance.forUI(LEVEL_UP_SOUND, pitch, LEVEL_UP_VOLUME));
-    }
-
-    /** 离开蓄力状态时清空，下一次蓄力从 0 重新逐级提示；同时清掉可选性蓄力的选档状态。 */
-    private static void reset() {
-        lastRenderedLevel = ChargeableActivation.NO_CHARGED_LEVEL;
-        OptionalChargedSelection.reset();
     }
 
     private static int castbarOffsetX() {

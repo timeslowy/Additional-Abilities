@@ -149,7 +149,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 | [01-实体效果.md](doc/中文/01-实体效果.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` |
 | [02-方块效果.md](doc/中文/02-方块效果.md) | `block_quake` / `extinguish` |
 | [03-目标选择器.md](doc/中文/03-目标选择器.md) | `anti_dragon_breath` / `annulus` / `domain` |
-| [04-激活类型.md](doc/中文/04-激活类型.md) | `charged`（含蓄力档位换算、HUD 表现与位置配置、查询指令、技能信息面板的激活类型显示） |
+| [04-激活类型.md](doc/中文/04-激活类型.md) | `charged`（含蓄力档位换算、HUD 表现、位置与音效配置、查询指令、技能信息面板的激活类型显示） |
 | [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 5 个技能、所属龙种、解锁方式 |
 | [06-调试与查询指令.md](doc/中文/06-调试与查询指令.md) | 独立指令树 `/additional-abilities` 与 DS 查询追加项的用法 |
 | [07-内置数据包.md](doc/中文/07-内置数据包.md) | 内置的可选数据包、启用方法与改动明细 |
@@ -305,7 +305,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 | [01-Entity-Effect.md](doc/English/01-Entity-Effect.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` |
 | [02-Block-Effect.md](doc/English/02-Block-Effect.md) | `block_quake` / `extinguish` |
 | [03-Target-Type.md](doc/English/03-Target-Type.md) | `anti_dragon_breath` / `annulus` / `domain` |
-| [04-Activation-Type.md](doc/English/04-Activation-Type.md) | `charged` (tier conversion, HUD behaviour and position config, query command, activation type shown in the ability info panel) |
+| [04-Activation-Type.md](doc/English/04-Activation-Type.md) | `charged` (tier conversion, HUD behaviour, position and sound config, query command, activation type shown in the ability info panel) |
 | [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 5 bundled abilities, their species and unlock conditions |
 | [06-Debug-and-Query-Commands.md](doc/English/06-Debug-and-Query-Commands.md) | Usage of the standalone `/additional-abilities` tree and the appended Dragon Survival query entries |
 | [07-Bundled-Datapacks.md](doc/English/07-Bundled-Datapacks.md) | The bundled optional datapack, how to enable it, and what it changes |

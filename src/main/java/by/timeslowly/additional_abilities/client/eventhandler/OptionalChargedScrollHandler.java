@@ -5,6 +5,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.OptionalChargedSelection;
+import by.timeslowly.additional_abilities.common.config.AAClientConfig;
 import by.timeslowly.additional_abilities.common.network.OptionalChargedSelectionPayload;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import net.minecraft.client.Minecraft;
@@ -41,11 +42,20 @@ import org.jetbrains.annotations.NotNull;
  * 真正生效的档位随 {@code ChargedReleasePayload} 单独上报，并由服务端重新校验是否超过已达成档位。
  * 这里额外同步一次到服务端，只为让 {@code /dragon-ability query … current_selected_level} 可读，
  * 因此<b>只在档位真正变化时发送</b>（一次施法内至多几次）。
+ *
+ * <h2>音效（可选 + 音量倍率）</h2>
+ * 本类的选档点击音与 {@code ChargedLevelSoundHandler} 的档位提升音<b>共用同一套客户端配置</b>：
+ * 开关 {@link AAClientConfig#playSound()} 与总倍率 {@link AAClientConfig#soundVolume()}。
+ * 两个音各自的<b>基准音量</b>刻意不同（本类更短更轻），总倍率叠在基准之上，
+ * 所以默认（倍率 1.0）时响度与升级前完全一致。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public final class OptionalChargedScrollHandler {
-    /** 选档反馈音的音量。 */
-    private static final float SELECT_VOLUME = 0.6F;
+    /**
+     * 选档点击音的基准音量（比档位提升音更轻，是刻意的）。
+     * 配置项 {@code sound_volume} 是叠在它之上的总倍率，见类注释。
+     */
+    private static final float SELECT_BASE_VOLUME = 0.6F;
     /** 选定为"取消"（档位 0）时的音高：明显低于正常选档，形成可辨识的区分。 */
     private static final float CANCEL_PITCH = 0.6F;
     /** 正常选档的音高基准与逐档增量，随档位升高而升高。 */
@@ -120,13 +130,23 @@ public final class OptionalChargedScrollHandler {
                 casting.key(), OptionalChargedSelection.rawForSync()));
     }
 
-    /** 档位 0（取消）用低音，其余档位音高随档位递增。仅本地播放（"给自己听的选档提示"）。 */
+    /**
+     * 档位 0（取消）用低音，其余档位音高随档位递增。仅本地播放（"给自己听的选档提示"）。
+     * <p>
+     * 音量 = 基准 {@link #SELECT_BASE_VOLUME} × 配置总倍率；开关关闭时直接返回，连
+     * {@link SimpleSoundInstance} 都不构造。
+     */
     private static void playSelectSound(final int selected) {
+        if (!AAClientConfig.playSound()) {
+            return;
+        }
+
         float pitch = selected < 1
                 ? CANCEL_PITCH
                 : Math.min(SELECT_BASE_PITCH + SELECT_PITCH_PER_LEVEL * selected, SELECT_MAX_PITCH);
+        float volume = SELECT_BASE_VOLUME * (float) AAClientConfig.soundVolume();
 
         Minecraft.getInstance().getSoundManager()
-                .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), pitch, SELECT_VOLUME));
+                .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), pitch, volume));
     }
 }
