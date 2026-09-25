@@ -56,8 +56,18 @@ public final class BlockGlows {
      */
     public static final int REFRESH_INTERVAL_TICKS = 20;
 
-    /** 假身/方块渲染的实际视距约 64 格，广播半径在此之上留出余量（与 {@code BlockQuakes} 同口径） */
-    private static final double VIEW_MARGIN = 64.0;
+    /**
+     * 广播半径的余量（格）：只发给「本批方块的最小外接球再外扩这么多格」之内的玩家。
+     * <p>
+     * <b>它同时充当客户端可见距离配置的硬上限</b> —— {@code AAClientConfig} 里那两个
+     * {@code block_glow.*_distance} 直接用它当 {@code defineInRange} 的 max。原因：服务端
+     * <b>读不到</b>客户端的可见距离设置（CLIENT 类型配置在专用服务端根本不加载），
+     * 所以只能用「配置上限 ≤ 本余量」这条约束来杜绝
+     * 「客户端想画、服务端却没发包」的静默截断。把上限钉在这个常量上，结构上就配不出问题。
+     * <p>
+     * 数值沿用与 {@code BlockQuakes} 同口径的 {@code 64}。调小它会让线框在远处被客户端自己剔掉。
+     */
+    public static final double VIEW_MARGIN = 64.0;
 
     /** {@code Direction.values()} 每次调用都会克隆数组，热路径上必须缓存（虽然这里只在建立条目时用） */
     private static final Direction[] DIRECTIONS = Direction.values();
@@ -105,9 +115,7 @@ public final class BlockGlows {
 
         /** 追加贡献者（先查再写：绝大多数条目只有一名施法者，避免 HashSet 无谓地扩容） */
         void addCaster(final @NotNull UUID caster) {
-            if (!casters.contains(caster)) {
-                casters.add(caster);
-            }
+            casters.add(caster);
         }
 
         /**

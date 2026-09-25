@@ -1,0 +1,231 @@
+{
+  "actions": [
+    {
+      "target_selection": {
+        "applied_effects": {
+          "entity_effect": [
+            {
+              "effect_type": "dragonsurvival:projectile",
+              "number_of_projectiles": 1.0,
+              "projectile_data": "wing_kirin:signal_arrow",
+              "speed": 10.0,
+              "target_direction": {
+                "direction": "looking_at"
+              }
+            },
+            {
+              "effect_type": "dragonsurvival:run_function",
+              "function": "wing_kirin:dragon_ability/signal_arrow/on_entity_spawn/generic_arrow_entity"
+            },
+            {
+              "effect_type": "dragonsurvival:projectile",
+              "number_of_projectiles": 0,
+              "projectile_data": "wing_kirin:pear_blossom_needles",
+              "speed": 0,
+              "target_direction": {
+                "direction": "looking_at"
+              }
+            },
+            {
+              "effect_type": "dragonsurvival:glow",
+              "glows": [
+                {
+                  "base": {
+                    "id": "wing_kirin:signal_arrow_glowing",
+                    "duration": 20,
+                    "is_hidden": true
+                  },
+                  "color": "#fbdc92"
+                }
+              ]
+            }
+          ],
+          "targeting_mode": "allies_and_self"
+        },
+        "target_type": "dragonsurvival:self"
+      }
+    },
+    {
+      "target_selection": {
+        "applied_effects":{
+          "entity_effect":[
+            {
+              "effect_type": "dragonsurvival:run_function",
+              "function": "wing_kirin:dragon_ability/signal_arrow/radiu_display/charging/main"
+            }
+          ],
+          "targeting_mode": "allies_and_self"
+        },
+        "target_type": "dragonsurvival:self"
+      },
+      "trigger_point": "charging",
+      "trigger_rate": 5
+    },
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "effect_type": "additional_abilities:glow",
+              "color": "#fbdc92",
+              "alpha": 0.5,
+              "display_type": "simple_shader",
+              "duration": 200,
+              "hide_occluded": true
+            }
+          ],
+          "target_conditions": {
+            "condition": "inverted",
+            "term": {
+              "condition": "minecraft:block_state_property",
+              "block": "air"
+            }
+          }
+        },
+        "target_type": "dragonsurvival:disc",
+        "radius": {
+          "type": "minecraft:linear",
+          "base": 12,
+          "per_level_above_first": 2
+        },
+        "height": 2,
+        "height_starts_below": true
+      }
+    }
+  ],
+  "activation": {
+    "activation_type": "dragonsurvival:simple",
+    "animations": {
+      "start_and_charging": {
+        "animation_key": "spell_charge",
+        "layer": "BREATH",
+        "locks_neck": false,
+        "locks_tail": false,
+        "transition_length": 5
+      }
+    },
+    "cast_time": 60.0,
+    "cooldown": 800.0,
+    "initial_mana_cost": 15.0,
+    "notification": {
+      "usage_blocked": {
+        "translate": "dragon_ability.wing_kirin.signal_arrow.activation.notification.usage_blocked"
+      }
+    },
+    "sound": {
+      "charging": "item.crossbow.loading_middle",
+      "end": "minecraft:item.firecharge.use"
+    }
+  },
+  "icon": {
+    "texture_entries": [
+      {
+        "from_level": 0,
+        "texture_resource": "wing_kirin:abilities/signal_arrow/signal_arrow_0"
+      },
+      {
+        "from_level": 1,
+        "texture_resource": "wing_kirin:abilities/signal_arrow/signal_arrow_1"
+      },
+      {
+        "from_level": 2,
+        "texture_resource": "wing_kirin:abilities/signal_arrow/signal_arrow_2"
+      },
+      {
+        "from_level": 3,
+        "texture_resource": "wing_kirin:abilities/signal_arrow/signal_arrow_3"
+      },
+      {
+        "from_level": 4,
+        "texture_resource": "wing_kirin:abilities/signal_arrow/signal_arrow_4"
+      },
+      {
+        "from_level": 5,
+        "texture_resource": "wing_kirin:abilities/signal_arrow/signal_arrow_5"
+      }
+    ]
+  },
+  "upgrade": {
+    "level_requirement": {
+      "type": "minecraft:lookup",
+      "fallback": {
+        "type": "minecraft:linear",
+        "base": 15.0,
+        "per_level_above_first": 15.0
+      },
+      "values": [
+        60.0,
+        70.0,
+        80.0,
+        90.0,
+        100.0
+      ]
+    },
+    "maximum_level": 5,
+    "upgrade_type": "dragonsurvival:experience_levels"
+  },
+  "usage_blocked": {
+    "condition": "minecraft:any_of",
+    "terms": [
+      {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "type_specific": {
+            "type": "dragonsurvival:custom_predicates",
+            "eye_in_fluid": "minecraft:water",
+            "weather_predicate": {}
+          }
+        }
+      },
+      {
+        "condition": "entity_properties",
+        "entity": "this",
+        "predicate": {
+          "location": {
+            "can_see_sky": false
+          }
+        }
+      },
+      {
+        "condition": "minecraft:inverted",
+        "term": {
+          "condition": "entity_properties",
+          "entity": "this",
+          "predicate": {
+            "type_specific": {
+              "type": "dragonsurvival:dragon_predicate",
+              "dragon_species": "dragonsurvival:wing_kirin"
+            }
+          }
+        }
+      },
+      {
+        "condition": "all_of",
+        "terms": [
+          {
+            "condition": "inverted",
+            "term": {
+              "condition": "location_check",
+              "predicate": {
+                "dimension": "minecraft:overworld"
+              }
+            }
+          },
+          {
+            "condition": "inverted",
+            "term": {
+              "condition": "entity_properties",
+              "entity": "this",
+              "predicate": {
+                "effects": {
+                  "wing_kirin:great_zhengqi":{}
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

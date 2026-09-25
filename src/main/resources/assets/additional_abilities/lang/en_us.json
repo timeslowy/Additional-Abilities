@@ -95,6 +95,11 @@
 "trigger_type.additional_abilities.on_block_placed": "On Block Place",
 "trigger_type.additional_abilities.on_item_consumed": "On Item Consumed",
 
+"additional_abilities.configuration.block_glow": "Block glow (visibility distance)",
+"additional_abilities.configuration.block_glow.outline_distance": "Wireframe distance",
+"additional_abilities.configuration.block_glow.outline_distance.tooltip": "How far the wireframe channel is drawn (blocks), 8 - 64, default 64. Its cost is tiny and independent of block shape, so there is usually no reason to lower it; lowering it only affects your own view.",
+"additional_abilities.configuration.block_glow.shader_distance": "Tint distance",
+"additional_abilities.configuration.block_glow.shader_distance.tooltip": "How far the tint channel is drawn (blocks), 8 - 64, default 32. This channel re-bakes the block model every frame and dominates the cost, so lower it first if the frame rate suffers; lowering it only affects your own view.",
 "additional_abilities.configuration.charged_indicator": "Charge indicator (readout & sounds)",
 "additional_abilities.configuration.charged_indicator.anchor": "Placement",
 "additional_abilities.configuration.charged_indicator.anchor.cast_bar_above": "Above the cast bar",

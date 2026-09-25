@@ -97,6 +97,11 @@
 "trigger_type.additional_abilities.on_block_placed": "放置方块时",
 "trigger_type.additional_abilities.on_item_consumed": "消耗物品时",
 
+"additional_abilities.configuration.block_glow": "方块发光（可见距离）",
+"additional_abilities.configuration.block_glow.outline_distance": "线框可见距离",
+"additional_abilities.configuration.block_glow.outline_distance.tooltip": "线框通道画到多远（格），8 ~ 64，默认 64。线框代价极低且与方块形状无关，通常不用调小；调小只影响你自己的画面。",
+"additional_abilities.configuration.block_glow.shader_distance": "整块染色可见距离",
+"additional_abilities.configuration.block_glow.shader_distance.tooltip": "整块染色通道画到多远（格），8 ~ 64，默认 32。这条通道逐帧烘焙方块模型，是发光的主要开销来源，掉帧时优先调小它；调小只影响你自己的画面。",
 "additional_abilities.configuration.charged_indicator": "蓄力提示（读数区与音效）",
 "additional_abilities.configuration.charged_indicator.anchor": "摆放方位",
 "additional_abilities.configuration.charged_indicator.anchor.cast_bar_above": "蓄力条上方",

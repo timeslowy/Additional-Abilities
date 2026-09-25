@@ -1,5 +1,6 @@
 package by.timeslowly.additional_abilities.common.config;
 
+import by.timeslowly.additional_abilities.common.ability.BlockGlows;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -72,6 +73,16 @@ public final class AAClientConfig {
     /** 本分区内所有选项译文键的公共前缀（即 {@link #LANG_SECTION} 加一个点）。 */
     public static final String LANG_PREFIX = LANG_SECTION + ".";
 
+    /**
+     * 分区 {@code [block_glow]} 自身的译文键（方块发光的可见距离）。
+     * <p>
+     * 与 {@link #LANG_SECTION} 同一套规则：它就是本分区全部选项键去掉尾点后的公共前缀。
+     */
+    public static final String LANG_SECTION_GLOW = "additional_abilities.configuration.block_glow";
+
+    /** {@code [block_glow]} 分区内所有选项译文键的公共前缀。 */
+    public static final String LANG_PREFIX_GLOW = LANG_SECTION_GLOW + ".";
+
     /** 偏移量上下限（GUI 缩放后的像素）。四个方位已经解决"贴哪边"，偏移只是微调，不需要更大。 */
     private static final int OFFSET_LIMIT = 4000;
 
@@ -103,6 +114,17 @@ public final class AAClientConfig {
     private static final double OVERCHARGE_WARNING_MIN = 0.0;
     private static final double OVERCHARGE_WARNING_MAX = 1.0;
 
+    /**
+     * 方块发光可见距离的可设下限（格）。低于这个值基本等于看不见，留着只是让"调到最小"有意义。
+     */
+    private static final double GLOW_DISTANCE_MIN = 8.0;
+
+    /** {@code outline}（线框）可见距离的默认值（格）= 旧版行为。代价与方块形状无关，所以给得较远。 */
+    private static final double GLOW_OUTLINE_DISTANCE_DEFAULT = 64.0;
+
+    /** {@code simple_shader}（整块染色）可见距离的默认值（格）= 旧版行为。逐帧烘焙方块模型，因此收紧。 */
+    private static final double GLOW_SHADER_DISTANCE_DEFAULT = 32.0;
+
     public static final ModConfigSpec SPEC;
 
     private static final ModConfigSpec.EnumValue<IndicatorAnchor> INDICATOR_ANCHOR;
@@ -115,6 +137,8 @@ public final class AAClientConfig {
     private static final ModConfigSpec.DoubleValue LEVEL_UP_PITCH;
     private static final ModConfigSpec.DoubleValue LEVEL_UP_PITCH_PER_LEVEL;
     private static final ModConfigSpec.DoubleValue LEVEL_UP_MAX_PITCH;
+    private static final ModConfigSpec.DoubleValue GLOW_OUTLINE_DISTANCE;
+    private static final ModConfigSpec.DoubleValue GLOW_SHADER_DISTANCE;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -225,6 +249,42 @@ public final class AAClientConfig {
 
         builder.pop();
 
+        // ---- 方块发光：可见距离（第二个分区） ----
+        builder.comment(
+                        "方块发光（additional_abilities:glow）的可见距离。",
+                        "两条通道的代价差一个量级：线框恒为 12 条棱、与方块形状无关；整体染色要逐帧烘焙方块模型。",
+                        "因此两者的默认值与建议取值不同 —— 掉帧时优先调小染色那条。",
+                        "改完即时生效、无需重启；上限由服务端的广播余量决定，配置界面里已是最大可设值。",
+                        "Visibility distance of the block glow effect (additional_abilities:glow).",
+                        "The two channels differ by an order of magnitude in cost: the wireframe is always 12 edges and",
+                        "independent of block shape, while the tint re-bakes the block model every frame.",
+                        "Hence the different defaults - lower the tint one first if the frame rate suffers.",
+                        "Takes effect immediately; the ceiling is the server's broadcast margin, already the max here.")
+                .translation(LANG_SECTION_GLOW)
+                .push("block_glow");
+
+        GLOW_OUTLINE_DISTANCE = builder
+                .comment(
+                        "outline（线框）的可见距离（格），范围 8 ~ 64，默认 64。",
+                        "线框的代价与方块形状无关且极低，通常不需要调小。",
+                        "Visibility distance of the outline (wireframe) channel, range 8 - 64, default 64.",
+                        "Its cost is tiny and independent of block shape, so there is usually no reason to lower it.")
+                .translation(LANG_PREFIX_GLOW + "outline_distance")
+                .defineInRange("outline_distance", GLOW_OUTLINE_DISTANCE_DEFAULT,
+                        GLOW_DISTANCE_MIN, BlockGlows.VIEW_MARGIN);
+
+        GLOW_SHADER_DISTANCE = builder
+                .comment(
+                        "simple_shader（整块染色）的可见距离（格），范围 8 ~ 64，默认 32。",
+                        "这条通道逐帧烘焙方块模型，是发光效果的主要开销来源；掉帧时优先调小它。",
+                        "Visibility distance of the simple_shader (tint) channel, range 8 - 64, default 32.",
+                        "This channel re-bakes the block model every frame and dominates the cost; lower it first.")
+                .translation(LANG_PREFIX_GLOW + "shader_distance")
+                .defineInRange("shader_distance", GLOW_SHADER_DISTANCE_DEFAULT,
+                        GLOW_DISTANCE_MIN, BlockGlows.VIEW_MARGIN);
+
+        builder.pop();
+
         SPEC = builder.build();
     }
 
@@ -315,5 +375,30 @@ public final class AAClientConfig {
     /** 音高封顶值；配置尚未加载时返回 {@link #PITCH_MAX}（引擎硬上限，即旧版行为）。 */
     public static double levelUpMaxPitch() {
         return SPEC.isLoaded() ? LEVEL_UP_MAX_PITCH.get() : PITCH_MAX;
+    }
+
+    /**
+     * {@code outline}（线框）通道的可见距离（格）。
+     * <p>
+     * 配置尚未加载时返回 {@link #GLOW_OUTLINE_DISTANCE_DEFAULT}（{@code 64}），与旧版行为一致 ——
+     * 遵循本类"配置没读出来也不该静默改变观感"的既有约定。
+     * <p>
+     * <b>上限是 {@link BlockGlows#VIEW_MARGIN}，不是随手定的数</b>：服务端按固定余量决定把发光包发给谁，
+     * 而 CLIENT 类型配置<b>根本不会</b>在专用服务端加载 → 服务端读不到玩家这里的设置。
+     * 因此唯一正确的约束是「配置上限 ≤ 服务端广播余量」；把上限直接钉在那个常量上，
+     * 结构上就不可能配出"客户端想画、服务端却没发包"的静默截断。
+     */
+    public static double glowOutlineDistance() {
+        return SPEC.isLoaded() ? GLOW_OUTLINE_DISTANCE.get() : GLOW_OUTLINE_DISTANCE_DEFAULT;
+    }
+
+    /**
+     * {@code simple_shader}（整块染色）通道的可见距离（格）。
+     * <p>
+     * 默认值只有线框的一半，因为这条通道逐帧烘焙方块模型，是发光效果的主要开销来源。
+     * 上限与"配置没读出来"的兜底理由同 {@link #glowOutlineDistance()}。
+     */
+    public static double glowShaderDistance() {
+        return SPEC.isLoaded() ? GLOW_SHADER_DISTANCE.get() : GLOW_SHADER_DISTANCE_DEFAULT;
     }
 }

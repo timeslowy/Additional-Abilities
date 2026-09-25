@@ -4,6 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.client.render.block_vision.BlockVisi
 import by.dragonsurvivalteam.dragonsurvival.compat.Compat;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.ClientBlockGlowState;
+import by.timeslowly.additional_abilities.common.config.AAClientConfig;
 import by.timeslowly.additional_abilities.client.ClientBlockGlowState.GlowEntry;
 import by.timeslowly.additional_abilities.client.GlowOutlineRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -54,11 +55,10 @@ import java.util.List;
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public class BlockGlowRenderHandler {
-    /** 线框的可见距离（格）：代价与形状无关，可以给得远一些 */
-    private static final double OUTLINE_DISTANCE = 64.0;
-
-    /** 核心着色器的可见距离（格）：逐帧烘焙方块模型，收紧到 32 格 */
-    private static final double SHADER_DISTANCE = 32.0;
+    // 两条通道的可见距离不在这里写死 —— 它们是客户端配置项
+    // （AAClientConfig 的 block_glow.outline_distance / shader_distance），改配置即时生效、无需重启。
+    // 「包能发到多远」由服务端的 BlockGlows.VIEW_MARGIN 决定，而配置的上限就钉在那个常量上，
+    // 因此不可能配出「客户端想画、服务端却没发包」的静默截断。
 
     /** 单帧参与核心着色器渲染的方块数上限，超限按距离由近到远截断（确定性兜底） */
     private static final int MAX_SHADER_BLOCKS = 256;
@@ -146,7 +146,10 @@ public class BlockGlowRenderHandler {
     /** 距离 + 视锥剔除。包围盒在收包时已构造好并缓存在条目里，这里不产生任何分配 */
     private static boolean isVisible(final @NotNull GlowEntry entry, final @NotNull Frustum frustum,
                                      final @NotNull Vec3 camera) {
-        double maxDistance = entry.displayType().isShader() ? SHADER_DISTANCE : OUTLINE_DISTANCE;
+        // 逐帧读配置：ModConfigSpec 的取值自带缓存，改配置即时生效，这里不需要另做缓存
+        double maxDistance = entry.displayType().isShader()
+                ? AAClientConfig.glowShaderDistance()
+                : AAClientConfig.glowOutlineDistance();
 
         return entry.bounds().getCenter().distanceToSqr(camera) <= maxDistance * maxDistance
                 && frustum.isVisible(entry.bounds());

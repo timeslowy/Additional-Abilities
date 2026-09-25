@@ -233,3 +233,23 @@ is glowing", **not** as X-ray.
   the covered edges for free. Set `hide_occluded` to `false` for an "X-ray ore finding" style effect.
 - **Sidebar**: extra notes are appended only when the probability is below 100%, `alpha` is below 1.0, or
   `valid_blocks` is not "match everything".
+### Client config (visibility distance)
+
+How far the glow is **drawn** is a client-side setting. It lives in the `[block_glow]` section of
+`config/additional_abilities-client.toml`, or you can edit it in-game under "Mods -> Additional Abilities for DS
+-> Config". **It takes effect immediately, no restart needed.**
+
+| Option | Default | Notes |
+|---|---|---|
+| `block_glow.outline_distance` | `64.0` | Visibility distance of the wireframe channel (blocks), range `8 - 64` |
+| `block_glow.shader_distance` | `32.0` | Visibility distance of the tint channel (blocks), range `8 - 64`. **Lower this one first if the frame rate suffers** |
+
+Two things to keep in mind:
+
+- **The 64 ceiling is not arbitrary**: the server decides "who receives the glow packets" using a fixed margin,
+  and it **cannot read** this client-side config (client configs are not loaded on a dedicated server at all).
+  The config ceiling is therefore pinned to the server's broadcast margin (`BlockGlows.VIEW_MARGIN`) —
+  **you can only lower it, never raise it**, which structurally rules out the silent truncation where
+  "the client wants to draw but the server never sent the packet".
+- Lowering it affects **only what you see** — not other players, not the glow's duration, and not any
+  server-side behaviour.

@@ -74,7 +74,7 @@ loads**. `/reload` does **not** rebuild them. So if you only run `/reload`, you 
 
 ### `innovative_wingkirin_abilities`
 
-Overrides two ability definitions from Wing Kirin (under `data/wing_kirin/dragonsurvival/dragon_ability/`).
+Overrides some abilities definitions from Wing Kirin (under `data/wing_kirin/dragonsurvival/dragon_ability/`).
 
 #### "Spell Binder" — `wing_kirin:spell_binder`
 
@@ -111,6 +111,14 @@ sounds, upgrade rules) is identical to the original.
 
 Utilized new components *Target Type*`additional_abilities:annulus`&`additional_abilities:domain` comprehensively, is the best ability example.
 If you want to know, please start game to experience byself, will not go into further detail here.
+
+#### "Signal Arrow" - `wing_kirin:signal_arrow`
+
+| Item | Wing kirin original | This pack |
+|---|---|---|
+| Block glow | none | adds `additional_abilities:glow`: `simple_shader` to enchance range notification |
+
+Everything else is identical to the original.
 
 ---
 
