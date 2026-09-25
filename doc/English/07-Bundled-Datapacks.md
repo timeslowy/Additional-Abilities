@@ -12,7 +12,7 @@ this mod's own custom ability components.
 
 | Pack | Display name | Type | Purpose |
 |---|---|---|---|
-| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 (Innovative WingKirin's Abilities) | overriding datapack | Reworks Wing Kirin's "Spell Binder" and "Thunderous Shout" with this mod's custom components |
+| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 (Innovative WingKirin's Abilities) | overriding datapack | Reworks Wing Kirin's some abilities with this mod's custom components |
 
 All bundled packs live under:
 
@@ -100,11 +100,17 @@ check still spends mana based on the real level.
 
 | Item | Wing Kirin original | This pack |
 |---|---|---|
-| Knockback `push_force` | `0.1 + 0.1 × (level - 1)` | **doubled** to `0.2 + 0.2 × (level - 1)` |
 | Camera shake | none | adds `additional_abilities:simple_screen_vision`: `shake`, duration `40 + 20 × (level - 1)` ticks, strength `1 + 1 × (level - 1)`, always applies |
 
 Everything else (damage, weakness, hunger, the exhaustion debuff on `channel_completion`, animations,
 sounds, upgrade rules) is identical to the original.
+
+#### "Fire Ring" - `wing_kirin:fire_ring`
+
+> New ability of Wing Kirin, inspired by Chinese 3A game: **Black Myth:Wukong** 
+
+Utilized new components *Target Type*`additional_abilities:annulus`&`additional_abilities:domain` comprehensively, is the best ability example.
+If you want to know, please start game to experience byself, will not go into further detail here.
 
 ---
 

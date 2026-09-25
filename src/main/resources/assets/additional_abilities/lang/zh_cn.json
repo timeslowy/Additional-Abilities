@@ -45,9 +45,12 @@
 "dragon_ability.sea_dragon.extinguish_breath": "止火之息",
 "dragon_ability.sea_dragon.extinguish_breath.desc": "■喷吐大量水汽，浇灭所及之处的火焰，亦包括失火的生物。\n\n■§f射程§r§7取决于年龄，§f抗火时间§r§7则取决于经验等级。\n\n■§8无法在§4熔岩里§r使用。\n\n§7（不能熄灭蜡烛）",
 "dragon_ability.cave_dragon.piercing_eye": "火眼金睛",
-"dragon_ability.cave_dragon.piercing_eye.desc": "■在熔岩里的生活使你练就了一双§c火眼金睛§r，让目光能穿过迷雾§2（免疫失明）§r。\n\n■§7当然，此效果不能免疫§4黑暗§r，毕竟洞穴龙和坚守者没有打过“半毛钱”交道",
+"dragon_ability.cave_dragon.piercing_eye.desc": "■在熔岩里的生活使你练就了一双§c火眼金睛§r，让目光能穿过迷雾§a（免疫失明）§r。\n\n■§7当然，此效果不能免疫§4黑暗§r，毕竟洞穴龙和坚守者没有打过“半毛钱”交道",
 "dragon_ability.cave_dragon.smoke_breath": "障目之息",
 "dragon_ability.cave_dragon.smoke_breath.desc": "■喷吐大量烟气，蒙蔽敌人的双眼。\n\n■§f射程§r§7取决于年龄，施加的§f失明时间§r§7则取决于经验等级。\n\n■§7也有些许伤害，但远远低于§c炽焰之息§7。\n\n■§8无法在水下或雨间使用§r。",
+"dragon_ability.wing_kirin.fire_ring":"安身法",
+"dragon_ability.wing_kirin.fire_ring.desc":"§7■保命之奇术也，就地施法，片刻过后，即§n以自身为圆心§r§7画出一道火圈并形成§l持续之阵势§r§7。形成瞬间§e可短暂无敌，并把敌方击退至圈外§7。\n\n■阵法可§l存续一段时间，随时步出再折返亦无妨,时限一到，阵势自然幻灭。§r§7若自身及友方§n位于阵法之内§r§7，可获得§a持续的增益效果§e，而敌方则寸步难行。§7\n\n■阵法的§n范围§r§7随§a技能等级而增长§7，同一玩家最多可同时存在§l一个阵法§r§7。§4只能在地上使用，且不可立于水中。\n\n§6§o“强似那铜墙铁壁，更不是画地为牢。”",
+"dragon_ability.wing_kirin.fire_ring.activation.notification.usage_blocked": "§l这阵法水火不容，更不可凭空生造，你可识得？",
 
 "dragon_ability.additional_abilities.test_annulus": "环形测试",
 "dragon_ability.additional_abilities.test_annulus.desc": "§7■ 用于测试§6「环形」§7目标选择器（§fadditional_abilities:annulus§7）的测试技能。\n\n■ 命中的实体会§f发光§7，选择范围是以你为中心的§f环带§7——内半径以内的一切都不会被影响。\n\n■ 按 §fF3+B§7 可以看到选择箱体：§b青色§r 为外边界，§8暗青§r 为内（挖空）边界。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",

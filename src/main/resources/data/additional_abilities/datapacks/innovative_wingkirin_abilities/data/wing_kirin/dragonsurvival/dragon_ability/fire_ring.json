@@ -1,0 +1,416 @@
+{
+    "actions": [
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:heal",
+                            "percentage": 0.2
+                        },
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": "minecraft:resistance",
+                                "amplifier": 4,
+                                "duration": 40
+                            }
+                        }
+                    ],
+                    "targeting_mode": "allies_and_self"
+                },
+                "target_type": "dragonsurvival:self"
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:damage",
+                            "amount": 5,
+                            "damage_type": "dragonsurvival:burn"
+                        },
+                        {
+                            "effect_type": "dragonsurvival:push",
+                            "push_force": -3.0,
+                            "target_direction": {
+                                "direction": "towards_entity"
+                            }
+                        }
+                    ],
+                    "targeting_mode": "non_allies",
+                    "target_conditions": {
+                        "condition": "entity_properties",
+                        "entity": "this",
+                        "predicate": {
+                            "type_specific": {
+                                "type": "dragonsurvival:entity_check_predicate",
+                                "check_for": "living_entity"
+                            }
+                        }
+                    }
+                },
+                "target_type": "dragonsurvival:disc",
+                "radius": {
+                    "type": "minecraft:linear",
+                    "base": 3,
+                    "per_level_above_first": 3
+                },
+                "height": 10,
+                "height_starts_below": true
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "block_effect": [
+                        {
+                            "effect_type": "dragonsurvival:fire",
+                            "ignite_probability": 1.0
+                        }
+                    ]
+                },
+                "target_type": "additional_abilities:annulus",
+                "inner_radius": {
+                    "type": "minecraft:linear",
+                    "base": 3,
+                    "per_level_above_first": 3
+                },
+                "width": 3,
+                "height": 10,
+                "height_starts_below": true
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": [
+                                    "minecraft:regeneration",
+                                    "dragonsurvival:source_of_magic",
+                                    "minecraft:fire_resistance",
+                                    "minecraft:speed",
+                                    "minecraft:strength",
+                                    "minecraft:haste",
+                                    "minecraft:health_boost"
+                                ],
+                                "amplifier": 2,
+                                "duration": 100
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:modifier",
+                            "modifiers": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:fire_ring_beneficial_1",
+                                        "duration": 300,
+                                        "is_hidden": true
+                                    },
+                                    "modifiers": [
+                                        {
+                                            "attribute": "minecraft:generic.burning_time",
+                                            "amount": -1,
+                                            "operation": "add_value"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:effect_removal",
+                            "max_amount": 5,
+                            "categories": [
+                                "HARMFUL"
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:damage_modification",
+                            "modifications": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:fire_ring_beneficial_2",
+                                        "duration": 60,
+                                        "is_hidden":true
+                                    },
+                                    "damage_types": "#wing_kirin:instant_invisibility_immunity",
+                                    "multiplier": 0.7
+                                }
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:glow",
+                            "glows": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:fire_ring_beneficial_3",
+                                        "duration": 60,
+                                        "is_hidden": true
+                                    },
+                                    "color": "#fbdc92"
+                                }
+                            ]
+                        }
+                    ],
+                    "targeting_mode": "allies_and_self"
+                },
+                "target_type": "additional_abilities:domain",
+                "duration": 400,
+                "apply_interval": 40,
+                "shape": "cylinder",
+                "radius": {
+                    "type": "minecraft:linear",
+                    "base": 3,
+                    "per_level_above_first": 3
+                },
+                "height": 10,
+                "height_starts_below": true
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:ignite",
+                            "ignite_ticks": 60
+                        },
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": [
+                                    "minecraft:slowness",
+                                    "weakness"
+                                ],
+                                "amplifier": 1,
+                                "duration": 60
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:effect_removal",
+                            "categories": [
+                                "BENEFICIAL"
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:glow",
+                            "glows": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:fire_ring_harmful_1",
+                                        "duration": 60,
+                                        "is_hidden": true
+                                    },
+                                    "color": "#e81313"
+                                }
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:damage_modification",
+                            "modifications": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:fire_ring_harmful_2",
+                                        "duration": 60,
+                                        "is_hidden": true
+                                    },
+                                    "damage_types": "#minecraft:is_fire",
+                                    "multiplier": 3.0
+                                }
+                            ]
+                        }
+                    ],
+                    "targeting_mode": "non_allies",
+                    "target_conditions": {
+                        "condition": "entity_properties",
+                        "entity": "this",
+                        "predicate": {
+                            "type_specific": {
+                                "type": "dragonsurvival:entity_check_predicate",
+                                "check_for": "living_entity"
+                            }
+                        }
+                    }
+                },
+                "target_type": "additional_abilities:domain",
+                "duration": 400,
+                "apply_interval": 40,
+                "shape": "cylinder",
+                "radius": {
+                    "type": "minecraft:linear",
+                    "base": 3,
+                    "per_level_above_first": 3
+                },
+                "height": 10,
+                "height_starts_below": true
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "block_effect": [
+                        {
+                            "effect_type": "dragonsurvival:particle",
+                            "particle_count": 5,
+                            "particle_data": {
+                                "particle": {
+                                    "type": "instant_effect"
+                                },
+                                "horizontal_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "vertical_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "horizontal_velocity": {
+                                    "base": 1
+                                },
+                                "vertical_velocity": {
+                                    "base": 1
+                                }
+                            }
+                        }
+                    ],
+                    "target_conditions": {
+                        "condition": "inverted",
+                        "term": {
+                            "condition": "block_state_property",
+                            "block": "air"
+                        }
+                    }
+                },
+                "target_type": "additional_abilities:domain",
+                "duration": 400,
+                "apply_interval": 40,
+                "shape": "cylinder",
+                "radius": {
+                    "type": "minecraft:linear",
+                    "base": 3,
+                    "per_level_above_first": 3
+                },
+                "height": 10,
+                "height_starts_below": true
+            }
+        }
+    ],
+    "activation": {
+        "activation_type": "dragonsurvival:simple",
+        "cast_time": 20,
+        "initial_mana_cost": 10,
+        "can_move_while_casting": false,
+        "cooldown": {
+            "type": "minecraft:linear",
+            "base": 1600,
+            "per_level_above_first": 400
+        },
+        "notification": {
+            "usage_blocked": {
+                "translate": "dragon_ability.wing_kirin.fire_ring.activation.notification.usage_blocked"
+            }
+        },
+        "sound": {
+            "charging": "block.fire.ambient",
+            "end": "item.firecharge.use"
+        },
+        "animations": {
+            "start_and_charging": {
+                "animation_key": "cast_mass_buff",
+                "layer": "BASE",
+                "locks_neck": false,
+                "locks_tail": false,
+                "transition_length": 5
+            },
+            "end": {
+                "animation_key": "mass_buff",
+                "layer": "BASE",
+                "locks_tail": false,
+                "locks_neck": false,
+                "transition_length": 5
+            }
+        }
+    },
+    "icon": {
+        "texture_entries": [
+            {
+                "from_level": 0,
+                "texture_resource": "wing_kirin:abilities/fire_ring/fire_ring_0"
+            },
+            {
+                "from_level": 1,
+                "texture_resource": "wing_kirin:abilities/fire_ring/fire_ring_1"
+            },
+            {
+                "from_level": 2,
+                "texture_resource": "wing_kirin:abilities/fire_ring/fire_ring_2"
+            },
+            {
+                "from_level": 3,
+                "texture_resource": "wing_kirin:abilities/fire_ring/fire_ring_3"
+            },
+            {
+                "from_level": 4,
+                "texture_resource": "wing_kirin:abilities/fire_ring/fire_ring_4"
+            }
+        ]
+    },
+    "upgrade": {
+        "upgrade_type": "dragonsurvival:dragon_growth",
+        "maximum_level": 4,
+        "growth_requirement": {
+            "type": "minecraft:lookup",
+            "fallback": 10,
+            "values": [
+                40,
+                50,
+                60,
+                70
+            ]
+        }
+    },
+    "usage_blocked": {
+        "condition": "any_of",
+        "terms": [
+            {
+                "condition": "entity_properties",
+                "entity": "this",
+                "predicate": {
+                    "flags": {
+                        "is_on_ground": false
+                    }
+                }
+            },
+            {
+                "condition": "entity_properties",
+                "entity": "this",
+                "predicate": {
+                    "type_specific": {
+                        "type": "dragonsurvival:custom_predicates",
+                        "eye_in_fluid": "minecraft:water",
+                        "weather_predicate": {}
+                    }
+                }
+            },
+            {
+                "condition": "inverted",
+                "term": {
+                    "condition": "entity_properties",
+                    "entity": "this",
+                    "predicate": {
+                        "type_specific": {
+                            "type": "dragonsurvival:dragon_predicate",
+                            "dragon_species": "dragonsurvival:wing_kirin"
+                        }
+                    }
+                }
+            },
+            {
+                "condition": "weather_check",
+                "raining": true
+            }
+        ]
+    }
+}
