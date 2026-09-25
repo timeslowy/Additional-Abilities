@@ -24,7 +24,9 @@ import org.jetbrains.annotations.NotNull;
  *     <li>{@code /additional-abilities simple-screen-vision clear <targets>}
  *         —— 清空目标玩家身上的屏幕视觉（{@link SimpleScreenVisionCommand}）；</li>
  *     <li>{@code /additional-abilities domain clear <targets>}
- *         —— 清除目标玩家留下的领域（{@link DomainCommand}）。</li>
+ *         —— 清除目标玩家留下的领域（{@link DomainCommand}）；</li>
+ *     <li>{@code /additional-abilities block-glow clear <targets>}
+ *         —— 清除目标玩家造成的方块发光（{@link BlockGlowCommand}）。</li>
  * </ul>
  *
  * <b>权限等级 2</b>（与 {@code /effect clear} 同档，单机存档的拥有者默认满足），
@@ -49,6 +51,7 @@ public final class AACommands {
         dispatcher.register(Commands.literal(ROOT)
                 .requires(source -> source.hasPermission(2))
                 .then(SimpleScreenVisionCommand.subtree())
-                .then(DomainCommand.subtree()));
+                .then(DomainCommand.subtree())
+                .then(BlockGlowCommand.subtree()));
     }
 }

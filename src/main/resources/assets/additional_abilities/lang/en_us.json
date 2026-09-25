@@ -4,6 +4,10 @@
 "additional_abilities.ability.damage_reflection.description": "Reflects %s of damage taken back to enemies within %s blocks",
 "additional_abilities.ability.extinguish.chance": " with a %s chance",
 "additional_abilities.ability.extinguish.description": "§6■ Extinguishes fire, campfires and candles in the affected area%s",
+"additional_abilities.ability.glow.alpha": " at %s opacity",
+"additional_abilities.ability.glow.chance": " with a %s chance",
+"additional_abilities.ability.glow.description": "§6■ Makes affected blocks glow %s§r for %s seconds%s",
+"additional_abilities.ability.glow.restricted": " (only %s)",
 "additional_abilities.ability.percentaged_damage.description": "Based on the target's %2$s, deals %1$s as damage",
 "additional_abilities.ability.percentaged_damage.type.current_health": "current health",
 "additional_abilities.ability.percentaged_damage.type.max_health": "maximum health",
@@ -28,6 +32,7 @@
 "attribute.additional_abilities.dragon_breath_restriction": "Dragon Breath Restriction",
 "attribute.additional_abilities.dragon_breath_restriction.desc": "Narrows the dragon breath area: the cross-section shrinks while the beam extends along your line of sight",
 
+"commands.additional_abilities.block_glow.clear.success": "Cleared %2$s block glow entries caused by %1$s player(s)",
 "commands.additional_abilities.domain.clear.success": "Cleared %2$s domain(s) created by %1$s player(s)",
 "commands.additional_abilities.simple_screen_vision.clear.success": "Cleared simple screen vision from %s player(s)",
 
@@ -64,6 +69,8 @@
 "dragon_ability.additional_abilities.test_charged_hold.desc": "§7■ Same as §6「Charged Test」§7, but with §fcan_charge_exceed_cast_time§7 enabled and §fmax_overcharged_duration: 20§7 set.\n\n■ Hold §fpast the cast time§7 — the charge stays at your highest level and the indicator keeps showing it.\n\n■ The overcharge window is §f20 ticks§7: you may hold at most 20 ticks past the cap, then it §ffires automatically at your highest tier§7 (releasing inside the window fires at your highest tier too).",
 "dragon_ability.additional_abilities.test_domain": "Domain Test",
 "dragon_ability.additional_abilities.test_domain.desc": "§7■ A test ability for the §6Domain§7 target selector (§fadditional_abilities:domain§7).\n\n■ Finishing the cast leaves a §fspherical§7 domain of radius §f5§7 at the §fcasting position§7. It lasts §f10§7 seconds and ticks every §f1§7 second.\n\n■ §fAllies and yourself§7 inside keep gaining §fRegeneration§7 and §fGlowing§7, with particles.\n\n■ The domain §fdoes not follow you§7 — it keeps working where it was cast until the time runs out.\n\n■ §8Not attached to any dragon species; grant it with a command.",
+"dragon_ability.additional_abilities.test_glow": "Block Glow Test",
+"dragon_ability.additional_abilities.test_glow.desc": "§7■ A test ability for the §6「Block Glow」§7 block effect (§fadditional_abilities:glow§7).\n\n■ On cast, centred on you: blocks within §f3 blocks§7 take the §6tint§7 path (gold, semi-transparent), while blocks out to §f6 blocks§7 get a §bcyan wireframe§7 only. The inner ring is therefore covered by §fboth display types at once§7, which shows that different sources stack instead of overriding each other.\n\n■ §fFully occluded§7 and §fnon-full-shaped§7 blocks never take the tint path (flip §fhide_occluded§7 to §ffalse§7 in the JSON for comparison).\n\n■ Lasts §f6 seconds§7 and expires on its own; recasting on the same spot only refreshes the duration.\n\n■ §8Not attached to any species — grant it with a command.",
 "dragon_ability.additional_abilities.test_on_ability_cast": "On Ability Cast Test",
 "dragon_ability.additional_abilities.test_on_ability_cast.desc": "§7■ Test ability for the§6 \"On Ability Cast\"§7 passive trigger type (§fadditional_abilities:on_ability_cast§7).\n\n■ Cast any ability§f listed in abilities§7 (by default §fadditional_abilities:test_screen_vision§7 and §fadditional_abilities:test_charged§7); once§f that cast settles§7 you gain§f Glowing§7 and emit particles.\n\n■ abilities accepts a§f single ability id§7, a§f list of ids§7 or a§f #tag§7; when§f omitted, any active ability§7 will trigger it.\n\n■ §8Not attached to any species — grant it with a command.",
 "dragon_ability.additional_abilities.test_on_block_placed": "On Block Placed Test",

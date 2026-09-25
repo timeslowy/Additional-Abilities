@@ -313,7 +313,7 @@
             }
         },
         "sound": {
-            "charging": "block.fire.ambient",
+            "charging": "block.enchantment_table.use",
             "end": "item.firecharge.use"
         },
         "animations": {

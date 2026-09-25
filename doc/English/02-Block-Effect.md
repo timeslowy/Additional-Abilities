@@ -146,3 +146,90 @@ special branches are not.
 - Division of labour with the built-ins: `dragonsurvival:block_break` can only break fire and is silent;
   `dragonsurvival:conversion` can only map one block state to another (campfire → unlit campfire). To
   "put out every fire in an area", use this effect — it covers fire, campfires and candles at once.
+
+---
+
+## `additional_abilities:glow` — Block Glow
+
+**In one sentence**: makes the selected blocks **glow** — every player within view distance sees the same spot,
+in the same colour, for the same duration.
+
+### Fields
+
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `color` | colour | ✅ | — | Vanilla `TextColor`: one of 16 colour names, or `#RRGGBB` — see below |
+| `alpha` | `0.0` – `1.0` | ❌ | `1.0` | Opacity. `0` means invisible and is skipped outright |
+| `display_type` | enum | ❌ | `outline` | `outline` (wireframe) / `simple_shader` (the whole block tinted) |
+| `duration` | level value | ❌ | `60` (3s) | Glow duration in ticks, clamped to **1 – 1200** |
+| `probability` | level value | ❌ | `1.0` | Chance to take effect, **rolled independently for every block** |
+| `valid_blocks` | block predicate | ❌ | match everything | Same format as Dragon Survival's other block effects |
+| `hide_occluded` | boolean | ❌ | `true` | Whether to drop fully occluded blocks. **`simple_shader` only** |
+
+### How to write the colour
+
+| Form | Examples |
+|---|---|
+| Colour name (16 of them, all lowercase) | `"aqua"` / `"dark_purple"` / `"light_purple"` / `"gold"` … |
+| Hex | `"#3FD9FF"` |
+
+The 16 names are `black` `dark_blue` `dark_green` `dark_aqua` `dark_red` `dark_purple` `gold` `gray`
+`dark_gray` `blue` `green` `aqua` `red` `light_purple` `yellow` `white`.
+
+> ⚠️ **Two traps**:
+> 1. The `#` branch parses the text as a **hex integer**, **not** as CSS shorthand — `"#FFF"` is `0x000FFF`
+>    (a near-black blue), not white. **Always write all six digits.**
+> 2. **`color` itself carries no alpha** (an eight-digit `#AARRGGBB` is out of range and errors out).
+>    For transparency use the separate `alpha` field.
+
+### The two display types
+
+| `display_type` | Look | Cost per block | Filtering applied |
+|---|---|---|---|
+| `outline` | A wireframe along the block's edges — as if the block itself were alight | **A fixed 12 edges**, independent of block shape | Distance (64 blocks) + frustum |
+| `simple_shader` | The whole block model tinted with the colour | Re-bakes the block model every frame — noticeably more expensive | Distance (32 blocks) + frustum + **occluded / non-full-shaped blocks never even leave the server** |
+
+`outline` **uses the depth test**: whatever is hidden behind another block stays hidden — it reads as "the block
+is glowing", **not** as X-ray.
+
+### Example
+
+```json
+"block_effect": [
+  {
+    "effect_type": "additional_abilities:glow",
+    "color": "#3FD9FF",
+    "alpha": 0.85,
+    "display_type": "outline",
+    "duration": { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 20.0 },
+    "valid_blocks": { "type": "minecraft:matching_block_tag", "tag": "minecraft:ores" }
+  }
+]
+```
+
+### Things to know
+
+- **This is not `dragonsurvival:glow`** (and that is the point of the effect):
+  - Dragon Survival's `glow` is an **entity effect** — the state lives on the **player**, and the client only
+    outlines **that player's own dragon model**, so the glow follows the player and only they see it;
+  - this effect is a **block effect** — the target is a block coordinate, synced from the server to nearby
+    players, so the glow is pinned to the world and anyone passing by sees it.
+- **How it relates to `dragonsurvival:block_vision`** (the ore vision ability): that system already implements
+  `outline` / `simple_shader`, but it is a **client-side local scan** attached to a player and never sent over
+  the network. This effect reuses its **rendering** and replaces its **sync and lifetime** semantics.
+- **Purely visual, it does not modify the world**: no `setBlock`, no lighting writes, no neighbour updates —
+  it **does not affect the actual block light level**.
+- **Overlapping works**: different colours / display types are separate entries on the server and are drawn
+  separately on the client, so different casts and different players stack naturally instead of overriding each
+  other. (Same colour and same type merge into one entry — visually indistinguishable anyway.)
+- **The lifetime is self-managed**: the block effect interface has no `remove` (block effects are instantaneous),
+  so this effect keeps its own clock — the server re-sends every live entry once every 20 ticks to "keep it
+  alive", and the client counts down locally from the remaining duration carried in the packet. A repeatedly
+  triggered ability stays lit; once it stops, the glow expires on its own. The trade-off: **if the ability is
+  interrupted early, the glow lingers until `duration` runs out.**
+- **The occlusion filter serves `simple_shader` only**: it asks whether **all six** neighbouring blocks are
+  solid-rendered — a strict definition of "completely occluded", so visible blocks are never dropped by mistake.
+  `outline` skips this filter: its cost is independent of visibility, and with the depth test on the GPU hides
+  the covered edges for free. Set `hide_occluded` to `false` for an "X-ray ore finding" style effect.
+- **Sidebar**: extra notes are appended only when the probability is below 100%, `alpha` is below 1.0, or
+  `valid_blocks` is not "match everything".

@@ -4,6 +4,10 @@
 "additional_abilities.ability.damage_reflection.description": "将所受伤害的 %s 反震回 %s 格内的敌对实体",
 "additional_abilities.ability.extinguish.chance": "，生效概率 %s",
 "additional_abilities.ability.extinguish.description": "§6■ 熄灭所及的火、营火与蜡烛%s",
+"additional_abilities.ability.glow.alpha": "，不透明度 %s",
+"additional_abilities.ability.glow.chance": "，生效概率 %s",
+"additional_abilities.ability.glow.description": "§6■ 使所及方块发出 %s§r 的光，持续 %s 秒%s",
+"additional_abilities.ability.glow.restricted": "，仅限%s",
 "additional_abilities.ability.percentaged_damage.description": "以目标%2$s为基数，造成%1$s的伤害",
 "additional_abilities.ability.percentaged_damage.type.current_health": "当前生命值",
 "additional_abilities.ability.percentaged_damage.type.max_health": "最大生命值",
@@ -28,6 +32,7 @@
 "attribute.additional_abilities.dragon_breath_restriction": "龙息范围收束",
 "attribute.additional_abilities.dragon_breath_restriction.desc": "按比例收束龙息的作用范围：截面变窄、沿视线方向拉长，如同给龙息装上收束器",
 
+"commands.additional_abilities.block_glow.clear.success": "已清除 %1$s 名玩家造成的 %2$s 处方块发光",
 "commands.additional_abilities.domain.clear.success": "已清除 %1$s 名玩家建立的 %2$s 个领域",
 "commands.additional_abilities.simple_screen_vision.clear.success": "已清除 %s 名玩家身上的简单视觉效果",
 
@@ -64,6 +69,8 @@
 "dragon_ability.additional_abilities.test_charged_hold.desc": "§7■ 与§6「蓄力测试」§7相同，但开启了 §fcan_charge_exceed_cast_time§7 并配置 §fmax_overcharged_duration: 20§7。\n\n■ 蓄力§f按过总蓄力时长§7后仍可继续按住，档位停在自身最高档不再上升，提示会一直保持。\n\n■ 超限窗口为 §f20 刻§7：按满后最多再按住 20 刻，到点会§f以自身最高档自动释放§7（窗口内松手同样按最高档释放）。",
 "dragon_ability.additional_abilities.test_domain": "领域测试",
 "dragon_ability.additional_abilities.test_domain.desc": "§7■ 用于测试§6「领域」§7目标选择器（§fadditional_abilities:domain§7）的测试技能。\n\n■ 施法完成后在§f施法位置§7留下一个半径 §f5§7 格、持续 §f10§7 秒的§f球形§7领域，每 §f1§7 秒结算一次。\n\n■ 领域内的§f盟友与自己§7持续获得§f生命恢复§7与§f发光§7，并伴随粒子。\n\n■ 领域§f不会跟着你走§7——你离开后它仍在原地继续作用，直到时间耗尽。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
+"dragon_ability.additional_abilities.test_glow": "方块发光测试",
+"dragon_ability.additional_abilities.test_glow.desc": "§7■ 用于测试§6「方块发光」§7方块效果（§fadditional_abilities:glow§7）的测试技能。\n\n■ 施法后以你为中心：§f3 格内§7的方块走§6整体染色§7通道（金色、带半透明），§f6 格内§7的其余方块只有§b青色线框§7。内圈因此同时被§f两种显示方式§7覆盖，用于验证「不同来源叠加、互不顶替」。\n\n■ §f被完全遮挡§7与§f非完整形状§7的方块不会走染色通道（可在 JSON 里把 §fhide_occluded§7 改成 §ffalse§7 做对照）。\n\n■ 持续 §f6 秒§7后自动消失；同一处反复施法只刷新时长，不会叠加。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
 "dragon_ability.additional_abilities.test_on_ability_cast": "使用技能测试",
 "dragon_ability.additional_abilities.test_on_ability_cast.desc": "§7■ 用于测试§6「使用技能后」§7被动触发类型（§fadditional_abilities:on_ability_cast§7）的测试技能。\n\n■ 先施放§f列在 abilities 里§7的任一技能（默认 §fadditional_abilities:test_screen_vision§7 与 §fadditional_abilities:test_charged§7），§f该次施法结算后§7自身会获得§f发光§7并冒出粒子。\n\n■ abilities 可写§f单个技能 id§7、§f id 列表§7或§f#标签§7；§f省略则任意主动技能§7施法都会触发。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
 "dragon_ability.additional_abilities.test_on_block_placed": "放置方块测试",

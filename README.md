@@ -43,6 +43,7 @@
 | 实体效果 | `effect_type` | `additional_abilities:simple_screen_vision` | 给对方玩家来一下镜头抖动 / 画面模糊 | [01](doc/中文/01-实体效果.md) |
 | 方块效果 | `effect_type` | `additional_abilities:block_quake` | 让选中方块跳一下再落回（纯视觉） | [02](doc/中文/02-方块效果.md) |
 | 方块效果 | `effect_type` | `additional_abilities:extinguish` | 扑灭所及的火、营火与蜡烛（`fire` 的反向版） | [02](doc/中文/02-方块效果.md) |
+| 方块效果 | `effect_type` | `additional_abilities:glow` | 让选中方块发光（颜色 / 半透明可指定，视距内所有玩家可见） | [02](doc/中文/02-方块效果.md) |
 | 目标选择器 | `target_type` | `additional_abilities:anti_dragon_breath` | 龙息锥形，但朝施法者**身后**延伸 | [03](doc/中文/03-目标选择器.md) |
 | 目标选择器 | `target_type` | `additional_abilities:annulus` | 环形（圆盘挖空内圈） | [03](doc/中文/03-目标选择器.md) |
 | 目标选择器 | `target_type` | `additional_abilities:domain` | 领域 —— 在施法处留下一块持续存在的区域，按间隔反复作用 | [03](doc/中文/03-目标选择器.md) |
@@ -64,6 +65,7 @@
 |---|---|---|
 | `/additional-abilities simple-screen-vision clear <targets>` | 清空目标玩家身上的屏幕视觉 | [06](doc/中文/06-调试与查询指令.md) |
 | `/additional-abilities domain clear <targets>` | 清除目标玩家留下的领域 | [06](doc/中文/06-调试与查询指令.md) |
+| `/additional-abilities block-glow clear <targets>` | 清除目标玩家造成的方块发光 | [06](doc/中文/06-调试与查询指令.md) |
 | `/dragon-ability query <目标> <技能> current_charged_level` | 查询蓄力档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
 | `/dragon-ability query <目标> <技能> current_selected_level` | 查询滚轮选定的释放档位（追加项） | [06](doc/中文/06-调试与查询指令.md) |
 
@@ -150,7 +152,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 | 文件 | 内容 |
 |---|---|
 | [01-实体效果.md](doc/中文/01-实体效果.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` |
-| [02-方块效果.md](doc/中文/02-方块效果.md) | `block_quake` / `extinguish` |
+| [02-方块效果.md](doc/中文/02-方块效果.md) | `block_quake` / `extinguish` / `glow` |
 | [03-目标选择器.md](doc/中文/03-目标选择器.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-激活类型.md](doc/中文/04-激活类型.md) | `charged`（含蓄力档位换算、HUD 表现、位置与音效配置、查询指令、技能信息面板的激活类型显示） |
 | [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 5 个技能、所属龙种、解锁方式 |
@@ -228,6 +230,7 @@ The values added by this mod are:
 | Entity effect | `effect_type` | `additional_abilities:simple_screen_vision` | Give another player a camera shake or a screen blur | [01](doc/English/01-Entity-Effect.md) |
 | Block effect | `effect_type` | `additional_abilities:block_quake` | Make selected blocks hop and settle back (visual only) | [02](doc/English/02-Block-Effect.md) |
 | Block effect | `effect_type` | `additional_abilities:extinguish` | Put out fire, campfires and candles in the affected area (mirror of `fire`) | [02](doc/English/02-Block-Effect.md) |
+| Block effect | `effect_type` | `additional_abilities:glow` | Make selected blocks glow (colour / alpha configurable, visible to every player in range) | [02](doc/English/02-Block-Effect.md) |
 | Target type | `target_type` | `additional_abilities:anti_dragon_breath` | A dragon breath cone, but extending **behind** the caster | [03](doc/English/03-Target-Type.md) |
 | Target type | `target_type` | `additional_abilities:annulus` | A ring — a disc with the inner circle hollowed out | [03](doc/English/03-Target-Type.md) |
 | Target type | `target_type` | `additional_abilities:domain` | A domain — a persistent area left at the casting spot that keeps acting on an interval | [03](doc/English/03-Target-Type.md) |
@@ -249,6 +252,7 @@ The values added by this mod are:
 |---|---|---|
 | `/additional-abilities simple-screen-vision clear <targets>` | Clear screen vision from the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/additional-abilities domain clear <targets>` | Clear the domains left behind by the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
+| `/additional-abilities block-glow clear <targets>` | Clear the block glow caused by the targeted players | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/dragon-ability query <target> <ability> current_charged_level` | Query the charge tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
 | `/dragon-ability query <target> <ability> current_selected_level` | Query the wheel-picked release tier (appended entry) | [06](doc/English/06-Debug-and-Query-Commands.md) |
 
@@ -339,7 +343,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 | File | Contents |
 |---|---|
 | [01-Entity-Effect.md](doc/English/01-Entity-Effect.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` |
-| [02-Block-Effect.md](doc/English/02-Block-Effect.md) | `block_quake` / `extinguish` |
+| [02-Block-Effect.md](doc/English/02-Block-Effect.md) | `block_quake` / `extinguish` / `glow` |
 | [03-Target-Type.md](doc/English/03-Target-Type.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-Activation-Type.md](doc/English/04-Activation-Type.md) | `charged` (tier conversion, HUD behaviour, position and sound config, query command, activation type shown in the ability info panel) |
 | [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 5 bundled abilities, their species and unlock conditions |

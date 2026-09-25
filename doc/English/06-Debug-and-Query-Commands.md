@@ -2,7 +2,7 @@
 
 > Applies to: Additional Abilities for DS `2.0.0`
 
-This mod adds one standalone command tree, **`/additional-abilities`** (with 2 debug sub-commands), and
+This mod adds one standalone command tree, **`/additional-abilities`** (with 3 debug sub-commands), and
 **appends** 2 query sub-commands to Dragon Survival's command tree. All of them require
 **permission level 2** (the same as `/effect clear`; the owner of a single-player world has it by default);
 for the standalone tree the check is applied once, on the **root** node.
@@ -10,7 +10,8 @@ for the standalone tree the check is applied once, on the **root** node.
 ```
 /additional-abilities
  ├─ simple-screen-vision clear <targets>      Clear simple screen vision from the targeted players
- └─ domain clear <targets>                    Clear the domains left behind by the targeted players
+ ├─ domain clear <targets>                    Clear the domains left behind by the targeted players
+ └─ block-glow clear <targets>                Clear the block glow caused by the targeted players
 ```
 
 ---
@@ -94,7 +95,51 @@ The **command's return value is the number of domains actually removed**, so it 
 
 ---
 
-## 3. `/dragon-ability query <target> <ability> current_charged_level`
+## 3. `/additional-abilities block-glow clear <targets>`
+
+Clears the block glow left behind by the `additional_abilities:glow` block effect, for the players selected by
+`<targets>` **as the casters** (see [02-Block-Effect.md](02-Block-Effect.md)).
+
+```text
+/additional-abilities block-glow clear Steve
+/additional-abilities block-glow clear @a
+/additional-abilities block-glow clear @p[distance=..32]
+```
+
+### What exactly does it clear
+
+`<targets>` selects the **causers**, not "the players whose screen is affected" — the same convention as
+`domain clear` above.
+
+- Block glow is **shared** on the server by "position + colour + display type" (which is exactly what lets
+  different casters stack), so the server has no notion of "this glow belongs to one player's screen only".
+  The only reliable meaning is therefore to **revoke these casters' contributions**;
+- a spot that other players are still contributing to is **left untouched**, so nobody else is affected;
+- once a spot has no contributor left the entry is dropped, and nearby players are told **immediately** to stop
+  drawing it (otherwise they would keep it until the next 20-tick refresh).
+
+### Return value
+
+The number of entries **removed outright** (usable with `/execute store result`); `0` when the targeted players
+have no live contribution.
+
+### How it differs from waiting for natural expiry
+
+| | Takes effect | Scope |
+|---|---|---|
+| Waiting out `duration` | up to 60 seconds later | that one entry |
+| This command | **immediately** | revokes only the `<targets>` contributions; other players' glow stays |
+
+### Things to know
+
+- **It is a debug "undo", not an off switch**: while the ability keeps triggering, the glow is registered again
+  on the very next tick. To make it disappear for good, disable the ability first.
+- The clear only applies to the present moment: the client is told "this entry is gone", and the server will not
+  refresh it again.
+
+---
+
+## 4. `/dragon-ability query <target> <ability> current_charged_level`
 
 One of the two **sub-commands appended** to Dragon Survival's own ability query, covering the charged-tier
 family (`additional_abilities:charged` and `additional_abilities:optional_charged`):
@@ -124,7 +169,7 @@ The output reuses Dragon Survival's own query result message, so it is **formatt
 
 ---
 
-## 4. `/dragon-ability query <target> <ability> current_selected_level`
+## 5. `/dragon-ability query <target> <ability> current_selected_level`
 
 Works with `additional_abilities:optional_charged` (the optional charged-tier type) and its wheel picking:
 
@@ -158,7 +203,7 @@ of every cast (release or cancel), so it never leaks into the next one.
 
 ---
 
-## 5. For reference: Dragon Survival's own query entries
+## 6. For reference: Dragon Survival's own query entries
 
 Under `/dragon-ability query <target> <ability>` these sub-entries already exist and can be mixed with the ones
 above:
@@ -175,7 +220,7 @@ above:
 
 ---
 
-## 6. Granting abilities by hand (Dragon Survival's own, not added by this mod)
+## 7. Granting abilities by hand (Dragon Survival's own, not added by this mod)
 
 This mod's `test_*` abilities are not attached to any species, so grant them manually while debugging:
 

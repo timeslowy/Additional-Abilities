@@ -19,8 +19,14 @@ public class AANetwork {
      * <p>
      * 6 → 7：{@link ChargedReleasePayload} 增加 {@code releaseLevel} 字段
      * （支撑 {@code additional_abilities:optional_charged} 的滚轮选档与取消）。
+     * <p>
+     * 7 → 8：新增 {@link BlockGlowPayload}（方块发光：服务端 → 客户端的位置 + 颜色 + 剩余时长）。
+     * <p>
+     * 8 → 9：{@link BlockGlowPayload} 的 {@code remainingTicks} 增加「{@code <= 0} 表示该条目已失效、
+     * 客户端应移除」的语义（供 {@code /additional-abilities block-glow clear} 使用）。
+     * 旧客户端会把它当作"忽略"继续显示，因此属于必须递增的破坏性变更。
      */
-    private static final String PROTOCOL_VERSION = "7";
+    private static final String PROTOCOL_VERSION = "9";
 
     @SubscribeEvent
     public static void register(final @NotNull RegisterPayloadHandlersEvent event) {
@@ -34,6 +40,9 @@ public class AANetwork {
 
         // 方块震动：仅服务端 → 客户端
         registrar.playToClient(BlockQuakePayload.TYPE, BlockQuakePayload.STREAM_CODEC, BlockQuakePayload::handleClient);
+
+        // 方块发光：仅服务端 → 客户端
+        registrar.playToClient(BlockGlowPayload.TYPE, BlockGlowPayload.STREAM_CODEC, BlockGlowPayload::handleClient);
 
         // 蓄力释放：仅客户端 → 服务端
         registrar.playToServer(ChargedReleasePayload.TYPE, ChargedReleasePayload.STREAM_CODEC, ChargedReleasePayload::handleServer);
