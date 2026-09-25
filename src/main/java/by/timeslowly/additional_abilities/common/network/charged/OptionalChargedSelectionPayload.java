@@ -1,8 +1,8 @@
-package by.timeslowly.additional_abilities.common.network;
+package by.timeslowly.additional_abilities.common.network.charged;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.common.ability.ChargedCasts;
+import by.timeslowly.additional_abilities.common.ability.activation.ChargedCasts;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;

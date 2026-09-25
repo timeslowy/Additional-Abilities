@@ -4,8 +4,8 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilit
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.block_effects.AbilityBlockEffect;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
 import by.dragonsurvivalteam.dragonsurvival.util.Functions;
-import by.timeslowly.additional_abilities.common.ability.BlockGlows;
-import by.timeslowly.additional_abilities.common.ability.GlowDisplayType;
+import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlows;
+import by.timeslowly.additional_abilities.common.ability.block_effects.GlowDisplayType;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

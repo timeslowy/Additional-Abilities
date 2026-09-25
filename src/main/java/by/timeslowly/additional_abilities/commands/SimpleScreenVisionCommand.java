@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.commands;
 
-import by.timeslowly.additional_abilities.common.network.ScreenVisionClearPayload;
+import by.timeslowly.additional_abilities.common.network.screenvision.ScreenVisionClearPayload;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.LiteralCommandNode;

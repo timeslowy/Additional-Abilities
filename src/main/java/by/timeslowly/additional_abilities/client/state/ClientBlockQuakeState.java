@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.client;
+package by.timeslowly.additional_abilities.client.state;
 
 import by.timeslowly.additional_abilities.common.network.BlockQuakePayload;
 import com.mojang.logging.LogUtils;

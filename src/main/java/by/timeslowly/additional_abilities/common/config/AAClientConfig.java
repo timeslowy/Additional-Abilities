@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.common.config;
 
-import by.timeslowly.additional_abilities.common.ability.BlockGlows;
+import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlows;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;

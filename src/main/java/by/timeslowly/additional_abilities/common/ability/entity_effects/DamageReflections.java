@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.common.ability;
+package by.timeslowly.additional_abilities.common.ability.entity_effects;
 
 import by.timeslowly.additional_abilities.registry.AAAttachments;
 import by.timeslowly.additional_abilities.registry.dragon.ability.entity_effects.DamageReflectionEffect;

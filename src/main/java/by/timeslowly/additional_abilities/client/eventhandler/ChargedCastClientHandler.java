@@ -8,7 +8,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.OptionalChargedSelection;
-import by.timeslowly.additional_abilities.common.network.ChargedReleasePayload;
+import by.timeslowly.additional_abilities.common.network.charged.ChargedReleasePayload;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;

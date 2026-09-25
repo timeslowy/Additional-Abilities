@@ -1,7 +1,7 @@
 package by.timeslowly.additional_abilities.common.network;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.client.ClientBlockQuakeState;
+import by.timeslowly.additional_abilities.client.state.ClientBlockQuakeState;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

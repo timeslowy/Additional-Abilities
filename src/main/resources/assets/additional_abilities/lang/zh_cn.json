@@ -102,6 +102,7 @@
 "additional_abilities.configuration.block_glow.outline_distance.tooltip": "线框通道画到多远（格），8 ~ 64，默认 64。线框代价极低且与方块形状无关，通常不用调小；调小只影响你自己的画面。",
 "additional_abilities.configuration.block_glow.shader_distance": "整块染色可见距离",
 "additional_abilities.configuration.block_glow.shader_distance.tooltip": "整块染色通道画到多远（格），8 ~ 64，默认 32。这条通道逐帧烘焙方块模型，是发光的主要开销来源，掉帧时优先调小它；调小只影响你自己的画面。",
+"additional_abilities.configuration.block_glow.tooltip": "方块发光（additional_abilities:glow）的可见距离。\n两条通道的代价差一个量级：线框恒为 12 条棱、与方块形状无关；整体染色要逐帧烘焙方块模型。\n因此两者的默认值与建议取值不同 —— 掉帧时优先调小染色那条。\n改完即时生效、无需重启；上限由服务端的广播余量决定，配置界面里已是最大可设值。",
 "additional_abilities.configuration.charged_indicator": "蓄力提示（读数区与音效）",
 "additional_abilities.configuration.charged_indicator.anchor": "摆放方位",
 "additional_abilities.configuration.charged_indicator.anchor.cast_bar_above": "蓄力条上方",
@@ -135,6 +136,7 @@
 "additional_abilities.configuration.charged_indicator.play_sound.tooltip": "蓄力时每升一档播放一次提示音；用滚轮选档时另有一声更短的点击音。关掉后两个声音一起静音（不影响龙之生存自己的蓄力 / 释放音效）。",
 "additional_abilities.configuration.charged_indicator.sound_volume": "提示音音量（倍率）",
 "additional_abilities.configuration.charged_indicator.sound_volume.tooltip": "总倍率，0.0 ~ 1.0，叠在每种提示音各自的基准音量之上（档位提升音 0.7、滚轮选档音 0.6 —— 两者的差异是刻意的）。默认 1.0 即与旧版响度一致；仅在开关打开时生效。",
+"additional_abilities.configuration.charged_indicator.tooltip": "蓄力档位的交互反馈：读数区（HUD）位置，以及档位提示音。",
 "additional_abilities.configuration.section.additional.abilities.client.toml": "客户端配置",
 "additional_abilities.configuration.section.additional.abilities.client.toml.title": "%s 客户端配置"
 }

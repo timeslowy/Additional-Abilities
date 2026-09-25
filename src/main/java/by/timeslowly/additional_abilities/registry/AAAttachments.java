@@ -1,8 +1,8 @@
 package by.timeslowly.additional_abilities.registry;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.common.ability.DamageReflections;
-import by.timeslowly.additional_abilities.common.ability.domains.DomainData;
+import by.timeslowly.additional_abilities.common.ability.entity_effects.DamageReflections;
+import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainData;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;

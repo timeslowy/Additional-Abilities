@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.common.eventhandler.abilities;
 
-import by.timeslowly.additional_abilities.common.ability.domains.DomainData;
+import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainData;
 import by.timeslowly.additional_abilities.registry.AAAttachments;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;

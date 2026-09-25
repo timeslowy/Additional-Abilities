@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.commands;
 
-import by.timeslowly.additional_abilities.common.ability.BlockGlows;
+import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlows;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.LiteralCommandNode;

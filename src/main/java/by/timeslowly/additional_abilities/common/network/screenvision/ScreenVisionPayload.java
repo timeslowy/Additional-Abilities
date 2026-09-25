@@ -1,7 +1,7 @@
-package by.timeslowly.additional_abilities.common.network;
+package by.timeslowly.additional_abilities.common.network.screenvision;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.client.ClientScreenVisionState;
+import by.timeslowly.additional_abilities.client.state.ClientScreenVisionState;
 import by.timeslowly.additional_abilities.common.vision.ScreenVisionType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;

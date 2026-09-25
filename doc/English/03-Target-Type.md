@@ -31,6 +31,8 @@ A target type decides **who the ability selects**. It is written inside `actions
 **In one sentence**: exactly the same as Dragon Survival's built-in `dragonsurvival:dragon_breath`, except
 the cone extends **behind** the caster.
 
+TODO: inject picture here.
+
 ### Fields
 
 | Field | Type | Required | Default | Notes |
@@ -103,6 +105,8 @@ stays on the body's side.
 
 **In one sentence**: the same idea as Dragon Survival's built-in `dragonsurvival:disc`, but with the
 **inner circle hollowed out** — only the band between the inner and outer radius is selected.
+
+TODO: inject picture here.
 
 ### Fields
 

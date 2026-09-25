@@ -1,8 +1,8 @@
 package by.timeslowly.additional_abilities.common.network;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.client.ClientBlockGlowState;
-import by.timeslowly.additional_abilities.common.ability.GlowDisplayType;
+import by.timeslowly.additional_abilities.client.state.ClientBlockGlowState;
+import by.timeslowly.additional_abilities.common.ability.block_effects.GlowDisplayType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

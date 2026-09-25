@@ -3,7 +3,7 @@ package by.timeslowly.additional_abilities.registry.dragon.ability.entity_effect
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.entity_effects.AbilityEntityEffect;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
-import by.timeslowly.additional_abilities.common.ability.DamageReflections;
+import by.timeslowly.additional_abilities.common.ability.entity_effects.DamageReflections;
 import by.timeslowly.additional_abilities.common.eventhandler.abilities.DamageReflectionEventHandler;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;

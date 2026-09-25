@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.common.ability;
+package by.timeslowly.additional_abilities.common.ability.activation;
 
 import by.dragonsurvivalteam.dragonsurvival.common.handlers.magic.ManaHandler;
 import by.dragonsurvivalteam.dragonsurvival.network.animation.StopAbilityAnimation;
@@ -7,7 +7,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.common.network.ChargedReleasePayload;
+import by.timeslowly.additional_abilities.common.network.charged.ChargedReleasePayload;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,7 +33,7 @@ import java.util.UUID;
  * "提前松手按当前档位释放"必须由本模组补上：
  * <ol>
  *     <li>客户端松手时发出
- *         {@link by.timeslowly.additional_abilities.common.network.ChargedReleasePayload}；</li>
+ *         {@link ChargedReleasePayload}；</li>
  *     <li>服务端在这里校验、换算档位，并执行一次默认动作（或按请求取消）。</li>
  * </ol>
  *

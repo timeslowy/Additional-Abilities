@@ -3,7 +3,7 @@ package by.timeslowly.additional_abilities.registry.dragon.ability.entity_effect
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.entity_effects.AbilityEntityEffect;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
-import by.timeslowly.additional_abilities.common.network.ScreenVisionSender;
+import by.timeslowly.additional_abilities.common.network.screenvision.ScreenVisionSender;
 import by.timeslowly.additional_abilities.common.vision.ScreenVisionType;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

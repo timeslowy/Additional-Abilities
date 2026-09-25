@@ -134,6 +134,8 @@ The two variables available inside the expression:
 
 **In one sentence**: overlay a camera shake or a screen blur on another player's view.
 
+TODO: inject picture here.
+
 ### Fields
 
 | Field | Type | Required | Default | Notes |

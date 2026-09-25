@@ -1,8 +1,8 @@
-package by.timeslowly.additional_abilities.client;
+package by.timeslowly.additional_abilities.client.state;
 
 import by.dragonsurvivalteam.dragonsurvival.client.render.BlockVisionHandler;
 import by.dragonsurvivalteam.dragonsurvival.common.codecs.block_vision.BlockVision;
-import by.timeslowly.additional_abilities.common.ability.GlowDisplayType;
+import by.timeslowly.additional_abilities.common.ability.block_effects.GlowDisplayType;
 import by.timeslowly.additional_abilities.common.network.BlockGlowPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

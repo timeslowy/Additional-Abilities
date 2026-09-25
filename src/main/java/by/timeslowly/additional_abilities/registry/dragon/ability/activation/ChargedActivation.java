@@ -35,7 +35,7 @@ import java.util.Optional;
  * 落地手法：DS 里所有效果取等级的唯一来源都是 {@link DragonAbilityInstance#level()}
  * （源码中一律写作 {@code ability.level()}），因此本模组在服务端执行动作前临时
  * {@code setLevel(档位)}、执行完立刻还原，并在同一窗口内完成扣蓝与冷却结算。
- * 详见 {@code by.timeslowly.additional_abilities.common.ability.ChargedCasts#fire}
+ * 详见 {@code by.timeslowly.additional_abilities.common.ability.activation.ChargedCasts#fire}
  * 与 {@code by.timeslowly.additional_abilities.client.eventhandler.ChargedCastClientHandler}。
  * <p>
  * 按档位求值的字段：

@@ -1,7 +1,7 @@
 package by.timeslowly.additional_abilities.client.eventhandler;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.client.ClientBlockQuakeState;
+import by.timeslowly.additional_abilities.client.state.ClientBlockQuakeState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

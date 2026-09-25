@@ -20,6 +20,8 @@ A block effect lives inside the `applied_effects.block_effect[]` array. Each ele
 
 **In one sentence**: makes the selected blocks hop into the air like a ground slam, then settle back down.
 
+TODO: inject picture here.
+
 ### Fields
 
 | Field | Type | Required | Default | Notes |
@@ -153,6 +155,8 @@ special branches are not.
 
 **In one sentence**: makes the selected blocks **glow** — every player within view distance sees the same spot,
 in the same colour, for the same duration.
+
+TODO: inject picture here.
 
 ### Fields
 

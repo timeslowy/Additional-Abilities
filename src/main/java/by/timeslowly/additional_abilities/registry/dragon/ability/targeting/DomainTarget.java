@@ -4,10 +4,10 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilit
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.targeting.AbilityTargeting;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
 import by.dragonsurvivalteam.dragonsurvival.util.Functions;
-import by.timeslowly.additional_abilities.common.ability.domains.DomainAnchor;
-import by.timeslowly.additional_abilities.common.ability.domains.DomainData;
-import by.timeslowly.additional_abilities.common.ability.domains.DomainInstance;
-import by.timeslowly.additional_abilities.common.ability.domains.DomainShape;
+import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainAnchor;
+import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainData;
+import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainInstance;
+import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainShape;
 import by.timeslowly.additional_abilities.registry.AAAttachments;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;

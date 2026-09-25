@@ -1,6 +1,7 @@
-package by.timeslowly.additional_abilities.client;
+package by.timeslowly.additional_abilities.client.renderer;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
+import by.timeslowly.additional_abilities.client.state.ClientScreenVisionState;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;

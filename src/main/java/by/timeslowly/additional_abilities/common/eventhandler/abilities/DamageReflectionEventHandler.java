@@ -2,7 +2,7 @@ package by.timeslowly.additional_abilities.common.eventhandler.abilities;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.targeting.TargetingMode;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.common.ability.DamageReflections;
+import by.timeslowly.additional_abilities.common.ability.entity_effects.DamageReflections;
 import by.timeslowly.additional_abilities.registry.AADamageTypes;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;

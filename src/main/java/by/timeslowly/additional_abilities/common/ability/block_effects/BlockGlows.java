@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.common.ability;
+package by.timeslowly.additional_abilities.common.ability.block_effects;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.network.BlockGlowPayload;

@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.common.ability;
+package by.timeslowly.additional_abilities.common.ability.block_effects;
 
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;

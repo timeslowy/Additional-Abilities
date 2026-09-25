@@ -6,7 +6,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilit
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.OptionalChargedSelection;
 import by.timeslowly.additional_abilities.common.config.AAClientConfig;
-import by.timeslowly.additional_abilities.common.network.OptionalChargedSelectionPayload;
+import by.timeslowly.additional_abilities.common.network.charged.OptionalChargedSelectionPayload;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;

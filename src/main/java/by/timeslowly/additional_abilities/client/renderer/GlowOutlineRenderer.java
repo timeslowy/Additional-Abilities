@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.client;
+package by.timeslowly.additional_abilities.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;

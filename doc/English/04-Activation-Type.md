@@ -13,6 +13,8 @@
 **In one sentence**: hold the ability key to charge, then **release to fire at the tier you reached** —
 the longer you hold, the stronger it gets.
 
+TODO: inject picture here.
+
 Behaviourally it is the "hold to cast" of `dragonsurvival:simple`, except the casting process is treated as
 **charging**: the tier climbs while you hold, and the moment you release the ability fires once at the tier
 you had reached.
@@ -67,6 +69,8 @@ reachable.
 
 **In one line**: the `charged` variant that lets you **pick the tier you release** with the mouse wheel while
 charging — including picking *cancel, release nothing*.
+
+TODO: inject picture here.
 
 The fields are **identical** to `charged` (same table as above); only one default differs, plus a wheel
 interaction on top.
@@ -248,6 +252,8 @@ lower pitch so it stands out). Both cues share one toggle and one volume — see
 
 When an ability sets `max_overcharged_duration`, the readout gains an **overcharge row** below the usual two:
 a `remaining/total window` string (e.g. `18/20`) with a thin bar underneath that **drains** as the window runs out.
+
+TODO: inject picture here.
 
 | Colour | Meaning |
 |---|---|

@@ -1,5 +1,9 @@
 package by.timeslowly.additional_abilities.common.network;
 
+import by.timeslowly.additional_abilities.common.network.charged.ChargedReleasePayload;
+import by.timeslowly.additional_abilities.common.network.charged.OptionalChargedSelectionPayload;
+import by.timeslowly.additional_abilities.common.network.screenvision.ScreenVisionClearPayload;
+import by.timeslowly.additional_abilities.common.network.screenvision.ScreenVisionPayload;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;

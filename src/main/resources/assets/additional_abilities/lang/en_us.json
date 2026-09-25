@@ -100,6 +100,7 @@
 "additional_abilities.configuration.block_glow.outline_distance.tooltip": "How far the wireframe channel is drawn (blocks), 8 - 64, default 64. Its cost is tiny and independent of block shape, so there is usually no reason to lower it; lowering it only affects your own view.",
 "additional_abilities.configuration.block_glow.shader_distance": "Tint distance",
 "additional_abilities.configuration.block_glow.shader_distance.tooltip": "How far the tint channel is drawn (blocks), 8 - 64, default 32. This channel re-bakes the block model every frame and dominates the cost, so lower it first if the frame rate suffers; lowering it only affects your own view.",
+"additional_abilities.configuration.block_glow.tooltip": "Visibility distance of the block glow effect (additional_abilities:glow).\nThe two channels differ by an order of magnitude in cost: the wireframe is always 12 edges and independent of block shape, while the tint re-bakes the block model every frame.\nHence the different defaults - lower the tint one first if the frame rate suffers.\nTakes effect immediately; the ceiling is the server's broadcast margin, already the max here.",
 "additional_abilities.configuration.charged_indicator": "Charge indicator (readout & sounds)",
 "additional_abilities.configuration.charged_indicator.anchor": "Placement",
 "additional_abilities.configuration.charged_indicator.anchor.cast_bar_above": "Above the cast bar",
@@ -133,6 +134,7 @@
 "additional_abilities.configuration.charged_indicator.play_sound.tooltip": "Plays a sound each time the charge tier goes up, plus a shorter click when picking a tier with the wheel. Turning it off silences both (Dragon Survival's own charging / release sounds are unaffected).",
 "additional_abilities.configuration.charged_indicator.sound_volume": "Tier sound volume (multiplier)",
 "additional_abilities.configuration.charged_indicator.sound_volume.tooltip": "Master multiplier, 0.0 - 1.0, applied on top of each sound's own base volume (0.7 for the tier sound, 0.6 for the wheel click; the difference is intentional). Default 1.0 matches the previous loudness; only takes effect while the toggle above is on.",
+"additional_abilities.configuration.charged_indicator.tooltip": "Charged-tier feedback: readout (HUD) placement and the tier sounds.",
 "additional_abilities.configuration.section.additional.abilities.client.toml": "Client config",
 "additional_abilities.configuration.section.additional.abilities.client.toml.title": "%s client config"
 }

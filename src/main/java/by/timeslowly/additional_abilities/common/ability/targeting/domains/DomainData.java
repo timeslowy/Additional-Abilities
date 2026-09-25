@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.common.ability.domains;
+package by.timeslowly.additional_abilities.common.ability.targeting.domains;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import net.minecraft.resources.ResourceKey;
