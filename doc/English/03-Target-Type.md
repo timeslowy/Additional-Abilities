@@ -31,7 +31,7 @@ A target type decides **who the ability selects**. It is written inside `actions
 **In one sentence**: exactly the same as Dragon Survival's built-in `dragonsurvival:dragon_breath`, except
 the cone extends **behind** the caster.
 
-TODO: inject picture here.
+![反向龙息锥形anti-dragon-breath](../图片Pictures/反向龙息anti-dragon.png)
 
 ### Fields
 
@@ -106,7 +106,7 @@ stays on the body's side.
 **In one sentence**: the same idea as Dragon Survival's built-in `dragonsurvival:disc`, but with the
 **inner circle hollowed out** — only the band between the inner and outer radius is selected.
 
-TODO: inject picture here.
+![环形选择annulus](../图片Pictures/环形选择annulus.png)
 
 ### Fields
 
@@ -197,6 +197,8 @@ The config above selects a band from radius 5 to 6, three blocks thick starting 
 **In one sentence**: the cast **leaves a persistent area behind at the casting spot**; every
 `apply_interval` ticks it replays `applied_effects` onto the entities / blocks inside, and it disappears
 once `duration` runs out.
+
+![领域效果domain](../图片Pictures/领域效果domain.png)
 
 ### How it differs from every built-in target type
 

@@ -134,7 +134,7 @@ The two variables available inside the expression:
 
 **In one sentence**: overlay a camera shake or a screen blur on another player's view.
 
-TODO: inject picture here.
+![简单屏幕视觉screen-vision](../图片Pictures/屏幕效果screen-vision.png)
 
 ### Fields
 

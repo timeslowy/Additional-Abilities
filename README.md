@@ -6,17 +6,23 @@
   ============================================================
 -->
 
-**语言 / Language**：[中文](#lang-zh)（第 13 行起） · [English](#lang-en)（第 196 行起）
+**语言 / Language**：[中文](#lang-zh) · [English](#lang-en)
 
 ---
+
+![模组logo](./src/main/resources/pack.jpg)
 
 <a id="lang-zh"></a>
 
 # Additional Abilities for DS · 文档索引
 
-> 适用版本：Minecraft `1.21.1` · NeoForge · **Additional Abilities for DS `2.0.0`**
-> 前置：Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-> 最后核对：2026-09-23（对照本工作空间源码）  
+>  **Additional Abilities for DS `2.0.0`**  
+> 适用版本：Minecraft `1.21.1` · NeoForge   
+> 前置：
+> - Dragon Survival `≥ 2.0.68` 
+> - Wing Kirin `≥ 3.3.0`  
+
+> 最后核对：2026-09-26
 > 授权：**Apache-2.0** —— 可自由使用、修改与再发布（含闭源）。本模组是独立第三方附属，与 Dragon Survival 官方**无隶属关系**
 
 本模组给 [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival) 补了两类东西：
@@ -73,6 +79,8 @@
 
 「龙息范围收束」把龙息目标选择器的判定区从**轴对齐包围盒**换成**贴着视线的光束**（旋转长方体）：
 截面变窄、沿视线拉长，瞄哪儿打哪儿。玩家戴上附魔头盔即可获得该属性。
+
+![束息附魔breath-restrictor](./doc/图片Pictures/束息附魔breath-restrictor.png)
 
 | 类型 | 注册 id | 说明 |
 |---|---|---|
@@ -200,9 +208,13 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 
 # Additional Abilities for DS · Documentation Index
 
-> Applies to: Minecraft `1.21.1` · NeoForge · **Additional Abilities for DS `2.0.0`**
-> Requirements: Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-> Last verified: 2026-09-23 (against this workspace's source)  
+>  **Additional Abilities for DS `2.0.0`**  
+> Applies to: Minecraft `1.21.1` · NeoForge   
+> Requirements: 
+> - Dragon Survival `≥ 2.0.68` 
+> -  Wing Kirin `≥ 3.3.0`
+
+> Last verified: 2026-09-26
 > License: **Apache-2.0** — free to use, modify and redistribute, including in closed-source form. An independent third-party add-on, **not affiliated with** the Dragon Survival project
 
 This mod adds two kinds of things to [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival):
@@ -261,6 +273,8 @@ The values added by this mod are:
 "Dragon Breath Restriction" turns the dragon breath selection area from a **box-aligned AABB** into a
 **beam that follows your line of sight** (a rotated box): narrower cross-section, longer reach, and it hits
 exactly where you aim. Wearing the enchanted helmet grants the attribute.
+
+![束息附魔breath-restrictor](./doc/图片Pictures/束息附魔breath-restrictor.png)
 
 | Kind | Registry id | Notes |
 |---|---|---|
