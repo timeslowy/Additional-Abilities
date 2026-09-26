@@ -1,10 +1,7 @@
 # Bundled Abilities
 
 > Applies to: Additional Abilities for DS `2.0.0`
-> Requirements: Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
-
-FIXME:  This mod ships 5 abilities. Two of them — Explosion Arrow and Entity Marker — call Wing Kirin's projectile
-data and functions, so **Wing Kirin is a hard dependency**.
+> Requirements: Dragon Survival `≥ 2.0.68` · (optional)Wing Kirin `≥ 3.3.0`
 
 > This mod also bundles an **optional datapack** that reworks some Wing Kirin's abilities using this mod's own custom components. It is **off by default**; see
 > [07-Bundled-Datapacks.md](07-Bundled-Datapacks.md) for what it changes and how to enable it.

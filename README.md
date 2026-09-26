@@ -20,7 +20,7 @@
 > 适用版本：Minecraft `1.21.1` · NeoForge   
 > 前置：
 > - Dragon Survival `≥ 2.0.68` 
-> - Wing Kirin `≥ 3.3.0`  
+> - （可选）Wing Kirin `≥ 3.3.0`  
 
 > 最后核对：2026-09-26
 > 授权：**Apache-2.0** —— 可自由使用、修改与再发布（含闭源）。本模组是独立第三方附属，与 Dragon Survival 官方**无隶属关系**
@@ -212,7 +212,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 > Applies to: Minecraft `1.21.1` · NeoForge   
 > Requirements: 
 > - Dragon Survival `≥ 2.0.68` 
-> -  Wing Kirin `≥ 3.3.0`
+> - (optional)Wing Kirin `≥ 3.3.0`
 
 > Last verified: 2026-09-26
 > License: **Apache-2.0** — free to use, modify and redistribute, including in closed-source form. An independent third-party add-on, **not affiliated with** the Dragon Survival project

@@ -100,6 +100,25 @@ import java.util.Optional;
  * 需要玩家在「数据包」界面手动启用（{@code PackSource.FEATURE} 不会自动启用）。
  * 位置保持 {@link Pack.Position#TOP}（= 已启用列表的末尾 = 最高优先级），
  * 这样它才能覆盖 {@code mod_data} 里 Wing Kirin 的原版技能。
+ *
+ * <h2>Wing Kirin 是可选依赖（2026-09-26 起）</h2>
+ * {@code neoforge.mods.toml} 里 {@code wing_kirin} 已由 {@code required} 改为 {@code optional}：
+ * 缺席时本模组其余内容照常工作，只有依赖它的部分被停用。停用分两处：
+ * <ul>
+ *     <li><b>本文件</b>：不注册 {@link #WINGKIRIN_ABILITIES_PACK}。若照旧注册，玩家一旦启用它，
+ *         包内大量 {@code wing_kirin:} 粒子 / 药水效果 / 方块标签 / 贴图都会找不到，
+ *         而 datapack registry 只要有一条元素解析失败，{@code RegistryDataLoader#load} 就会抛
+ *         {@code IllegalStateException("Failed to load registries due to above errors")}，
+ *         世界直接无法加载 —— 不是「跳过该条」。</li>
+ *     <li><b>技能 JSON</b>：{@code additional_abilities:entity_marker} 与
+ *         {@code additional_abilities:explosion_arrow} 带
+ *         {@code "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "wing_kirin"}]}。
+ *         它们的 {@code dragon_predicate.dragon_species} 直接引用 {@code dragonsurvival:wing_kirin}
+ *         龙种（{@code RegistryFixedCodec} 解析失败同样致命），且 {@code usage_blocked} 本就只允许
+ *         翼麒麟龙种使用，故条件跳过不损失任何功能。</li>
+ * </ul>
+ * 两者都用「模组是否加载」判定，客户端与服务端模组集合一致 → 条件求值结果一致，
+ * 不会破坏注册表同步协商。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public class PackFinders {
@@ -109,8 +128,26 @@ public class PackFinders {
     private static final String WINGKIRIN_ABILITIES_PACK =
             "data/additional_abilities/datapacks/innovative_wingkirin_abilities";
 
+    /** 可选依赖 Wing Kirin 的 modId；它缺席时 {@link #WINGKIRIN_ABILITIES_PACK} 不注册、也不出现在数据包列表里。 */
+    private static final String WINGKIRIN_MOD_ID = "wing_kirin";
+
     @SubscribeEvent
     public static void addPackFinders(@NotNull AddPackFindersEvent event) {
+        // Wing Kirin 是「可选依赖」：它缺席时本数据包内的技能定义会引用一堆只存在于 wing_kirin
+        // 的注册表元素（自定义粒子、药水效果、方块标签、贴图），而 datapack registry 只要有一条元素
+        // 解析失败，RegistryDataLoader#load 就会抛 IllegalStateException("Failed to load registries
+        // due to above errors")，世界直接无法加载 —— 不是「跳过该条」。
+        // 所以在源头就不注册它：玩家在「数据包」界面里既看不到也启用不了，存档里残留的启用记录也会
+        // 随包缺席而被忽略（非致命）。
+        // 注意本方法会按 PackType 各触发一次（客户端资源包 + 服务端数据包），日志只在数据包那次输出。
+        if (!ModList.get().isLoaded(WINGKIRIN_MOD_ID)) {
+            if (event.getPackType() == PackType.SERVER_DATA) {
+                LOGGER.info("[PackFinders] 未检测到模组 {}，跳过注册内置数据包 {}"
+                        + "（该数据包完全依赖 Wing Kirin 的内容）", WINGKIRIN_MOD_ID, WINGKIRIN_ABILITIES_PACK);
+            }
+            return;
+        }
+
         // ① 覆盖型数据包：与别的模组（或本模组）已有的元素同名 → 必须走 known-pack-free 写法
         addOverridingDataPack(event, WINGKIRIN_ABILITIES_PACK,
                 "datapack.additional_abilities.innovative_wingkirin_abilities");

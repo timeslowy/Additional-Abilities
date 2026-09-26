@@ -92,7 +92,27 @@
     "activation_type": "dragonsurvival:simple",
     "cast_time": 20.0,
     "cooldown": 400.0,
-    "initial_mana_cost": 3.0
+    "initial_mana_cost": 3.0,
+    "animations": {
+      "start_and_charging": {
+        "animation_key": "cast_mass_buff",
+        "layer": "BASE",
+        "locks_neck": false,
+        "locks_tail": false,
+        "transition_length": 5
+      },
+      "end": {
+        "animation_key": "mass_buff",
+        "layer": "BASE",
+        "locks_tail": false,
+        "locks_neck": false,
+        "transition_length": 5
+      }
+    },
+    "sound": {
+      "charging": "block.beacon.activate",
+      "end": "dragonsurvival:activate_beacon"
+    }
   },
   "icon": {
     "texture_entries": [

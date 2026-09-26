@@ -80,10 +80,10 @@ versionRange = "${dragonsurvival_version_range}"
 ordering = "AFTER"
 side = "BOTH"
 
-# Wing Kirin
+# Wing kirin (optional)
 [[dependencies."${mod_id}"]]
 modId = "wing_kirin"
-type = "required"
+type = "optional"
 versionRange = "${wing_kirin_version_range}"
 ordering = "AFTER"
 side = "BOTH"
