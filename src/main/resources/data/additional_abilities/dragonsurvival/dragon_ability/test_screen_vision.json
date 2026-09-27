@@ -6,34 +6,43 @@
           "entity_effect": [
             {
               "effect_type": "additional_abilities:simple_screen_vision",
-              "type": "blur",
-              "duration": {
-                "type": "minecraft:linear",
-                "base": 40.0,
-                "per_level_above_first": 20.0
+              "base": {
+                "id": "additional_abilities:screen_vision_blur",
+                "duration": {
+                  "type": "minecraft:linear",
+                  "base": 40.0,
+                  "per_level_above_first": 20.0
+                }
               },
+              "type": "blur",
               "amplifier": 5,
               "probability": 1.0
             },
             {
               "effect_type": "additional_abilities:simple_screen_vision",
-              "type": "shake",
-              "duration": {
-                "type": "minecraft:linear",
-                "base": 40.0,
-                "per_level_above_first": 20.0
+              "base": {
+                "id": "additional_abilities:screen_vision_shake",
+                "duration": {
+                  "type": "minecraft:linear",
+                  "base": 40.0,
+                  "per_level_above_first": 20.0
+                }
               },
+              "type": "shake",
               "amplifier": 3.0,
               "probability": 1.0
             },
             {
               "effect_type": "additional_abilities:simple_screen_vision",
-              "type": "edge_light",
-              "duration": {
-                "type": "minecraft:linear",
-                "base": 60.0,
-                "per_level_above_first": 20.0
+              "base": {
+                "id": "additional_abilities:screen_vision_edge_light",
+                "duration": {
+                  "type": "minecraft:linear",
+                  "base": 60.0,
+                  "per_level_above_first": 20.0
+                }
               },
+              "type": "edge_light",
               "amplifier": 0.9,
               "size": 0.15,
               "color": "#fbdc92",

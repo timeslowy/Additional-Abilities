@@ -140,12 +140,22 @@ The two variables available inside the expression:
 
 | Field | Type | Required | Default | Notes |
 |---|---|---|---|---|
+| `base` | object | ✅ | — | Identity + duration; **mirrors Dragon Survival's "duration instance" effects** (`modifier` / `glow` / `block_vision` …) |
+| `base.id` | resource location | ✅ | — | Identifier of this effect, e.g. `additional_abilities:screen_vision_shake` |
+| `base.duration` | level value | ❌ | 60 ticks | Duration in **ticks** (1 second = 20). Floored after evaluation; **omitted or negative** falls back to 60 ticks, an explicit `0` does nothing |
 | `type` | enum | ✅ | — | `shake` camera shake / `blur` screen blur / `edge_light` edge mask |
-| `duration` | level value | ✅ | — | Duration in **ticks** (1 second = 20). Floored after evaluation; ≤ 0 does nothing |
 | `amplifier` | level value | ❌ | `1.0` | Strength multiplier; for `edge_light` it reads as the **mask opacity** (anything above 1 counts as 1). See the table below |
 | `size` | level value | ❌ | `0.15` | **`edge_light` only**: mask edge thickness as a fraction of the screen's **shorter side**, clamped to 0–0.5 |
 | `color` | colour | ❌ | `white` | **`edge_light` only**: vanilla colour name or `#RRGGBB` (**no alpha** — use `amplifier` for transparency) |
 | `probability` | level value | ❌ | `1.0` | Chance to take effect, **rolled independently on every trigger** (same convention as Dragon Survival's built-in potion effects) |
+
+`base` is the very same `DurationInstanceBase` that Dragon Survival's `modifier` / `damage_modification` effects use;
+its full field set is `id` (required), `duration`, `should_remove_automatically`, `early_removal_condition`,
+`custom_icon` and `is_hidden`. ⚠️ **This effect only reads `id` and `duration`** — the other four are switches for
+Dragon Survival's "store the effect instance in an entity attachment and tick it every tick" machinery, while this
+effect's visuals are a one-shot client state that counts down locally and has no instance to tick. Those four fields
+are therefore **accepted but carry no runtime meaning**. They are taken as-is to keep the JSON shape identical to
+Dragon Survival's and to leave room for a future upgrade.
 
 ### Strength reference
 
@@ -161,22 +171,31 @@ The two variables available inside the expression:
 "entity_effect": [
   {
     "effect_type": "additional_abilities:simple_screen_vision",
+    "base": {
+      "id": "additional_abilities:screen_vision_blur",
+      "duration": { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 20.0 }
+    },
     "type": "blur",
-    "duration": { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 20.0 },
     "amplifier": 5,
     "probability": 1.0
   },
   {
     "effect_type": "additional_abilities:simple_screen_vision",
+    "base": {
+      "id": "additional_abilities:screen_vision_shake",
+      "duration": { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 20.0 }
+    },
     "type": "shake",
-    "duration": { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 20.0 },
     "amplifier": 3.0,
     "probability": 1.0
   },
   {
     "effect_type": "additional_abilities:simple_screen_vision",
+    "base": {
+      "id": "additional_abilities:screen_vision_edge_light",
+      "duration": { "type": "minecraft:linear", "base": 60.0, "per_level_above_first": 20.0 }
+    },
     "type": "edge_light",
-    "duration": { "type": "minecraft:linear", "base": 60.0, "per_level_above_first": 20.0 },
     "amplifier": 0.6,
     "size": 0.25,
     "color": "gold",
@@ -198,6 +217,15 @@ The two variables available inside the expression:
 - ⚠️ `size` and `color` are `edge_light`-only fields: writing them on a `shake` / `blur` entry
   **neither errors nor does anything** (deliberately no hard validation — a codec exception would take the
   whole data pack down).
+- ⚠️ Likewise, `should_remove_automatically` / `early_removal_condition` / `custom_icon` / `is_hidden` inside `base`
+  **do nothing here** either (see the field notes above). `custom_icon` and `is_hidden` govern which icon the ability
+  info sidebar shows and whether the entry is hidden there — this effect has no sidebar entry, so changing them has no
+  visible effect at all.
+- ⚠️ Keep `base.id` unique and **never copy an existing `dragonsurvival:` id**: when Dragon Survival performs its
+  "caster out of range → remove early" check it compares the ids of every effect in the ability, so a clash could
+  wrongly cull a same-named Dragon Survival effect instance. The namespaces are already isolated, so normal
+  purpose-based naming (`additional_abilities:screen_vision_shake`) never runs into this; **reusing one id across
+  several abilities is fine** (Dragon Survival itself does that, e.g. `good_mana_condition`).
 - **Repeated sends are safe** and will neither extend nor intensify the effect indefinitely:
   for the same type, duration takes the larger value and strength takes the larger value.
   Passive abilities refreshing at high frequency are therefore fine.

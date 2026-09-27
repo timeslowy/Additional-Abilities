@@ -39,12 +39,15 @@
             },
             {
               "effect_type": "additional_abilities:simple_screen_vision",
-              "type": "shake",
-              "duration": {
-                "type": "minecraft:linear",
-                "base": 40.0,
-                "per_level_above_first": 20.0
+              "base": {
+                "id": "additional_abilities:screen_vision_shake",
+                "duration": {
+                  "type": "minecraft:linear",
+                  "base": 40.0,
+                  "per_level_above_first": 20.0
+                }
               },
+              "type": "shake",
               "amplifier": {
                 "type":"minecraft:linear",
                 "base": 1,

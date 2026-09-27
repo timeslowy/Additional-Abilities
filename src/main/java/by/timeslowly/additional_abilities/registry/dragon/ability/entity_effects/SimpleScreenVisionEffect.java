@@ -1,5 +1,6 @@
 package by.timeslowly.additional_abilities.registry.dragon.ability.entity_effects;
 
+import by.dragonsurvivalteam.dragonsurvival.common.codecs.duration_instance.DurationInstanceBase;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.entity_effects.AbilityEntityEffect;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
@@ -10,6 +11,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -30,11 +32,12 @@ import java.util.Locale;
  * 由于 {@link AbilityEntityEffect#apply} 只在服务端执行，实际链路为
  * 「服务端鉴权并计算参数 → {@link ScreenVisionSender} 下发 → 客户端渲染」，
  * 与 DS 内置视觉类效果（如 {@code block_vision}）的做法一致。
- * <p>
- * JSON 字段（与 effect_type 平级）：
+ *
+ * <h2>JSON 字段（与 {@code effect_type} 平级）</h2>
  * <pre>
+ * "base":        { "id":       "additional_abilities:screen_vision_shake",                     // 必填，本效果的标识
+ *                  "duration": { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 10.0 } }  // 可选，时长（单位 tick）
  * "type":        "shake"                                                              // 必填，视觉选项
- * "duration":    { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 10.0 }  // 必填，时长（单位 tick）
  * "amplifier":   { "type": "minecraft:linear", "base": 1.0,  "per_level_above_first": 0.0  }  // 可选，默认 1.0，强度倍率
  * "size":        0.2                                                                  // 可选，默认 0.15，仅 edge_light 使用
  * "color":       "gold"                                                               // 可选，默认 white，仅 edge_light 使用
@@ -53,13 +56,46 @@ import java.util.Locale;
  * ⚠️ {@code size} 与 {@code color} 是 {@code edge_light} 专有参数：在抖动/模糊的条目里写了它们
  * <b>不报错也不生效</b>。此处刻意不做硬校验 —— codec 抛异常会在数据包加载期直接废掉整个数据包，
  * 代价远大于收益。
+ *
+ * <h2>结构为什么长这样（与 DS 的时长实例族对齐）</h2>
+ * DS 的 {@code modifier} / {@code damage_modification} / {@code glow} / {@code block_vision} 等
+ * 实体效果统一采用「{@code base} 子对象承载身份与时长 + 效果专有参数作其兄弟字段」的形态
+ * （见 {@link DurationInstanceBase}）。本效果原先是把 {@code duration} 直挂 {@code effect_type} 同级，
+ * 现改为同一套形态；<b>单条、不带列表</b>，与 DS 的 {@code summon_entity} 效果同构。
+ * <p>
+ * <b>{@code base} 的六个字段</b>：{@code id}（必填）、{@code duration}、{@code should_remove_automatically}、
+ * {@code early_removal_condition}、{@code custom_icon}、{@code is_hidden}。
+ * <p>
+ * ⚠️ 其中 {@code should_remove_automatically} / {@code early_removal_condition} / {@code custom_icon} /
+ * {@code is_hidden} 是 DS 为「把效果实例存进实体附件、逐刻 tick、可序列化」那套机制准备的开关。
+ * 本效果<b>不走该机制</b>（画面状态是接收端本地倒计时自管的一次性视觉，没有需要 tick 或持久化的实例），
+ * 因此这四个字段能被 codec 接受但<b>没有运行时语义</b>。{@code id} 的唯一用途是对外声明身份
+ * （见 {@link #getEffectIDs()}）。这样取舍是为了保持与 DS 的 JSON 形态一致、并留出将来升级的余地，
+ * 代价是「写了不生效」的字段比 DS 多 —— 因此在此显式声明，不靠使用者去猜。
+ * <p>
+ * 另一处取舍：本类<b>用组合而非继承</b> {@code DurationInstanceBase}
+ * （DS 的类都是 {@code extends}）。原因有二：record 不能继承类；且继承会一并带来
+ * {@code type()} 与 {@code createInstance()} —— 这两个方法在 {@code DurationInstanceBase} 中
+ * 直接抛 {@code AssertionError}，只有真正实现附件存储的子类才该拥有它们。
  */
-// TODO:可将时长转移至`id`结构内，其他字段放于与`id`同级的`parameter`结构里，对齐龙生
-public record SimpleScreenVisionEffect(ScreenVisionType type, LevelBasedValue duration, LevelBasedValue amplifier,
-                                       LevelBasedValue size, TextColor color, LevelBasedValue probability)
-        implements AbilityEntityEffect {
+public record SimpleScreenVisionEffect(DurationInstanceBase<?, ?> base, ScreenVisionType type,
+                                       LevelBasedValue amplifier, LevelBasedValue size, TextColor color,
+                                       LevelBasedValue probability) implements AbilityEntityEffect {
     private static final float DEFAULT_AMPLIFIER = 1.0F;
     private static final float DEFAULT_PROBABILITY = 1.0F;
+
+    /**
+     * {@code base.duration} 缺席时的兜底时长（刻）= 3 秒。
+     * <p>
+     * {@link DurationInstanceBase} 对缺席的 {@code duration} 给出的是 {@code -1}
+     * （DS 语义为「无限时长」）。对一次性画面效果而言"永远抖着 / 永远糊着"没有意义，
+     * 因此这里把它读作<b>兜底时长</b>而不是"不生效"。取 60 刻与方块效果
+     * {@code registry...block_effects.GlowEffect#DEFAULT_DURATION_TICKS} 保持一致。
+     * <p>
+     * 注意区分：{@code duration} <b>显式</b>算出 {@code 0} 仍是「不生效」（与改动前一致），
+     * 只有「未提供」或算出负数才走本兜底。
+     */
+    public static final float DEFAULT_DURATION_TICKS = 60.0F;
 
     /** 边缘厚度的默认值（占屏幕短边的比例） */
     public static final float DEFAULT_SIZE = 0.15F;
@@ -81,8 +117,8 @@ public record SimpleScreenVisionEffect(ScreenVisionType type, LevelBasedValue du
     public static final TextColor DEFAULT_COLOR = TextColor.fromRgb(0xFFFFFF);
 
     public static final MapCodec<SimpleScreenVisionEffect> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            DurationInstanceBase.CODEC.fieldOf("base").forGetter(SimpleScreenVisionEffect::base),
             ScreenVisionType.CODEC.fieldOf("type").forGetter(SimpleScreenVisionEffect::type),
-            LevelBasedValue.CODEC.fieldOf("duration").forGetter(SimpleScreenVisionEffect::duration),
             LevelBasedValue.CODEC.optionalFieldOf("amplifier", LevelBasedValue.constant(DEFAULT_AMPLIFIER)).forGetter(SimpleScreenVisionEffect::amplifier),
             LevelBasedValue.CODEC.optionalFieldOf("size", LevelBasedValue.constant(DEFAULT_SIZE)).forGetter(SimpleScreenVisionEffect::size),
             TextColor.CODEC.optionalFieldOf("color", DEFAULT_COLOR).forGetter(SimpleScreenVisionEffect::color),
@@ -104,8 +140,7 @@ public record SimpleScreenVisionEffect(ScreenVisionType type, LevelBasedValue du
             return;
         }
 
-        // 计算值钳制为非负；时长向下取整为刻
-        int durationTicks = Math.max(0, (int) this.duration.calculate(level));
+        int durationTicks = durationFor(level);
         float amplitude = Math.max(0.0F, this.amplifier.calculate(level));
         float edgeSize = sizeFor(level);
 
@@ -116,6 +151,23 @@ public record SimpleScreenVisionEffect(ScreenVisionType type, LevelBasedValue du
         }
 
         ScreenVisionSender.send(player, type, amplitude, edgeSize, color.getValue(), durationTicks);
+    }
+
+    /**
+     * 本次触发给出的时长（刻）。
+     * <p>
+     * {@code base.duration} 缺席时 {@link DurationInstanceBase} 给出 {@code -1}（DS 的"无限时长"），
+     * 本效果把它读作 {@link #DEFAULT_DURATION_TICKS}；其余情况向下取整并钳制为非负，
+     * 算出 {@code 0} 即"不生效"（由 {@link ScreenVisionSender#send} 兜底拦截）。
+     */
+    public int durationFor(final int abilityLevel) {
+        float calculated = this.base.duration().calculate(abilityLevel);
+
+        if (calculated < 0.0F) {
+            return (int) DEFAULT_DURATION_TICKS;
+        }
+
+        return Math.max(0, (int) calculated);
     }
 
     /**
@@ -133,7 +185,7 @@ public record SimpleScreenVisionEffect(ScreenVisionType type, LevelBasedValue du
     @Override
     public @NotNull @Unmodifiable List<MutableComponent> getDescription(final Player dragon, final @NotNull DragonAbilityInstance ability) {
         int level = ability.level();
-        int seconds = Math.max(0, (int) this.duration.calculate(level)) / 20;
+        int seconds = durationFor(level) / 20;
         float amplitude = Math.max(0.0F, this.amplifier.calculate(level));
         float probability = Math.max(0.0F, this.probability.calculate(level));
 
@@ -181,6 +233,22 @@ public record SimpleScreenVisionEffect(ScreenVisionType type, LevelBasedValue du
                 chanceText);
 
         return List.of(description);
+    }
+
+    /**
+     * 对外声明本效果的身份，取 {@code base.id}。
+     * <p>
+     * DS 的时长实例族效果（{@code glow} / {@code climbable} / {@code modifier} 等）都会重写本方法，
+     * 把自己每个条目的 id 报上去；DS 的 {@code DurationInstance#tick} 会用它做「施法者超距则提前移除」
+     * 的判定。本效果没有 DS 那套实例存储，因此这里只是<b>形态对齐</b>，不产生本地行为。
+     * <p>
+     * ⚠️ 由此带来一条约定：{@code base.id} 应当与同一技能里其它时长实例效果保持<b>唯一</b>
+     * （换言之，不要照抄某个 {@code dragonsurvival:} 下的 id）。否则 DS 做超距剔除时可能把
+     * 那个同名的效果实例一并判掉。命名空间已天然隔离，正常命名不会踩到。
+     */
+    @Override
+    public @NotNull @Unmodifiable List<ResourceLocation> getEffectIDs() {
+        return List.of(this.base.id());
     }
 
     @Override
