@@ -37,11 +37,13 @@
 "commands.additional_abilities.simple_screen_vision.clear.success": "已清除 %s 名玩家身上的简单视觉效果",
 
 "damage_type.additional_abilities.counter_shock": "震伤",
+"damage_type.forest_dragon.natural_force": "自然之力",
 
 "datapack.additional_abilities.innovative_wingkirin_abilities": "翼麒麟革新版技能",
 "datapack.additional_abilities.innovative_wingkirin_abilities.desc": "部分采用了`Additional Abilities`此库里的新龙生自定义技能组件所革新技能",
 
 "death.attack.additional_abilities.counter_shock": "%1$s被反震震碎五脏六腑",
+"death.attack.forest_dragon.natural_force": "%1$s被一草一木绞杀",
 
 "dragon_ability.additional_abilities.entity_marker": "无所遁形",
 "dragon_ability.additional_abilities.entity_marker.desc": "§7■完成§6「眼前一亮！」§r§7进度以解锁。\n\n§6§o“发现敌人位置！§m（标记敌人+10分）”",
@@ -53,6 +55,8 @@
 "dragon_ability.cave_dragon.piercing_eye.desc": "■在熔岩里的生活使你练就了一双§c火眼金睛§r，让目光能穿过迷雾§a（免疫失明）§r。\n\n■§7当然，此效果不能免疫§4黑暗§r，毕竟洞穴龙和坚守者没有打过“半毛钱”交道",
 "dragon_ability.cave_dragon.smoke_breath": "障目之息",
 "dragon_ability.cave_dragon.smoke_breath.desc": "■喷吐大量烟气，蒙蔽敌人的双眼。\n\n■§f射程§r§7取决于年龄，施加的§f失明时间§r§7则取决于经验等级。\n\n■§7也有些许伤害，但远远低于§c炽焰之息§7。\n\n■§8无法在水下或雨间使用§r。",
+"dragon_ability.forest_dragon.natural_alies":"草木皆兵",
+"dragon_ability.forest_dragon.natural_alies.desc":"§7■你与自然共生共处、交感相融，竟拥有了让一草一木§e传递攻势§7的魔力。施用此法术，可以让一定范围内§n同位于草木系方块上§r§7的§l非友方生物§r§7遭受§e百分比伤害§7，并“缠住”他们，使其§e虚弱而不能移§7，且§e更易为森林龙法术所伤§7。\n\n■伤害比例、效果持续与易伤时长随§a技能等级（成长阶段）§7递增。\n\n§4■仅能在自身也处于草木系方块上时施用。",
 "dragon_ability.wing_kirin.fire_ring":"安身法",
 "dragon_ability.wing_kirin.fire_ring.desc":"§7■保命之奇术也，就地施法，片刻过后，即§n以自身为圆心§r§7画出一道火圈并形成§l持续之阵势§r§7。形成瞬间§e可短暂无敌，并把敌方击退至圈外§7。\n\n■阵法可§l存续一段时间，随时步出再折返亦无妨,时限一到，阵势自然幻灭。§r§7若自身及友方§n位于阵法之内§r§7，可获得§a持续的增益效果§e，而敌方则寸步难行。§7\n\n■阵法的§n范围§r§7随§a技能等级而增长§7，同一玩家最多可同时存在§l一个阵法§r§7。§4只能在地上使用，且不可立于水中。\n\n§6§o“强似那铜墙铁壁，更不是画地为牢。”",
 "dragon_ability.wing_kirin.fire_ring.activation.notification.usage_blocked": "§l这阵法水火不容，更不可凭空生造，你可识得？",
@@ -96,6 +100,8 @@
 "trigger_type.additional_abilities.on_ability_cast.any": "任意技能",
 "trigger_type.additional_abilities.on_block_placed": "放置方块时",
 "trigger_type.additional_abilities.on_item_consumed": "消耗物品时",
+
+"tag.damage_type.forest_dragon.is_forest_dragon": "森林龙法术",
 
 "additional_abilities.configuration.block_glow": "方块发光（可见距离）",
 "additional_abilities.configuration.block_glow.outline_distance": "线框可见距离",

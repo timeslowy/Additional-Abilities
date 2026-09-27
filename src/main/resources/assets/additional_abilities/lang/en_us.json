@@ -37,11 +37,13 @@
 "commands.additional_abilities.simple_screen_vision.clear.success": "Cleared simple screen vision from %s player(s)",
 
 "damage_type.additional_abilities.counter_shock": "Counter Shock",
+"damage_type.forest_dragon.natural_force": "Natural Force",
 
 "datapack.additional_abilities.innovative_wingkirin_abilities": "Innovative WingKirin's Abilities",
 "datapack.additional_abilities.innovative_wingkirin_abilities.desc": "Some Wing Kirin's abilities have used new ability compoments from `Additional Abilities`to create new effects.",
 
 "death.attack.additional_abilities.counter_shock": "%1$s was counter-shocked to death.",
+"death.attack.forest_dragon.natural_force": "%1$s was strangled by the undergrowth.",
 
 "dragon_ability.additional_abilities.entity_marker": "Entity Marker",
 "dragon_ability.additional_abilities.entity_marker.desc": "■ Simple ability: mark any entity with your mouse §nleft click§r§7.\n\n■ Unlock it with the advancement: §6「Glow and Behold!」.",
@@ -53,6 +55,8 @@
 "dragon_ability.cave_dragon.piercing_eye.desc": "■ Living in lava has given you innate§2 immunity to blindness.\n\n§7Of course, this ability cannot make you immune to darkness, because cave dragons have never had any relationship with Wardens",
 "dragon_ability.cave_dragon.smoke_breath": "Smoke Breath",
 "dragon_ability.cave_dragon.smoke_breath.desc": "■ Breathe a deluge of fire and smoke, blinding the enemy.\n\n■ Its §fRange§r§7 depends on the age, and the §fduration of effect§r§7 depends on the experience level.\n\n■ §7It also deals some damage, though far less than §cFire Breath§7.\n\n■ §8Cannot be used under water, or during rain.§r",
+"dragon_ability.forest_dragon.natural_alies": "Natural Allies",
+"dragon_ability.forest_dragon.natural_alies.desc": "§7■ You live in symbiosis with nature, attuned to its every breath, and you have gained the power to make §eevery blade of grass and every tree carry your strike§7.\n\n■ Cast this spell and the §lnon-allied creatures§r§7 within a certain radius that are §nstanding on grass, wood or dirt§r§7 will suffer §epercentage damage§7, be “tangled” by the flora — §eweakened and barely able to move§7 — and §ebecome far more vulnerable to a forest dragon's magic§7.\n\n■ The damage share, the effect duration and the vulnerability duration all rise with §askill level (growth stage)§7.\n\n§4■ Can only be cast while you yourself are also standing on grass, wood or dirt.",
 "dragon_ability.wing_kirin.fire_ring":"Fire Ring",
 "dragon_ability.wing_kirin.fire_ring.desc":"§7■ A life-saving art: cast it on the spot, and after a moment it draws a §nring of fire centred on yourself§r§7 and forms a §llasting formation§r§7. At the instant it forms you §ebecome briefly invulnerable§7 and enemies are knocked back outside the ring.\n\n■ The formation §llasts for a while§r§7 — step out and back in whenever you like; once its time runs out, it fades away by itself.§r§7 While you and your allies are §ninside the formation§r§7, you gain §aa continuous buff§e, while enemies can barely move.§7\n\n■ The formation's §nradius§r§7 grows with §aability level§7, and each player may keep at most §lone formation§r§7 at a time. §4Can only be used on the ground, and not while standing in water.\n\n§6§o“Strong as walls of bronze and iron — and far more than a circle of chalk.”",
 "dragon_ability.wing_kirin.fire_ring.activation.notification.usage_blocked": "§lThis formation brooks neither water nor fire, nor can it be conjured out of thin air — do you understand?",
@@ -84,6 +88,8 @@
 
 "enchantment.additional_abilities.dragon_breath_restrictor": "Breath Constrictor",
 
+"projectile.wing_kirin.explosion_arrow": "Explosion Arrow",
+
 "activation_type.additional_abilities.charged": "Charged",
 "activation_type.additional_abilities.optional_charged": "Optional Charged",
 "activation_type.dragonsurvival.channeled": "Channeled",
@@ -94,6 +100,8 @@
 "trigger_type.additional_abilities.on_ability_cast.any": "Any Ability",
 "trigger_type.additional_abilities.on_block_placed": "On Block Place",
 "trigger_type.additional_abilities.on_item_consumed": "On Item Consumed",
+
+"tag.damage_type.forest_dragon.is_forest_dragon": "Forest Dragon Magic",
 
 "additional_abilities.configuration.block_glow": "Block glow (visibility distance)",
 "additional_abilities.configuration.block_glow.outline_distance": "Wireframe distance",

@@ -24,13 +24,12 @@ public class AdditionalAbilities {
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
 
-
     // 注册模组加载的通用内容设置（部分需要顺序）
     public AdditionalAbilities(IEventBus modEventBus, @NotNull ModContainer modContainer) {
         // 登记客户端配置（config/additional_abilities-client.toml：蓄力读数区位置等）
         // 该配置类不引用任何客户端专属类型，故无需物理端判定；NeoForge 自身保证 CLIENT 类型只在客户端加载
         AAClientConfig.register(modContainer);
-        // 注册实体附加数据（伤害反震参数载体）
+        // 注册实体附加数据
         AAAttachments.register(modEventBus);
         // 注册自定义伤害类型
         AADamageTypes.register(modEventBus);

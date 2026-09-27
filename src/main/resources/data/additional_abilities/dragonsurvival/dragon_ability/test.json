@@ -5,44 +5,15 @@
                 "applied_effects": {
                     "entity_effect": [
                         {
-                            "effect_type": "dragonsurvival:potion",
-                            "potion": {
-                                "effects": [
-                                    "haste"
-                                ],
-                                "duration": 60,
-                                "amplifier": 1
-                            }
-                        },
-                        {
-                            "effect_type": "dragonsurvival:modifier",
-                            "modifiers": [
-                                {
-                                    "base": {
-                                        "id": "additional_abilities:test",
-                                        "duration": 60
-                                    },
-                                    "modifiers": [
-                                        {
-                                            "attribute": "minecraft:generic.burning_time",
-                                            "amount": -1,
-                                            "operation": "add_value"
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
                             "effect_type": "dragonsurvival:damage_modification",
                             "modifications": [
                                 {
                                     "base": {
                                         "id": "additional_abilities:test",
-                                        "duration": 60,
-                                        "is_hidden": true
+                                        "duration": 6
                                     },
-                                    "damage_types": "#minecraft:is_fire",
-                                    "multiplier": 2.0
+                                    "damage_types": "#is_freezing",
+                                    "multiplier": 0
                                 }
                             ]
                         }

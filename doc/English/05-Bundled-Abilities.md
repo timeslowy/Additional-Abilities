@@ -21,8 +21,9 @@
 | Ability id | Name | Species | Activation | Max level | Unlock / upgrade |
 |---|---|---|---|---|---|
 | `sea_dragon:extinguish_breath` | Extinguish Breath | Sea Dragon| `channeled` continuous breath | 4 | Experience levels `0 / 10 / 20 / 40` |
-| `cave_dragon:smoke_breath` | Smoke Breath | Cave Dragon, `channeled` continuous breath | 3 | Experience levels `0 / 10 / 20` |
+| `cave_dragon:smoke_breath` | Smoke Breath | Cave Dragon | `channeled` continuous breath | 3 | Experience levels `0 / 10 / 20` |
 | `cave_dragon:piercing_eye` | Piercing Eye | Cave Dragon | `passive` | 1 (no upgrade) | Active as soon as the ability is present |
+| `forest_dragon:natural_alies` | Natural Allies | Forest Dragon | `simple` cast | 4 | Growth `30 / 40 / 50 / 60` (upgrade type `dragon_growth`) |
 | `additional_abilities:explosion_arrow` | Explosion Arrow | Wing Kirin | `simple` cast | 1 | Complete the "Return to Sender" advancement |
 | `additional_abilities:entity_marker` | Entity Marker | Wing Kirin | `passive` + key trigger (left mouse button) | 2 | Complete the "Glow and Behold!" advancement; upgraded with experience points |
 
@@ -96,6 +97,55 @@ point-blank interrupts and blinding. Backing off after the enemy is blinded is w
 | Effect | multiplies the duration of `minecraft:blindness` by **0**, i.e. full immunity to Blindness |
 
 **Usage notes**: **it only blocks Blindness, not Darkness.** One of the Cave Dragon's permanent passives.
+
+---
+
+## Natural Allies — `natural_alies`
+
+> "You live in symbiosis with nature, attuned to its every breath — and you have gained the power to
+> make every blade of grass and every tree carry your strike."
+
+| Item | Value |
+|---|---|
+| Activation | `dragonsurvival:simple`, `cast_time` 40 ticks, initial mana cost 6 |
+| Cooldown | `600 / 800 / 1000 / 1200` ticks per level (30 / 40 / 50 / 60 seconds; linear `base` 600, +200 per level) |
+| Can move while casting | No (neck and tail are locked during the cast; animations `cast_mass_buff` → `mass_buff`) |
+| Usage restriction | **You must be standing on a grass-and-wood block yourself** (`#dragonsurvival:speeds_up_forest_dragon`) |
+| Level | max level 4, upgraded by `dragonsurvival:dragon_growth`: growth `30 / 40 / 50 / 60` → level 1 / 2 / 3 / 4 (fallback `10` beyond) |
+| Shape | radius 8, `dragonsurvival:area` target type |
+
+**Effect**: three actions.
+
+1. **Charging telegraph** (`trigger_point` = `charging`, `trigger_rate` 10): while the cast bar runs,
+   **every 10 ticks** all **non-air blocks** within a radius of 8 that belong to
+   `#dragonsurvival:speeds_up_forest_dragon` are tinted by this mod's `additional_abilities:glow` —
+   green `#0cb97f`, `alpha` 0.5, `display_type` = `simple_shader`, 40 ticks per application.
+   The greenery lights up first, which doubles as a countdown for whoever is standing in it.
+2. **Settlement** (once, when the cast finishes — the default `trigger_point`): every
+   **non-allied creature** within a radius of 8 (`targeting_mode` = `non_allies`) that is
+   **standing on a grass-and-wood block** (`target_conditions` → `entity_properties.predicate.stepping_on`)
+   - takes `forest_dragon:natural_force` (Natural Force) damage equal to
+     **the target's max health × `0.05 × ability level`** (5 / 10 / 15 / 20%), then multiplied by the
+     caster's *Dragon Ability Damage* attribute through the default expression;
+   - gets **Slowness II + Weakness II** (`amplifier` 1) for `100 / 160 / 220 / 280` ticks (5 / 8 / 11 / 14 seconds);
+   - gains a **hidden** damage modification `forest_dragon:natural_damage_increase`: **×2 damage taken**
+     from `#forest_dragon:is_forest_dragon` (forest dragon magic) for the same duration — the
+     "far more vulnerable to a forest dragon's magic" part of the description.
+3. **Presentation**: 5 `minecraft:egg_crack` particles burst from the non-air blocks within radius 8.
+
+**Usage notes**: this is a **terrain-bound area debuff**. The predicate is attached to the block under the
+**target's** feet; the block under **your own** feet only decides whether you may cast it at all
+(`usage_blocked`). So the correct play is to drag the enemy onto a grass-and-wood block
+(grass, dirt, logs or planks — the tag expands to `#minecraft:dirt` + `#minecraft:logs` + `#minecraft:planks` +
+`#minecraft:wooden_slabs` + `#dragonsurvival:is_grassy` + grass blocks) and only then cast — on stone, sand,
+water or mid-air it deals **no damage at all**. Applying the ×2 vulnerability and then following up with a
+breath attack is where the payoff is.
+
+> Shipped alongside the ability: the damage type `forest_dragon:natural_force`
+> (`data/forest_dragon/damage_type/natural_force.json`), the dragon-magic damage tag
+> `#forest_dragon:is_forest_dragon` (`data/forest_dragon/tags/damage_type/is_forest_dragon.json`, holding
+> `dragonsurvival:forest_breath` / `dragonsurvival:spike` / this damage type), and the death message key
+> `death.attack.forest_dragon.natural_force`.
 
 ---
 

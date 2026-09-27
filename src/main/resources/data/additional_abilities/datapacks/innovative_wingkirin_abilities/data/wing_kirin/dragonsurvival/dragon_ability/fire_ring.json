@@ -143,11 +143,24 @@
                             ]
                         },
                         {
+                            "effect_type": "dragonsurvival:damage_modification",
+                            "modifications": [
+                                {
+                                    "base": {
+                                        "id": "wing_kirin:fire_ring_beneficial_3",
+                                        "duration": 6
+                                    },
+                                    "damage_types": "#is_freezing",
+                                    "multiplier": 0
+                                }
+                            ]
+                        },
+                        {
                             "effect_type": "dragonsurvival:glow",
                             "glows": [
                                 {
                                     "base": {
-                                        "id": "wing_kirin:fire_ring_beneficial_3",
+                                        "id": "wing_kirin:fire_ring_beneficial_4",
                                         "duration": 60,
                                         "is_hidden": true
                                     },

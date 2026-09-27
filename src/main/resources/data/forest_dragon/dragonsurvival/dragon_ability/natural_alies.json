@@ -1,0 +1,219 @@
+{
+    "actions": [
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "block_effect": [
+                        {
+                            "effect_type": "additional_abilities:glow",
+                            "color": "#0cb97f",
+                            "alpha": 0.5,
+                            "display_type": "simple_shader",
+                            "duration": 40,
+                            "valid_blocks": {
+                                 "type": "minecraft:matching_block_tag",
+                                  "tag": "dragonsurvival:speeds_up_forest_dragon" 
+                            }
+                        }
+                    ],
+                    "target_conditions": {
+                        "condition": "inverted",
+                        "term": {
+                            "condition": "minecraft:block_state_property",
+                            "block": "air"
+                        }
+                    }
+                },
+                "target_type": "dragonsurvival:area",
+                "radius": 8
+            },
+            "trigger_point": "charging",
+            "trigger_rate": 10
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "additional_abilities:percentaged_damage",
+                            "percentage":{
+                                "type":"minecraft:linear",
+                                "base":0.05,
+                                "per_level_above_first": 0.05
+                            },
+                            "calculate_type": "max_health",
+                            "damage_type": "forest_dragon:natural_force"
+                        },
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": [
+                                    "minecraft:slowness",
+                                    "weakness"
+                                ],
+                                "amplifier": 1,
+                                "duration": {
+                                    "type": "minecraft:linear",
+                                    "base": 100,
+                                    "per_level_above_first": 60
+                                }
+                            }
+                        },
+                        {
+                            "effect_type": "dragonsurvival:damage_modification",
+                            "modifications": [
+                                {
+                                    "base": {
+                                        "id": "forest_dragon:natural_damage_increase",
+                                        "duration": {
+                                            "type": "minecraft:linear",
+                                            "base": 100,
+                                            "per_level_above_first": 60
+                                        },
+                                        "is_hidden": true
+                                    },
+                                    "damage_types": "#forest_dragon:is_forest_dragon",
+                                    "multiplier": 2.0
+                                }
+                            ]
+                        }
+                    ],
+                    "targeting_mode": "non_allies",
+                    "target_conditions": {
+                            "condition": "minecraft:entity_properties",
+                            "entity": "this",
+                            "predicate": {
+                                "stepping_on": {
+                                    "block": {
+                                        "blocks": "#dragonsurvival:speeds_up_forest_dragon"
+                                    }
+                                }
+                            }
+                    }
+                },
+                "target_type": "dragonsurvival:area",
+                "radius": 8
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "block_effect": [
+                        {
+                            "effect_type": "dragonsurvival:particle",
+                            "particle_data": {
+                                "particle": {
+                                    "type": "minecraft:egg_crack"
+                                },
+                                "horizontal_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "vertical_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "horizontal_velocity": {
+                                    "base": 1
+                                },
+                                "vertical_velocity": {
+                                    "base": 1.0
+                                },
+                                "speed": 1
+                            },
+                            "particle_count": 5
+                        }
+                    ],
+                    "target_conditions": {
+                        "condition": "inverted",
+                        "term": {
+                            "condition": "minecraft:block_state_property",
+                            "block": "air"
+                        }
+                    }
+                },
+                "target_type": "dragonsurvival:area",
+                "radius": 8
+            }
+        }
+    ],
+    "activation": {
+    "activation_type": "dragonsurvival:simple",
+    "animations": {
+      "end": {
+        "animation_key": "mass_buff",
+        "layer": "BASE",
+        "locks_neck": true,
+        "locks_tail": true
+      },
+      "start_and_charging": {
+        "animation_key": "cast_mass_buff",
+        "layer": "BASE",
+        "locks_neck": true,
+        "locks_tail": true,
+        "transition_length": 2
+      }
+    },
+    "can_move_while_casting": false,
+    "cast_time": 40.0,
+    "cooldown": {
+        "type": "minecraft:linear",
+        "base": 600,
+        "per_level_above_first": 200
+    },
+    "initial_mana_cost": 6.0,
+    "sound": {
+      "end": "minecraft:ui.toast.in"
+    }
+  },
+  "icon": {
+    "texture_entries": [
+        {
+            "from_level": 0,
+            "texture_resource": "dragonsurvival:abilities/forest/natural_alies_0"
+        },
+        {
+            "from_level": 1,
+            "texture_resource": "dragonsurvival:abilities/forest/natural_alies_1"
+        },
+        {
+            "from_level": 2,
+            "texture_resource": "dragonsurvival:abilities/forest/natural_alies_2"
+        },
+        {
+            "from_level": 3,
+            "texture_resource": "dragonsurvival:abilities/forest/natural_alies_3"
+        },
+        {
+            "from_level": 4,
+            "texture_resource": "dragonsurvival:abilities/forest/natural_alies_4"
+        }
+    ]
+  },
+  "upgrade": {
+    "upgrade_type": "dragonsurvival:dragon_growth",
+    "maximum_level": 4,
+    "growth_requirement": {
+        "type": "minecraft:lookup",
+        "fallback": 10,
+        "values": [
+            30,
+            40,
+            50,
+            60
+        ]
+    }
+  },
+  "usage_blocked": {
+    "condition": "inverted",
+    "term": {
+        "condition": "entity_properties",
+        "entity": "this",
+        "predicate": {
+            "stepping_on": {
+                "block": {
+                    "blocks": "#dragonsurvival:speeds_up_forest_dragon"
+                }
+            }
+        }
+    }
+  }
+}

@@ -5,6 +5,7 @@
         "additional_abilities:explosion_arrow",
         "sea_dragon:extinguish_breath",
         "cave_dragon:smoke_breath",
-        "cave_dragon:piercing_eye"
+        "cave_dragon:piercing_eye",
+        "forest_dragon:natural_alies"
     ]
 }
