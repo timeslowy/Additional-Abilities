@@ -52,7 +52,7 @@
 "dragon_ability.additional_abilities.explosion_arrow": "三连箭雷",
 "dragon_ability.additional_abilities.explosion_arrow.desc": "§7■完成§6「见鬼去吧」§r§7挑战进度以解锁。\n\n§6§o“捂好耳朵，要打雷了！”",
 "dragon_ability.sea_dragon.extinguish_breath": "止火之息",
-"dragon_ability.sea_dragon.extinguish_breath.desc": "■喷吐大量水汽，浇灭所及之处的火焰，亦包括失火的生物。\n\n■§f射程§r§7取决于年龄，§f抗火时间§r§7则取决于经验等级。\n\n■§8无法在§4熔岩里§r使用。\n\n§7（不能熄灭蜡烛）",
+"dragon_ability.sea_dragon.extinguish_breath.desc": "■喷吐大量水汽，浇灭所及之处的火焰，亦包括失火的生物。\n\n■§f射程§r§7取决于年龄，§f抗火时间§r§7则取决于经验等级。\n\n■§8无法在§4熔岩里§r使用。",
 "dragon_ability.cave_dragon.piercing_eye": "火眼金睛",
 "dragon_ability.cave_dragon.piercing_eye.desc": "■在熔岩里的生活使你练就了一双§c火眼金睛§r，让目光能穿过迷雾§a（免疫失明）§r。\n\n■§7当然，此效果不能免疫§4黑暗§r，毕竟洞穴龙和坚守者没有打过“半毛钱”交道",
 "dragon_ability.cave_dragon.smoke_breath": "障目之息",

@@ -40,7 +40,7 @@ dragon_ability.<namespace>.<ability id>.desc     → description
 
 > "Breathe a deluge of water vapour that extinguishes fire (including burning mobs)."
 > "Its range depends on age, and the duration of effect depends on the experience level."
-> "Cannot be used under lava." "(Cannot extinguish candles)"
+> "Cannot be used under lava." 
 
 | Item | Value |
 |---|---|
@@ -166,7 +166,7 @@ On hit the arrow detonates; the damage / radius / sound of the explosion are dri
 (`wing_kirin:dragonsurvival/projectile_data/explosion_arrow*` and the matching functions).
 
 **Usage notes**: a long cooldown (15 seconds) and a high mana cost, so treat it as one burst.
-Unlocking requires completing "Return to Sender" in the Overworld (deflecting a ghast fireball).
+Unlocking requires completing "Return to Sender" advancement.
 
 ---
 
