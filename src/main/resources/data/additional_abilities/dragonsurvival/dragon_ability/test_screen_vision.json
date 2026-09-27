@@ -25,6 +25,19 @@
               },
               "amplifier": 3.0,
               "probability": 1.0
+            },
+            {
+              "effect_type": "additional_abilities:simple_screen_vision",
+              "type": "edge_light",
+              "duration": {
+                "type": "minecraft:linear",
+                "base": 60.0,
+                "per_level_above_first": 20.0
+              },
+              "amplifier": 0.9,
+              "size": 0.15,
+              "color": "#fbdc92",
+              "probability": 1.0
             }
           ],
           "target_conditions": {

@@ -18,7 +18,7 @@ for the standalone tree the check is applied once, on the **root** node.
 
 ## 1. `/additional-abilities simple-screen-vision clear <targets>`
 
-Clears **all** simple screen vision effects (both `shake` and `blur` from `simple_screen_vision`) from the
+Clears **all** simple screen vision effects (`shake`, `blur` and `edge_light` from `simple_screen_vision`) from the
 targeted players.
 
 ```

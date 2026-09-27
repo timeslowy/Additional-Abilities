@@ -46,7 +46,7 @@
 |---|---|---|---|---|
 | 实体效果 | `effect_type` | `additional_abilities:damage_reflection` | 受伤时把伤害按比例震回身边一圈敌人 | [01](doc/中文/01-实体效果.md) |
 | 实体效果 | `effect_type` | `additional_abilities:percentaged_damage` | 按目标生命值百分比造成伤害 | [01](doc/中文/01-实体效果.md) |
-| 实体效果 | `effect_type` | `additional_abilities:simple_screen_vision` | 给对方玩家来一下镜头抖动 / 画面模糊 | [01](doc/中文/01-实体效果.md) |
+| 实体效果 | `effect_type` | `additional_abilities:simple_screen_vision` | 给对方玩家来一下镜头抖动 / 画面模糊 / 边缘遮罩 | [01](doc/中文/01-实体效果.md) |
 | 方块效果 | `effect_type` | `additional_abilities:block_quake` | 让选中方块跳一下再落回（纯视觉） | [02](doc/中文/02-方块效果.md) |
 | 方块效果 | `effect_type` | `additional_abilities:extinguish` | 扑灭所及的火、营火与蜡烛（`fire` 的反向版） | [02](doc/中文/02-方块效果.md) |
 | 方块效果 | `effect_type` | `additional_abilities:glow` | 让选中方块发光（颜色 / 半透明可指定，视距内所有玩家可见） | [02](doc/中文/02-方块效果.md) |
@@ -240,7 +240,7 @@ The values added by this mod are:
 |---|---|---|---|---|
 | Entity effect | `effect_type` | `additional_abilities:damage_reflection` | On taking damage, blast a share of it back at the enemies around you | [01](doc/English/01-Entity-Effect.md) |
 | Entity effect | `effect_type` | `additional_abilities:percentaged_damage` | Deal damage as a percentage of the target's health | [01](doc/English/01-Entity-Effect.md) |
-| Entity effect | `effect_type` | `additional_abilities:simple_screen_vision` | Give another player a camera shake or a screen blur | [01](doc/English/01-Entity-Effect.md) |
+| Entity effect | `effect_type` | `additional_abilities:simple_screen_vision` | Give another player a camera shake, a screen blur or an edge mask | [01](doc/English/01-Entity-Effect.md) |
 | Block effect | `effect_type` | `additional_abilities:block_quake` | Make selected blocks hop and settle back (visual only) | [02](doc/English/02-Block-Effect.md) |
 | Block effect | `effect_type` | `additional_abilities:extinguish` | Put out fire, campfires and candles in the affected area (mirror of `fire`) | [02](doc/English/02-Block-Effect.md) |
 | Block effect | `effect_type` | `additional_abilities:glow` | Make selected blocks glow (colour / alpha configurable, visible to every player in range) | [02](doc/English/02-Block-Effect.md) |

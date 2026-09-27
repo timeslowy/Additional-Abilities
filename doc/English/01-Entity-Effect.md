@@ -132,7 +132,7 @@ The two variables available inside the expression:
 
 ## 3. `additional_abilities:simple_screen_vision` — Simple Screen Vision
 
-**In one sentence**: overlay a camera shake or a screen blur on another player's view.
+**In one sentence**: overlay a camera shake, a screen blur or an edge mask on another player's view.
 
 ![简单屏幕视觉screen-vision](../图片Pictures/屏幕效果screen-vision.png)
 
@@ -140,9 +140,11 @@ The two variables available inside the expression:
 
 | Field | Type | Required | Default | Notes |
 |---|---|---|---|---|
-| `type` | enum | ✅ | — | `shake` camera shake / `blur` screen blur |
+| `type` | enum | ✅ | — | `shake` camera shake / `blur` screen blur / `edge_light` edge mask |
 | `duration` | level value | ✅ | — | Duration in **ticks** (1 second = 20). Floored after evaluation; ≤ 0 does nothing |
-| `amplifier` | level value | ❌ | `1.0` | Strength multiplier, see the table below |
+| `amplifier` | level value | ❌ | `1.0` | Strength multiplier; for `edge_light` it reads as the **mask opacity** (anything above 1 counts as 1). See the table below |
+| `size` | level value | ❌ | `0.15` | **`edge_light` only**: mask edge thickness as a fraction of the screen's **shorter side**, clamped to 0–0.5 |
+| `color` | colour | ❌ | `white` | **`edge_light` only**: vanilla colour name or `#RRGGBB` (**no alpha** — use `amplifier` for transparency) |
 | `probability` | level value | ❌ | `1.0` | Chance to take effect, **rolled independently on every trigger** (same convention as Dragon Survival's built-in potion effects) |
 
 ### Strength reference
@@ -151,8 +153,9 @@ The two variables available inside the expression:
 |---|---|---|
 | `shake` | `1.0` ≈ a maximum camera roll offset of **1.5°** | 0.5 – 5 |
 | `blur` | `1.0` = a blur radius of **1 pixel**, capped at **20** (anything higher counts as 20) | 1 – 20 |
+| `edge_light` | `1.0` = a fully opaque mask (**`amplifier` reads as the opacity here**) | 0.2 – 1 |
 
-### Example (both visions from a single cast)
+### Example (three visions from a single cast)
 
 ```json
 "entity_effect": [
@@ -169,6 +172,15 @@ The two variables available inside the expression:
     "duration": { "type": "minecraft:linear", "base": 40.0, "per_level_above_first": 20.0 },
     "amplifier": 3.0,
     "probability": 1.0
+  },
+  {
+    "effect_type": "additional_abilities:simple_screen_vision",
+    "type": "edge_light",
+    "duration": { "type": "minecraft:linear", "base": 60.0, "per_level_above_first": 20.0 },
+    "amplifier": 0.6,
+    "size": 0.25,
+    "color": "gold",
+    "probability": 1.0
   }
 ]
 ```
@@ -178,12 +190,20 @@ The two variables available inside the expression:
 - **Players only.** Non-player targets (even living ones) are skipped.
 - **Zero side effects**: no damage, no movement, no attributes — purely a visual on the receiving end.
 - `blur` **blurs the world only, never the GUI** — health bar, hotbar and chat stay perfectly sharp.
-- **The two visions coexist.** Sending both in one cast does not let either swallow the other.
+- **The visions coexist.** Sending several in one cast does not let one swallow another.
+- The `edge_light` mask sits **below the HUD** (health bar, hotbar and chat stay above it) and is drawn after the
+  `blur` post-processing chain, so the **mask itself is never blurred** — both can be active at the same time.
+- `edge_light`'s `size` is relative to the screen's **shorter side**, so all four edges have the same thickness;
+  writing `color: black` turns the "light edge" into a darkening vignette (same renderer, different colour).
+- ⚠️ `size` and `color` are `edge_light`-only fields: writing them on a `shake` / `blur` entry
+  **neither errors nor does anything** (deliberately no hard validation — a codec exception would take the
+  whole data pack down).
 - **Repeated sends are safe** and will neither extend nor intensify the effect indefinitely:
   for the same type, duration takes the larger value and strength takes the larger value.
   Passive abilities refreshing at high frequency are therefore fine.
 - There is **server-side throttling**: for the same player and the same vision type, nothing is sent
-  within 5 ticks unless the strength increased. A strength increase always goes through.
+  within 5 ticks unless **nothing about the parameters changed** (strength, size and colour all identical).
+  Any parameter change goes through.
 - Presentation details: 5-tick fade-in, 10-tick fade-out, so nothing snaps on or off; the shake phase is
   driven by the local tick count, so it is **frame-rate independent**.
 - **To clear it immediately** (debugging): `/additional-abilities simple-screen-vision clear <targets>`, see

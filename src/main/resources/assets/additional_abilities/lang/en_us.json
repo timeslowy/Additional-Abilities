@@ -13,7 +13,9 @@
 "additional_abilities.ability.percentaged_damage.type.max_health": "maximum health",
 "additional_abilities.ability.simple_screen_vision.chance": " with a %s chance",
 "additional_abilities.ability.simple_screen_vision.description": "§6■ Causes the target's screen to %s§r for %s seconds (strength %s)%s",
+"additional_abilities.ability.simple_screen_vision.description.edge_light": "§6■ Overlays an inward-fading %s mask on the target's screen edges§r (color %s, edge width %s, opacity %s) for %s seconds%s",
 "additional_abilities.ability.simple_screen_vision.type.blur": "blur",
+"additional_abilities.ability.simple_screen_vision.type.edge_light": "edge light",
 "additional_abilities.ability.simple_screen_vision.type.shake": "shake",
 
 "additional_abilities.gui.ability.activation_type": "§6■ Activation type:§r %s",

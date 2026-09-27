@@ -29,8 +29,12 @@ public class AANetwork {
      * 8 → 9：{@link BlockGlowPayload} 的 {@code remainingTicks} 增加「{@code <= 0} 表示该条目已失效、
      * 客户端应移除」的语义（供 {@code /additional-abilities block-glow clear} 使用）。
      * 旧客户端会把它当作"忽略"继续显示，因此属于必须递增的破坏性变更。
+     * <p>
+     * 9 → 10：{@link ScreenVisionPayload} 增加 {@code size} 与 {@code rgb} 两个字段
+     * （支撑 {@code simple_screen_vision} 的新视觉类型 {@code edge_light}：遮罩边缘厚度与颜色）。
+     * 字段结构变化即字节格式变化，因此必须递增。
      */
-    private static final String PROTOCOL_VERSION = "9";
+    private static final String PROTOCOL_VERSION = "10";
 
     @SubscribeEvent
     public static void register(final @NotNull RegisterPayloadHandlersEvent event) {
