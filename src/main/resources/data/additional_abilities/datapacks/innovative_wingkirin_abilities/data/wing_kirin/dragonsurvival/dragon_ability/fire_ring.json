@@ -2,6 +2,38 @@
     "actions": [
         {
             "target_selection": {
+                "applied_effects":{
+                    "block_effect":[
+                        {
+                            "effect_type":"additional_abilities:glow",
+                            "color": "#fbdc92",
+                            "alpha": 0.8,
+                            "display_type": "simple_shader"
+                        }
+                    ],
+                    "target_conditions": {
+                        "condition": "minecraft:inverted",
+                        "term": {
+                            "condition": "minecraft:block_state_property",
+                            "block": "air"
+                        }
+                    }
+                },
+                "target_type": "additional_abilities:annulus",
+                "inner_radius": {
+                    "type": "minecraft:linear",
+                    "base": 3,
+                    "per_level_above_first": 3
+                },
+                "width": 3,
+                "height": 10,
+                "height_starts_below": true
+            },
+            "trigger_point": "charging",
+            "trigger_rate": 5.0
+        },
+        {
+            "target_selection": {
                 "applied_effects": {
                     "entity_effect": [
                         {

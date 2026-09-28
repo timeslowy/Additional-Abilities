@@ -15,7 +15,7 @@ with `effect_type`, and that type's own fields sit **next to** `effect_type`:
 }
 ```
 
-The three `effect_type` values below are added by this mod.
+The four `effect_type` values below are added by this mod.
 
 ---
 
@@ -237,3 +237,108 @@ Dragon Survival's and to leave room for a future upgrade.
 - **To clear it immediately** (debugging): `/additional-abilities simple-screen-vision clear <targets>`, see
   [06-Debug-and-Query-Commands.md](06-Debug-and-Query-Commands.md). Note that a passive ability will simply
   re-send on the next tick, so clearing only affects the current moment.
+
+---
+
+## 4. `additional_abilities:enchantment_bonus` — Enchantment Bonus
+
+**In one sentence**: grants the chosen enchantments to the items the target **holds or wears**,
+for as long as the effect lasts (and only while the item stays in hand).
+
+### Fields
+
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `enchantment_bonuses` | list | ✅ | — | At least one entry; each carries its own `base`, **shaped exactly like Dragon Survival's `dragonsurvival:harvest_bonus`** |
+| `enchantment_bonuses[].base` | object | ✅ | — | Identity + duration, the very same "duration instance" `DurationInstanceBase` that `simple_screen_vision` above uses: `id` (required), `duration`, `should_remove_automatically`, `early_removal_condition`, `custom_icon`, `is_hidden` |
+| `enchantment_bonuses[].enchantments` | list | ✅ | — | At least one "enchantment + level" pair |
+| `…[].enchantment` | enchantment | ✅ | — | Enchantment id, e.g. `"minecraft:efficiency"`. **Treasure enchantments are allowed too** |
+| `…[].level` | level value | ❌ | `1` | Applied level, evaluated against the ability level; clamped at runtime to `[1, the enchantment's own maximum]` |
+
+⚠️ Unlike `simple_screen_vision`, **all six `base` fields carry real meaning here**: this is an actual duration
+instance (it counts down, and it is collected when the caster moves out of range or the ability stops),
+and `is_hidden` / `custom_icon` genuinely drive the UI — see "Things to know" below.
+
+### Example
+
+One cast granting four enchantments to nearby allies:
+
+```json
+{
+  "actions": [
+    {
+      "target_selection": {
+        "target_type": "dragonsurvival:area",
+        "radius": 6.0,
+        "applied_effects": {
+          "entity_effect": [
+            {
+              "effect_type": "additional_abilities:enchantment_bonus",
+              "enchantment_bonuses": [
+                {
+                  "base": {
+                    "id": "additional_abilities:ench_bonus_demo",
+                    "duration": { "type": "minecraft:linear", "base": 400.0, "per_level_above_first": 200.0 }
+                  },
+                  "enchantments": [
+                    { "enchantment": "minecraft:sharpness", "level": 3 },
+                    {
+                      "enchantment": "minecraft:efficiency",
+                      "level": { "type": "minecraft:linear", "base": 1.0, "per_level_above_first": 1.0 }
+                    },
+                    { "enchantment": "minecraft:unbreaking", "level": 3 },
+                    { "enchantment": "minecraft:protection", "level": 2 }
+                  ]
+                }
+              ]
+            }
+          ],
+          "targeting_mode": "allies_and_self"
+        }
+      }
+    }
+  ],
+  "activation": {
+    "activation_type": "dragonsurvival:simple",
+    "cast_time": 20.0,
+    "cooldown": 100.0,
+    "initial_mana_cost": 3.0
+  }
+}
+```
+
+### Things to know
+
+- **Living entities only.** Minecarts, dropped items and armour stands are skipped.
+- **What counts as "held or worn"**: main hand / off hand / helmet / chestplate / leggings / boots, plus
+  **Dragon Survival's four claw slots** (sword / pickaxe / axe / shovel) and the main-hand item parked away
+  during a tool swap. **An identical item sitting in your backpack does not count** — move the item back into
+  your inventory and the enchantment is gone immediately.
+- **Why the claw slots work**: Dragon Survival does not teach the enchantment layer about claw slots, it
+  **physically swaps** the claw tool into the main hand at the moment of mining or attacking, so
+  `efficiency` / `sharpness` / `mending` all fire at their normal moment. Where no swap happens
+  (say the mending repair check), this effect scans the claw slots itself and works just the same.
+- **It works exactly like a real enchantment** for damage bonuses, protection, mining speed, durability and
+  mending, crossbow / trident / fishing, and the enchantment's own **attribute modifiers**
+  (`efficiency` is an attribute in 1.21).
+- ⚠️ **What you will not get**: the enchantment **glint** (the item does not glow), the vanilla tooltip lines,
+  and recognition by the anvil / grindstone / repair recipe / `/enchant`. The first two are trade-offs (this mod
+  draws its own "temporary enchantment" tooltip line); the other four are actually a *feature* — those read the
+  item's NBT, cannot see a temporary enchantment, and therefore cannot be abused for free grindstone XP.
+- **It never touches the item's data**: the effect does **not** write the `enchantments` component. It stamps a
+  small `additional_abilities:enchantment_bonus` marker on the item, and an enchantment-query hook supplies the
+  levels from that marker; the marker is cleared when the effect ends. Even if a marker is left behind (say the
+  item was dropped into a chest as the effect ended), the hook first verifies that its source is still alive —
+  so a **permanently active fake enchantment can never happen**.
+- **Item eligibility** uses the same test as the anvil (`ItemStack#supportsEnchantment`): an item that does not
+  support the enchantment simply does nothing while held; enchanted books are excluded.
+- **Levels**: a **fixed** level above the enchantment's maximum **fails at data pack load**; a level that scales
+  with the ability level is clamped to the maximum at runtime.
+- **UI / commands**: the effect shows up in the **ability effect list and HUD** (`is_hidden: true` hides it), and
+  its icon comes from `custom_icon`, falling back to the ability's own icon (never a missing texture).
+  `/dragon-modifiers clear <targets>` removes it, along with the markers on the items.
+- **Multiple sources stack**: when several abilities or several casters hit the same item, each is tracked
+  separately and the **higher level wins** — a lower one never overwrites it.
+- **Infinite duration**: omitting `duration` means "until removed", so collection then relies entirely on
+  `should_remove_automatically` (caster out of range / ability disabled). A passive ability with
+  `dragonsurvival:self` is the recommended pairing.

@@ -34,5 +34,10 @@ public class AAAbilityEntityEffects {
         event.register(AbilityEntityEffect.REGISTRY_KEY,
                 ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "simple_screen_vision"),
                 () -> SimpleScreenVisionEffect.CODEC);
+
+        // 临时附魔加成：additional_abilities:enchantment_bonus
+        event.register(AbilityEntityEffect.REGISTRY_KEY,
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "enchantment_bonus"),
+                () -> EnchantmentBonusEffect.CODEC);
     }
 }

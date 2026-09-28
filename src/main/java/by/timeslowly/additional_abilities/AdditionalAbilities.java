@@ -31,6 +31,8 @@ public class AdditionalAbilities {
         AAClientConfig.register(modContainer);
         // 注册实体附加数据
         AAAttachments.register(modEventBus);
+        // 注册物品数据组件（DataComponentType：临时附魔标记）
+        AAComponents.register(modEventBus);
         // 注册自定义伤害类型
         AADamageTypes.register(modEventBus);
         // 注册自定义属性

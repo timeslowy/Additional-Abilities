@@ -47,6 +47,7 @@
 | 实体效果 | `effect_type` | `additional_abilities:damage_reflection` | 受伤时把伤害按比例震回身边一圈敌人 | [01](doc/中文/01-实体效果.md) |
 | 实体效果 | `effect_type` | `additional_abilities:percentaged_damage` | 按目标生命值百分比造成伤害 | [01](doc/中文/01-实体效果.md) |
 | 实体效果 | `effect_type` | `additional_abilities:simple_screen_vision` | 给对方玩家来一下镜头抖动 / 画面模糊 / 边缘遮罩 | [01](doc/中文/01-实体效果.md) |
+| 实体效果 | `effect_type` | `additional_abilities:enchantment_bonus` | 让目标手持 / 身穿的适用物品临时获得指定附魔 | [01](doc/中文/01-实体效果.md) |
 | 方块效果 | `effect_type` | `additional_abilities:block_quake` | 让选中方块跳一下再落回（纯视觉） | [02](doc/中文/02-方块效果.md) |
 | 方块效果 | `effect_type` | `additional_abilities:extinguish` | 扑灭所及的火、营火与蜡烛（`fire` 的反向版） | [02](doc/中文/02-方块效果.md) |
 | 方块效果 | `effect_type` | `additional_abilities:glow` | 让选中方块发光（颜色 / 半透明可指定，视距内所有玩家可见） | [02](doc/中文/02-方块效果.md) |
@@ -160,7 +161,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 
 | 文件 | 内容 |
 |---|---|
-| [01-实体效果.md](doc/中文/01-实体效果.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` |
+| [01-实体效果.md](doc/中文/01-实体效果.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` / `enchantment_bonus` |
 | [02-方块效果.md](doc/中文/02-方块效果.md) | `block_quake` / `extinguish` / `glow` |
 | [03-目标选择器.md](doc/中文/03-目标选择器.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-激活类型.md](doc/中文/04-激活类型.md) | `charged`（含蓄力档位换算、HUD 表现、位置与音效配置、查询指令、技能信息面板的激活类型显示） |
@@ -241,6 +242,7 @@ The values added by this mod are:
 | Entity effect | `effect_type` | `additional_abilities:damage_reflection` | On taking damage, blast a share of it back at the enemies around you | [01](doc/English/01-Entity-Effect.md) |
 | Entity effect | `effect_type` | `additional_abilities:percentaged_damage` | Deal damage as a percentage of the target's health | [01](doc/English/01-Entity-Effect.md) |
 | Entity effect | `effect_type` | `additional_abilities:simple_screen_vision` | Give another player a camera shake, a screen blur or an edge mask | [01](doc/English/01-Entity-Effect.md) |
+| Entity effect | `effect_type` | `additional_abilities:enchantment_bonus` | Grants the chosen enchantments to the items the target holds or wears, while the effect lasts | [01](doc/English/01-Entity-Effect.md) |
 | Block effect | `effect_type` | `additional_abilities:block_quake` | Make selected blocks hop and settle back (visual only) | [02](doc/English/02-Block-Effect.md) |
 | Block effect | `effect_type` | `additional_abilities:extinguish` | Put out fire, campfires and candles in the affected area (mirror of `fire`) | [02](doc/English/02-Block-Effect.md) |
 | Block effect | `effect_type` | `additional_abilities:glow` | Make selected blocks glow (colour / alpha configurable, visible to every player in range) | [02](doc/English/02-Block-Effect.md) |
@@ -358,7 +360,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 
 | File | Contents |
 |---|---|
-| [01-Entity-Effect.md](doc/English/01-Entity-Effect.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` |
+| [01-Entity-Effect.md](doc/English/01-Entity-Effect.md) | `damage_reflection` / `percentaged_damage` / `simple_screen_vision` / `enchantment_bonus` |
 | [02-Block-Effect.md](doc/English/02-Block-Effect.md) | `block_quake` / `extinguish` / `glow` |
 | [03-Target-Type.md](doc/English/03-Target-Type.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-Activation-Type.md](doc/English/04-Activation-Type.md) | `charged` (tier conversion, HUD behaviour, position and sound config, query command, activation type shown in the ability info panel) |

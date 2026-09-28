@@ -33,8 +33,14 @@ public class AANetwork {
      * 9 → 10：{@link ScreenVisionPayload} 增加 {@code size} 与 {@code rgb} 两个字段
      * （支撑 {@code simple_screen_vision} 的新视觉类型 {@code edge_light}：遮罩边缘厚度与颜色）。
      * 字段结构变化即字节格式变化，因此必须递增。
+     * <p>
+     * 10 → 11：新增物品数据组件 {@code additional_abilities:enchantment_bonus}
+     * （{@code AAComponents}，支撑 {@code enchantment_bonus} 实体效果）。
+     * 它虽不是 payload，但会<b>随物品栈上线</b>、并进入登录期的注册表同步：
+     * 旧客户端收到带该组件的物品栈会解码失败、或直接卡在注册表同步。
+     * 递增后版本不匹配会在协商阶段被明确拒绝，而不是在游戏中途炸出难查的解码错误。
      */
-    private static final String PROTOCOL_VERSION = "10";
+    private static final String PROTOCOL_VERSION = "11";
 
     @SubscribeEvent
     public static void register(final @NotNull RegisterPayloadHandlersEvent event) {
