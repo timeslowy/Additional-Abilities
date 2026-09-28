@@ -334,8 +334,7 @@ One cast granting four enchantments to nearby allies:
   support the enchantment simply does nothing while held; enchanted books are excluded.
 - **Levels**: a **fixed** level above the enchantment's maximum **fails at data pack load**; a level that scales
   with the ability level is clamped to the maximum at runtime.
-- **UI / commands**: the effect shows up in the **ability effect list and HUD** (`is_hidden: true` hides it), and
-  its icon comes from `custom_icon`, falling back to the ability's own icon (never a missing texture).
+- **UI / commands**: the effect shows up in the **ability effect list and HUD** ,
   `/dragon-modifiers clear <targets>` removes it, along with the markers on the items.
 - **Multiple sources stack**: when several abilities or several casters hit the same item, each is tracked
   separately and the **higher level wins** — a lower one never overwrites it.

@@ -60,17 +60,6 @@ import java.util.List;
  * 非生物（掉落物、矿车……）没有装备槽可言，直接跳过；玩家与其它生物走同一套逻辑
  * （差别只在"爪牙槽"这一额外持有位置）。
  *
- * <h2>界面 / 指令集成（为什么实例存储注册在 DS 的注册表里）</h2>
- * 实例的载体 {@code AAAttachments.ENCHANTMENT_BONUSES} 是**注册进 DS 附件注册表**的
- * （原因见该字段的注释：DS 只遍历它自己的存储），因此以下 DS 原生能力对本效果生效：
- * <ul>
- *     <li><b>技能效果 HUD 与物品栏效果列表</b>会显示本效果，`base.is_hidden: true` 可隐藏；</li>
- *     <li>图标取 `base.custom_icon`，<b>缺省时回落到技能自身的图标</b>（`icon.texture_entries`），
- *         而不是显示缺失纹理；</li>
- *     <li>`/dragon-modifiers clear &lt;目标&gt;` 可以清除本效果（并连带清掉物品上的标记）；</li>
- *     <li>数据包条件 `has_duration_effect` 可以用 `base.id` 断言本效果在不在目标身上。</li>
- * </ul>
- *
  * <h2>与龙的爪牙槽</h2>
  * 龙生并不让附魔 API 去认爪牙槽，而是<b>物理换手</b>：挖掘（{@code ServerPlayerGameModeStart/EndMixin}）
  * 与攻击（{@code PlayerStartMixin} / {@code PlayerEndMixin}）时把爪牙工具塞进主手，

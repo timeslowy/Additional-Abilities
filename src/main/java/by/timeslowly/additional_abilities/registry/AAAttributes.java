@@ -30,13 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * {@code PercentageAttribute} 只是把显示值乘以 {@code scaleFactor}（默认 100），
  * 即 0.8 显示为 {@code 80%}，**不改变数值语义**（取值、钳制、修饰符运算全部照旧）。
  * 这与本属性的「比例」定位相符。
- *
- * <h2>为什么必须 {@code setSyncable(true)}</h2>
- * {@code Attribute#syncable} 的默认值是 {@code false}（构造函数不设置该字段），
- * 不同步到客户端的后果是：客户端 {@code ClientDragonRenderer#renderAbilityHitbox}
- * （显示选择箱的调试框）按属性默认值 0 计算，于是框体与服务端实际选中的目标不一致。
- * DS 自身的全部属性也都调用了 {@code setSyncable(true)}。
- *
  * <h2>仅挂在玩家身上</h2>
  * 通过 {@link EntityAttributeModificationEvent} 只对 {@code EntityType.PLAYER} 注册
  * （DS 的龙息技能本就以玩家为施法者）。其它生物读取该属性会得到默认值 0，
