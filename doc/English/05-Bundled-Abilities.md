@@ -22,9 +22,11 @@
 | Ability id | Name | Species | Activation | Max level | Unlock / upgrade |
 |---|---|---|---|---|---|
 | `sea_dragon:extinguish_breath` | Extinguish Breath | Sea Dragon| `channeled` continuous breath | 4 | Experience levels `0 / 10 / 20 / 40` |
+| `sea_dragon:lightning_domain` | Lightning Domain | Sea Dragon | `simple` cast | 5 | Experience levels `10 / 20 / 30 / 40 / 50` |
 | `cave_dragon:smoke_breath` | Smoke Breath | Cave Dragon | `channeled` continuous breath | 3 | Experience levels `0 / 10 / 20` |
 | `cave_dragon:piercing_eye` | Piercing Eye | Cave Dragon | `passive` | 1 (no upgrade) | Active as soon as the ability is present |
 | `forest_dragon:natural_alies` | Natural Allies | Forest Dragon | `simple` cast | 4 | Growth `30 / 40 / 50 / 60` (upgrade type `dragon_growth`) |
+| `forest_dragon:photorepair` | Photorepair | Forest Dragon | `passive` | 3 | Growth `30 / 40 / 50` (upgrade type `dragon_growth`) |
 | `additional_abilities:explosion_arrow` | Explosion Arrow | Wing Kirin | `simple` cast | 1 | Complete the "Return to Sender" advancement |
 | `additional_abilities:entity_marker` | Entity Marker | Wing Kirin | `passive` + key trigger (left mouse button) | 2 | Complete the "Glow and Behold!" advancement; upgraded with experience points |
 
@@ -59,6 +61,53 @@ dragon_ability.<namespace>.<ability id>.desc     → description
 
 **Usage notes**: this is a support / firefighting ability that deals almost no damage. Use it to put out
 allies (and yourself) and to clear a burning area.
+
+---
+
+## Lightning Domain — `lightning_domain`
+
+> "Cast the spell and scatter the 'Thunderling Force' within you into a domain, held for a time."
+> "Any outsider who dares trespass is pulled down by the electricity coursing everywhere and feels far
+> heavier, and is more easily hurt by lightning; while the caster is buffed, coming and going freely."
+> "Best of all, their attacks more easily pierce armour."
+> "The domain's radius grows with the skill level (experience levels)." "Cannot be cast inside lava."
+
+| Item | Value |
+|---|---|
+| Activation | `dragonsurvival:simple`, `cast_time` 80 ticks, cooldown 2000 ticks (100 seconds), initial mana cost 8 |
+| Can move while casting | No (neck and tail are locked during the cast; animations `cast_magic_alt` → `magic_alt`) |
+| Usage restriction | **Blocked while the eyes are in lava** |
+| Level | max level 5, upgraded by `dragonsurvival:experience_levels`: `10 / 20 / 30 / 40 / 50` |
+| Shape | annulus radius `4 + 4 × (level - 1)`; uses both `additional_abilities:annulus` and `additional_abilities:domain` |
+
+**Effect**: four actions.
+
+1. **Charging telegraph** (`trigger_point` = `charging`, `trigger_rate` 10): while the cast bar runs,
+   **every 10 ticks** the **non-air blocks** within the annulus (`additional_abilities:annulus`) around your
+   feet — inner radius `4 + 4 × (level - 1)`, width 2, height 4 (extending 4 blocks downwards) — put out
+   10 `minecraft:end_rod` particles. That is the visual telegraph for the "electricity coursing everywhere".
+2. **Hostile domain** (`additional_abilities:domain`, same radius, cylinder, duration 600 ticks = 30 seconds):
+   **non-allied creatures** inside it (`targeting_mode` = `non_allies`, `is_harmful` = `true`) keep gaining:
+   - **Gravity +0.6** (`generic.gravity`, `add_multiplied_total`) — the "feels far heavier" part;
+   - **×2 damage taken from electric sources** (`#dragonsurvival:is_electric`, e.g. lightning, storm breath);
+   - a **30% chance** of **Broken Wings** (`dragonsurvival:broken_wings`) — no flying.
+   All three are **hidden** effects (`is_hidden: true`) and their duration is refreshed every tick by the domain.
+3. **Ally domain** (`additional_abilities:domain`, same parameters): **allies and yourself**
+   (`targeting_mode` = `allies_and_self`) inside it keep gaining:
+   - **Armour Ignore Chance +0.4** (`dragonsurvival:armor_ignore_chance`) — the "attacks pierce armour" part;
+   - **Strength II + Speed II + Haste II** (`amplifier` 1) — the "buffed, coming and going freely" part.
+4. **Charged cloud on blocks** (`dragonsurvival:disc`, same radius): **non-air blocks** inside the domain have
+   a **30% chance** to be left with a `dragonsurvival:area_cloud` (duration 600 ticks) — creatures inside gain
+   **Charged** (`dragonsurvival:charged`) and **Glowing** (`minecraft:glowing`), with
+   `dragonsurvival:large_lightning` particles.
+
+**Usage notes**: a **two-sided area domain** that stakes out your surrounding ground as your own turf. The
+damage does not come from the ability itself but from **amplifying the environment**: enemies inside are
+**crushed by double gravity, slowed, take double lightning damage and have a 30% chance to be grounded**,
+while allies get **Strength, Speed and Haste plus armour-piercing attacks**. **The domain does not move** —
+it is fixed where it was cast and fades after 30 seconds. Pair it with lightning, storm breath or a
+teammate's electric attacks to get the most out of it. The **100-second cooldown** and **8 initial mana cost**
+make it an opening move for a real fight rather than a throwaway aura.
 
 ---
 
@@ -147,6 +196,39 @@ breath attack is where the payoff is.
 > `#forest_dragon:is_forest_dragon` (`data/forest_dragon/tags/damage_type/is_forest_dragon.json`, holding
 > `dragonsurvival:forest_breath` / `dragonsurvival:spike` / this damage type), and the death message key
 > `death.attack.forest_dragon.natural_force`.
+
+---
+
+## Photorepair — `photorepair`
+
+> "As the dragon grows in age, the plants it lives in symbiosis with become ever more familiar, and it
+> develops the power to make them settle on its armour and claws — using 'photosynthesis' to repair tools."
+> "The trigger cooldown drops as the skill level (growth stage) rises."
+> "As the name suggests, it only works by day, outdoors, under clear skies."
+
+| Item | Value |
+|---|---|
+| Activation | `dragonsurvival:passive` |
+| Continuous mana cost | `1` reserved (`continuous_mana_cost`, `type` = `reserved`) |
+| Cooldown | `800 / 600 / 400` ticks per level (40 / 30 / 20 seconds; linear `base` 800, −200 per level) |
+| Usage restriction | **Blocked when the sky is not visible**; **blocked while raining / snowing**; **blocked at night (ticks 12000~23999)** |
+| Level | max level 3, upgraded by `dragonsurvival:dragon_growth`: growth `30 / 40 / 50` → level 1 / 2 / 3 (fallback `10` beyond) |
+
+**Effect**: a single action — settles one `additional_abilities:durability` (durability setting) on
+**yourself** (`target_type` = `dragonsurvival:self`, `targeting_mode` = `allies_and_self`):
+
+- damageable items in the **equipment slots and claw slots** (`slots` = `["equipment", "claws"]`) gain
+  **+1% of max durability** (`operation` = `add`, `unit` = `percent`, `percent_base` = `max_durability`).
+
+**Usage notes**: an **offline auto-repair** passive — a purely flavour-driven "photosynthesis" way to keep
+your gear in shape. Its **three conditions must all hold**: you must be **exposed to the sky**, it must
+**not be raining or snowing**, and it must be **daytime** (in-game ticks 0~11999, i.e. sunrise to sunset) —
+which means it fails **underground, underwater, deep in a forest, at night and in the rain**. A `reserved`
+continuous cost means it **permanently holds 1 point of your mana cap**; it will not drain you, but your
+total mana is always 1 lower. Since `percent_base` is **max durability**, the beefier the item (diamond
+pickaxe, netherite armour) the more it repairs; wear faster than 1.25% per second (the 400-tick cooldown at
+level 3) outpaces it, but normal use is comfortably covered. **Note**: the durability effect resolves
+**instantly**, so the amount repaired is a single fixed value — there is no continuous "repairing" process.
 
 ---
 

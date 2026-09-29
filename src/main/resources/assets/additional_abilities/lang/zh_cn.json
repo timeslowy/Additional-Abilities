@@ -79,16 +79,23 @@
 "dragon_ability.additional_abilities.entity_marker.desc": "§7■完成§6「眼前一亮！」§r§7进度以解锁。\n\n§6§o“发现敌人位置！§m（标记敌人+10分）”",
 "dragon_ability.additional_abilities.explosion_arrow": "三连箭雷",
 "dragon_ability.additional_abilities.explosion_arrow.desc": "§7■完成§6「见鬼去吧」§r§7挑战进度以解锁。\n\n§6§o“捂好耳朵，要打雷了！”",
-"dragon_ability.additional_abilities.test_durability": "耐久设置测试",
-"dragon_ability.additional_abilities.test_durability.desc": "§7■ 用于测试§6「耐久设置」§7实体效果（§fadditional_abilities:durability§7）的测试技能。\n\n■ 施法后对§f自身§7结算四条规则：§f主手§7物品耐久 §f+25%§7（每级再 +5%）；§f爪牙槽§7 4 格修满；§f头盔 / 胸甲 / 护腿 / 靴子§7各 §f-4§7 点耐久（会被§f耐久附魔§7减免）；§f副手§7物品 §f-60%§7 且耗尽即§f销毁§7。\n\n■ §8本效果是纯瞬时结算，触发频次完全由技能决定：actions 里的 §ftrigger_rate§8 默认是 1（每刻一次），挂被动技能时必须显式写，否则修复类瞬间拉满、磨损类瞬间掏空。\n\n■ §8slots 可用值：mainhand / offhand / head / chest / legs / feet / body / equipment / hotbar / inventory / claw_sword / claw_pickaxe / claw_axe / claw_shovel / claws / all。\n\n■ §8percent_base 需在 max_durability 与 current_durability 中二选一；operation 另有 set（设为指定值）。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
+
 "dragon_ability.sea_dragon.extinguish_breath": "止火之息",
 "dragon_ability.sea_dragon.extinguish_breath.desc": "■喷吐大量水汽，浇灭所及之处的火焰，亦包括失火的生物。\n\n■§f射程§r§7取决于年龄，§f抗火时间§r§7则取决于经验等级。\n\n■§8无法在§4熔岩里§r使用。",
+"dragon_ability.sea_dragon.lightning_domain": "威霆显域",
+"dragon_ability.sea_dragon.lightning_domain.desc": "§7■施用法术，将体内的§9“幽雷之力”§7散布开为一片领域，并§n维系一段时间§r§7。凡是胆敢擅闯领域的外者，皆遭遍地电泳所吸而§e倍感沉重§7，且§e更易为电所伤§7；而施法者则§a增益有加，来去自如。§7最妙的是，其§a攻击将更易穿甲。§7\n\n■§n领域范围§r§7随§a技能等级（经验等级）§7而增长。§8\n\n■不得在§4熔岩内§r§8施用。",
+
+
 "dragon_ability.cave_dragon.piercing_eye": "火眼金睛",
 "dragon_ability.cave_dragon.piercing_eye.desc": "■在熔岩里的生活使你练就了一双§c火眼金睛§r，让目光能穿过迷雾§a（免疫失明）§r。\n\n■§7当然，此效果不能免疫§4黑暗§r，毕竟洞穴龙和坚守者没有打过“半毛钱”交道",
 "dragon_ability.cave_dragon.smoke_breath": "障目之息",
 "dragon_ability.cave_dragon.smoke_breath.desc": "■喷吐大量烟气，蒙蔽敌人的双眼。\n\n■§f射程§r§7取决于年龄，施加的§f失明时间§r§7则取决于经验等级。\n\n■§7也有些许伤害，但远远低于§c炽焰之息§7。\n\n■§8无法在水下或雨间使用§r。",
+
 "dragon_ability.forest_dragon.natural_alies":"草木皆兵",
-"dragon_ability.forest_dragon.natural_alies.desc":"§7■你与自然共生共处、交感相融，竟拥有了让一草一木§e传递攻势§7的魔力。施用此法术，可以让一定范围内§n同位于草木系方块上§r§7的§l非友方生物§r§7遭受§e百分比伤害§7，并“缠住”他们，使其§e虚弱而不能移§7，且§e更易为森林龙法术所伤§7。\n\n■伤害比例、效果持续与易伤时长随§a技能等级（成长阶段）§7递增。\n\n§4■仅能在自身也处于草木系方块上时施用。",
+"dragon_ability.forest_dragon.natural_alies.desc":"§7■你与自然共生共处、交感相融，竟拥有了让一草一木§f传递攻势§7的魔力。施用此法术，可以让一定范围内§n同位于草木系方块上§r§7的§l非友方生物§r§7遭受§e百分比伤害§7，并“缠住”他们，使其§e虚弱而不能移§7，且§e更易为森林龙法术所伤§7。\n\n■伤害比例、效果持续与易伤时长随§a技能等级（成长阶段）§7递增。\n\n§4■仅能在自身也处于草木系方块上时施用。",
+"dragon_ability.forest_dragon.photorepair": "光补作用",
+"dragon_ability.forest_dragon.photorepair.desc": "§7■随着§n年龄渐长§r§7，森林龙逐渐与身上共生之植物愈发熟络，而生发出可以让他们附着在§n盔甲与爪牙之上§r§7——利用“光合作用”§a修补工具§7的能力。\n\n■§l触发冷却§7§r随§a技能等级（成长阶段）而递减。§7\n\n■如技能名所言，仅能在§n白日、户外、晴朗时§r§7方能生效。",
+
 "dragon_ability.wing_kirin.fire_ring":"安身法",
 "dragon_ability.wing_kirin.fire_ring.desc":"§7■保命之奇术也，就地施法，片刻过后，即§n以自身为圆心§r§7画出一道火圈并形成§l持续之阵势§r§7。形成瞬间§e可短暂无敌，并把敌方击退至圈外§7。\n\n■阵法可§l存续一段时间，随时步出再折返亦无妨,时限一到，阵势自然幻灭。§r§7若自身及友方§n位于阵法之内§r§7，可获得§a持续的增益效果§e，而敌方则寸步难行。§7\n\n■阵法的§n范围§r§7随§a技能等级而增长§7，同一玩家最多可同时存在§l一个阵法§r§7。§4只能在地上使用，且不可立于水中。\n\n§6§o“强似那铜墙铁壁，更不是画地为牢。”",
 "dragon_ability.wing_kirin.fire_ring.activation.notification.usage_blocked": "§l这阵法水火不容，更不可凭空生造，你可识得？",
@@ -119,6 +126,8 @@
 "dragon_ability.additional_abilities.test_optional_charged.desc": "§7■ 用于测试§6「可选性蓄力」§7激活类型的技能。\n\n■ §f按住技能键§7蓄力。蓄力期间§f滚动鼠标滚轮§7即可挑选松手时要释放的档位：上滚提升、下滚降低。\n\n■ 只能挑选§f当前已蓄到§7的档位 —— 提示区左边的数字是你选定的档位，紧跟其后的灰色数字是已蓄到的档位。\n\n■ 一直下滚到 §f0§7 即为§f取消§7：此时松手什么都不放，既不耗蓝也不进冷却。\n\n■ 把档位滚回「已蓄到档位」即恢复§f自动跟随§7（表现与§6「蓄力」§7类型一致）：松手按已蓄到的档位释放。",
 "dragon_ability.additional_abilities.test_screen_vision": "屏幕视觉测试",
 "dragon_ability.additional_abilities.test_screen_vision.desc": "§7■ 用于测试§6「简单屏幕视觉」§7实体效果（§fadditional_abilities:simple_screen_vision§7）的测试技能。\n\n■ §f具体表现与数值会随调试改动§7，本描述不作详细说明。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
+"dragon_ability.additional_abilities.test_durability": "耐久设置测试",
+"dragon_ability.additional_abilities.test_durability.desc": "§7■ 用于测试§6「耐久设置」§7实体效果（§fadditional_abilities:durability§7）的测试技能。\n\n■ 施法后对§f自身§7结算四条规则：§f主手§7物品耐久 §f+25%%§7（每级再 +5%%）；§f爪牙槽§7 4 格修满；§f头盔 / 胸甲 / 护腿 / 靴子§7各 §f-4§7 点耐久（会被§f耐久附魔§7减免）；§f副手§7物品 §f-60%%§7 且耗尽即§f销毁§7。\n\n■ §8本效果是纯瞬时结算，触发频次完全由技能决定：actions 里的 §ftrigger_rate§8 默认是 1（每刻一次），挂被动技能时必须显式写，否则修复类瞬间拉满、磨损类瞬间掏空。\n\n■ §8slots 可用值：mainhand / offhand / head / chest / legs / feet / body / equipment / hotbar / inventory / claw_sword / claw_pickaxe / claw_axe / claw_shovel / claws / all。\n\n■ §8percent_base 需在 max_durability 与 current_durability 中二选一；operation 另有 set（设为指定值）。\n\n■ §8未挂在任何龙种下，需用指令自行授予。",
 
 "enchantment.additional_abilities.dragon_breath_restrictor": "束息",
 

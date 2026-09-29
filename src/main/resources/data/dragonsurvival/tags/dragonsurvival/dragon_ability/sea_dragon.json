@@ -1,6 +1,7 @@
 {
     "replace": false,
     "values": [
-        "sea_dragon:extinguish_breath"
+        "sea_dragon:extinguish_breath",
+        "sea_dragon:lightning_domain"
     ]
 }

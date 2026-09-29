@@ -1,0 +1,300 @@
+{
+    "actions": [
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "block_effect": [
+                        {
+                            "effect_type": "dragonsurvival:particle",
+                            "particle_data": {
+                                "particle": {
+                                    "type": "minecraft:end_rod"
+                                },
+                                "horizontal_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "vertical_position": {
+                                    "type": "in_bounding_box"
+                                },
+                                "horizontal_velocity": {
+                                    "base": 1
+                                },
+                                "vertical_velocity": {
+                                    "base": 1
+                                }
+                            },
+                            "particle_count": 10
+                        }
+                    ],
+                    "target_conditions": {
+                        "condition": "minecraft:inverted",
+                        "term": {
+                            "condition": "minecraft:block_state_property",
+                            "block": "air"
+                        }
+                    }
+                },
+                "target_type": "additional_abilities:annulus",
+                "inner_radius": {
+                    "type": "minecraft:linear",
+                    "base": 4,
+                    "per_level_above_first": 4
+                },
+                "width": 2,
+                "height": 4,
+                "height_starts_below": true
+            },
+            "trigger_point": "charging",
+            "trigger_rate": 10
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:modifier",
+                            "modifiers": [
+                                {
+                                    "base": {
+                                        "id": "sea_dragon:lightning_domain_harmful_1",
+                                        "duration": 200,
+                                        "is_hidden": true
+                                    },
+                                    "modifiers": [
+                                        {
+                                            "attribute": "generic.gravity",
+                                            "amount": 0.6,
+                                            "operation": "add_multiplied_total"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:damage_modification",
+                            "modifications": [
+                                {
+                                    "base": {
+                                        "id": "sea_dragon:lightning_domain_harmful_2",
+                                        "duration": 200,
+                                        "is_hidden": true
+                                    },
+                                    "damage_types": "#dragonsurvival:is_electric",
+                                    "multiplier": 2.0
+                                }
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": "dragonsurvival:broken_wings",
+                                "duration": 200,
+                                "amplifier": 0,
+                                "probability": 0.3
+                            }
+                        }
+                    ],
+                    "targeting_mode": "non_allies",
+                    "is_harmful": true,
+                    "target_conditions": {
+                        "condition": "minecraft:entity_properties",
+                        "entity": "this",
+                        "predicate": {
+                            "type_specific": {
+                                "type": "dragonsurvival:entity_check_predicate",
+                                "check_for": "living_entity"
+                            }
+                        }
+                    }
+                },
+                "target_type": "additional_abilities:domain",
+                "duration": 600,
+                "shape": "cylinder",
+                "radius": {
+                    "type": "minecraft:linear",
+                    "base": 4,
+                    "per_level_above_first": 4
+                },
+                "height": 4,
+                "height_starts_below": true
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "entity_effect": [
+                        {
+                            "effect_type": "dragonsurvival:modifier",
+                            "modifiers": [
+                                {
+                                    "base": {
+                                        "id": "sea_dragon:lightning_domain_beneficial_1",
+                                        "duration": 200,
+                                        "is_hidden": true
+                                    },
+                                    "modifiers": [
+                                        {
+                                            "attribute": "dragonsurvival:armor_ignore_chance",
+                                            "amount": 0.4,
+                                            "operation": "add_value"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "effect_type": "dragonsurvival:potion",
+                            "potion": {
+                                "effects": [
+                                    "minecraft:strength",
+                                    "minecraft:speed",
+                                    "minecraft:haste"
+                                ],
+                                "amplifier": 1,
+                                "duration": 200,
+                                "effect_particles": true
+                            }
+                        }
+                    ],
+                    "targeting_mode": "allies_and_self"
+                },
+                "target_type": "additional_abilities:domain",
+                "duration": 600,
+                "shape": "cylinder",
+                "radius": {
+                    "type": "minecraft:linear",
+                    "base": 4,
+                    "per_level_above_first": 4
+                },
+                "height": 4,
+                "height_starts_below": true
+            }
+        },
+        {
+            "target_selection": {
+                "applied_effects": {
+                    "block_effect": [
+                        {
+                            "effect_type": "dragonsurvival:area_cloud",
+                            "duration": 600.0,
+                            "particle": {
+                                "type": "dragonsurvival:large_lightning",
+                                "duration": 37.0,
+                                "swirls": false
+                            },
+                            "potion": {
+                                "amplifier": 1.0,
+                                "duration": 60.0,
+                                "effects": [
+                                    "dragonsurvival:charged",
+                                    "minecraft:glowing"
+                                ]
+                            },
+                            "probability": 0.3
+                        }
+                    ],
+                    "target_conditions": {
+                        "condition": "minecraft:inverted",
+                        "term": {
+                            "condition": "minecraft:block_state_property",
+                            "block": "air"
+                        }
+                    }
+                },
+                "target_type": "dragonsurvival:disc",
+                "radius": {
+                    "type": "minecraft:linear",
+                    "base": 4,
+                    "per_level_above_first": 4
+                },
+                "height": 4,
+                "height_starts_below": true
+            }
+        }
+    ],
+    "activation": {
+        "activation_type": "dragonsurvival:simple",
+        "animations": {
+            "end": {
+                "animation_key": "magic_alt",
+                "layer": "BASE",
+                "locks_neck": true,
+                "locks_tail": true
+            },
+            "start_and_charging": {
+                "animation_key": "cast_magic_alt",
+                "layer": "BASE",
+                "locks_neck": true,
+                "locks_tail": true,
+                "transition_length": 2
+            }
+        },
+        "can_move_while_casting": false,
+        "cast_time": 80.0,
+        "cooldown": 2000,
+        "initial_mana_cost": 8.0,
+        "sound": {
+            "end": "dragonsurvival:storm_breath_end",
+            "start": "dragonsurvival:storm_breath_start"
+        }
+    },
+    "icon": {
+        "texture_entries": [
+            {
+                "from_level": 0,
+                "texture_resource": "dragonsurvival:abilities/sea/lightning_domain_0"
+            },
+            {
+                "from_level": 1,
+                "texture_resource": "dragonsurvival:abilities/sea/lightning_domain_1"
+            },
+            {
+                "from_level": 2,
+                "texture_resource": "dragonsurvival:abilities/sea/lightning_domain_2"
+            },
+            {
+                "from_level": 3,
+                "texture_resource": "dragonsurvival:abilities/sea/lightning_domain_3"
+            },
+            {
+                "from_level": 4,
+                "texture_resource": "dragonsurvival:abilities/sea/lightning_domain_4"
+            },
+            {
+                "from_level": 5,
+                "texture_resource": "dragonsurvival:abilities/sea/lightning_domain_5"
+            }
+        ]
+    },
+    "upgrade": {
+        "upgrade_type": "dragonsurvival:experience_levels",
+        "maximum_level": 5,
+        "level_requirement": {
+            "type": "minecraft:lookup",
+            "fallback": 10,
+            "values": [
+                10,
+                20,
+                30,
+                40,
+                50
+            ]
+        }
+    },
+    "usage_blocked": {
+        "condition": "minecraft:any_of",
+        "terms": [
+            {
+                "condition": "minecraft:entity_properties",
+                "entity": "this",
+                "predicate": {
+                    "type_specific": {
+                        "type": "dragonsurvival:custom_predicates",
+                        "eye_in_fluid": "minecraft:lava",
+                        "weather_predicate": {}
+                    }
+                }
+            }
+        ]
+    }
+}

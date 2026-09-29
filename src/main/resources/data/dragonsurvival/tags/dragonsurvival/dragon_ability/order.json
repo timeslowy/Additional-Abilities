@@ -4,8 +4,10 @@
         "additional_abilities:entity_marker",
         "additional_abilities:explosion_arrow",
         "sea_dragon:extinguish_breath",
+        "sea_dragon:lightning_domain",
         "cave_dragon:smoke_breath",
         "cave_dragon:piercing_eye",
-        "forest_dragon:natural_alies"
+        "forest_dragon:natural_alies",
+        "forest_dragon:photorepair"
     ]
 }

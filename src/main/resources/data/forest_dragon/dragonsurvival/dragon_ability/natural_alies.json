@@ -139,13 +139,13 @@
     "activation_type": "dragonsurvival:simple",
     "animations": {
       "end": {
-        "animation_key": "mass_buff",
+        "animation_key": "magic_alt",
         "layer": "BASE",
         "locks_neck": true,
         "locks_tail": true
       },
       "start_and_charging": {
-        "animation_key": "cast_mass_buff",
+        "animation_key": "cast_magic_alt",
         "layer": "BASE",
         "locks_neck": true,
         "locks_tail": true,
@@ -161,7 +161,8 @@
     },
     "initial_mana_cost": 6.0,
     "sound": {
-      "end": "minecraft:ui.toast.in"
+      "end": "minecraft:block.enchantment_table.use",
+      "charging": "dragonsurvival:forest_breath_start"
     }
   },
   "icon": {
