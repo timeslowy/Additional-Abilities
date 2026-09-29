@@ -39,5 +39,10 @@ public class AAAbilityEntityEffects {
         event.register(AbilityEntityEffect.REGISTRY_KEY,
                 ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "enchantment_bonus"),
                 () -> EnchantmentBonusEffect.CODEC);
+
+        // 耐久设置：additional_abilities:durability
+        event.register(AbilityEntityEffect.REGISTRY_KEY,
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "durability"),
+                () -> DurabilityEffect.CODEC);
     }
 }

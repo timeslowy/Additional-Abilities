@@ -7,8 +7,9 @@
 > [07-Bundled-Datapacks.md](07-Bundled-Datapacks.md) for what it changes and how to enable it.
 
 > There is also a set of `test_*` abilities (`test_charged` / `test_charged_hold` / `test_optional_charged` /
-> `test_block_quake` / `test_screen_vision` / `test_anti_dragon_breath` / `test_annulus` /
-> `test_domain` / `test_on_block_placed` / `test_on_item_consumed` / `test_enchantment_bonus`) for development and
+> `test_block_quake` / `test_glow` / `test_screen_vision` / `test_enchantment_bonus` / `test_durability` /
+> `test_anti_dragon_breath` / `test_annulus` / `test_domain` /
+> `test_on_block_placed` / `test_on_item_consumed` / `test_on_ability_cast`) for development and
 > debugging only.
 > They are **not attached to any species** and must be granted with a command.
 > See the [README](../../README.md) quick-reference table for which custom type each one exercises.  

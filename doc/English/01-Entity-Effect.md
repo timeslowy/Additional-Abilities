@@ -15,7 +15,7 @@ with `effect_type`, and that type's own fields sit **next to** `effect_type`:
 }
 ```
 
-The four `effect_type` values below are added by this mod.
+The five `effect_type` values below are added by this mod.
 
 ---
 
@@ -341,3 +341,113 @@ One cast granting four enchantments to nearby allies:
 - **Infinite duration**: omitting `duration` means "until removed", so collection then relies entirely on
   `should_remove_automatically` (caster out of range / ability disabled). A passive ability with
   `dragonsurvival:self` is the recommended pairing.
+
+---
+
+## 5. `additional_abilities:durability` — Durability
+
+**In one sentence**: changes the durability of the damageable items sitting in the target's chosen slots —
+wear them down, repair them, or set them to a specific value.
+
+### Fields
+
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `durability_changes` | list | ✅ | — | At least one entry; each entry is an independent rule that scans slots and settles on its own |
+| `durability_changes[].slots` | enum list | ✅ | — | At least one entry, see the slot table below |
+| `durability_changes[].item` | item predicate | ❌ | **every** damageable item in those slots | Same fields as the vanilla `ItemPredicate` (`items` / `count` / `components` / `predicates`) |
+| `durability_changes[].operation` | enum | ✅ | — | `add` = change the current durability (**positive `amount` repairs, negative wears**); `set` = set it to the value `amount` resolves to |
+| `durability_changes[].amount` | level value | ✅ | — | The delta (`add`) or the target value (`set`), evaluated against the ability level |
+| `durability_changes[].unit` | enum | ✅ | — | `durability` = durability points; `percent` = a percentage |
+| `durability_changes[].percent_base` | enum | ⚠️ | — | `max_durability` / `current_durability`. **Required when `unit` is `percent`; must be omitted when `unit` is `durability`** — either mistake fails at data pack load |
+| `durability_changes[].break_item` | boolean | ❌ | `false` | **Only** decides whether the item is destroyed once the result is `≤ 0`; it does not affect anything else |
+
+#### Slot values (`slots`)
+
+| Value | Covers |
+|---|---|
+| `mainhand` / `offhand` | Main hand / off hand |
+| `head` / `chest` / `legs` / `feet` / `body` | Helmet / chestplate / leggings / boots / animal armour slot (horse and wolf armour) |
+| `equipment` | All of the equipment slots above |
+| `hotbar` / `inventory` | Hotbar (9 slots) / inventory (36 slots, hotbar included) |
+| `claw_sword` / `claw_pickaxe` / `claw_axe` / `claw_shovel` | A single Dragon Survival claw slot |
+| `claws` | All four claw slots |
+| `all` | Equipment slots + 36 inventory slots + 4 claw slots |
+
+### Example
+
+One cast settling three rules: repair the main hand, wear the armour, and put the off hand at
+"half of its current durability", destroying it once it runs out:
+
+```json
+{
+  "effect_type": "additional_abilities:durability",
+  "durability_changes": [
+    {
+      "slots": ["mainhand", "claw_sword", "claw_pickaxe"],
+      "operation": "add",
+      "amount": { "type": "minecraft:linear", "base": 0.25, "per_level_above_first": 0.05 },
+      "unit": "percent",
+      "percent_base": "max_durability"
+    },
+    {
+      "slots": ["head", "chest", "legs", "feet"],
+      "operation": "add",
+      "amount": -4.0,
+      "unit": "durability"
+    },
+    {
+      "slots": ["offhand"],
+      "item": { "items": "#minecraft:swords" },
+      "operation": "set",
+      "amount": 0.5,
+      "unit": "percent",
+      "percent_base": "current_durability",
+      "break_item": true
+    }
+  ]
+}
+```
+
+### Things to know
+
+- **Living entities only.** Minecarts, dropped items and armour stands are skipped, and non-player mobs only
+  have equipment slots — no inventory, no claw slots.
+- **"Damageable" is the vanilla definition**: the test is `ItemStack#isDamageableItem()` — it has `max_damage`,
+  it does **not** carry an `unbreakable` component, and it has `damage`. "Unbreakable" items are therefore
+  excluded for free, and a brand-new tool already qualifies (vanilla's `Item.Properties#durability` writes
+  `damage = 0` as well).
+- **The Unbreaking enchantment only softens wear**: when `operation` is `add` and the resolved change is a
+  **loss**, that loss first goes through Unbreaking (including the "fully negated" chance — a high enough level
+  can mean no durability is lost at all). **Repairs and `set` never go through it**, so "how much you repair /
+  set" is exactly what you wrote, never eaten by a random roll.
+- **Where the durability ending at 0 goes** (the full meaning of `break_item`):
+  - `false` (default) → the durability is clamped to 0 and the **item is kept**. ⚠️ **1.21.1 has no "broken"
+    state** — the item **still works normally** and is only destroyed by the next ordinary wear, exactly as
+    vanilla would. Treat this as "one free life", not as turning a tool into scrap.
+  - `true` → when this change would take the durability to 0, the whole step is handed to vanilla `hurtAndBreak`
+    (Unbreaking applies as usual, `shrink(1)` destroys the item, `onEquippedItemBroken` fires). The cost is that
+    **vanilla skips the whole thing in creative mode**; wear that does not reach 0 never takes this path, so it
+    is unaffected by that side effect.
+- **The percentage base is a required choice**: `max_durability` and `current_durability` have no default.
+  `max_durability` is a fixed yardstick, the same idea as vanilla `set_damage` (⚠️ vanilla works on the **damage**
+  axis, the opposite direction); `current_durability` moves with the item's state — the blunter the blade, the
+  less it recovers, which suits "proportional patching".
+- ⚠️ **A purely instant effect, so the frequency is entirely up to the ability.** `trigger_rate` inside
+  `actions[]` **defaults to 1 (every tick)**: on a **passive** ability without an explicit `trigger_rate`,
+  repairs fill up instantly and wear empties instantly. An **active** ability (one settlement per cast) is the
+  safest use; if you really want a passive aura, always set `trigger_rate` (e.g. 20 = once per second).
+- **The same item is only changed once per settlement**: matching several `slots` at once (say the selected
+  hotbar item, which is also the main-hand item) does not stack. Different `durability_changes` entries do settle
+  independently, though — two rules pointing at the same item each apply once, by design.
+- **Omitting `item` means "every damageable item in those slots"**, junk in the backpack included. To target only
+  tools, narrow it down with something like `"item": { "items": "#minecraft:swords" }`.
+- **The UI updates immediately**: equipment slots and the inventory are synced by vanilla itself, while the
+  **claw slots are not part of any container menu** and get a sync packet from this effect, so durability changes
+  in the claw slots show up in Dragon Survival's UI right away.
+- **During a tool swap the slot is taken literally**: Dragon Survival physically moves the claw tool into the main
+  hand while mining or attacking, so at that instant it counts as `mainhand`, not as a claw slot. An instant effect
+  normally settles the moment the ability fires, so hitting that single tick is very unlikely.
+- **This effect is not part of the "duration instance" family**: it has no state to keep across ticks, so it
+  creates no attachment, takes no slot in the ability effect HUD and never shows up in `/dragon-modifiers` —
+  every trigger is a standalone settlement.
