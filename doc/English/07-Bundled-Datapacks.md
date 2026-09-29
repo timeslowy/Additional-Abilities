@@ -20,6 +20,13 @@ All bundled packs live under:
 src/main/resources/data/additional_abilities/datapacks/
 ```
 
+> **A bundled pack only carries ability definitions that share a name with Wing Kirin's and therefore
+> need to override them.** Abilities that are **original** to this mod and override nothing — such as
+> "Fire Ring" `wing_kirin:fire_ring` — live under `data/wing_kirin/dragonsurvival/dragon_ability/`
+> and are **active from the moment the jar loads; no datapack needs to be enabled**.
+> They still use the `wing_kirin` namespace so they can reuse its ability icon textures
+> (`wing_kirin:abilities/fire_ring/*`); this mod ships **no** Wing Kirin code or textures in its jar.
+
 ---
 
 ## 2. How to enable it
@@ -74,7 +81,20 @@ loads**. `/reload` does **not** rebuild them. So if you only run `/reload`, you 
 
 ### `innovative_wingkirin_abilities`
 
-Overrides some abilities definitions from Wing Kirin (under `data/wing_kirin/dragonsurvival/dragon_ability/`).
+Overrides existing ability definitions from Wing Kirin (under `data/wing_kirin/dragonsurvival/dragon_ability/`):
+
+```
+invincible_benevolence   ("Invincible Benevolence")
+signal_arrow             ("Signal Arrow")
+spell_binder             ("Spell Binder")
+thunderous_shout         ("Thunderous Shout")
+```
+
+> **This pack no longer contains "Fire Ring" `wing_kirin:fire_ring`.** That ability is **original**
+> content of this mod and now lives at
+> `src/main/resources/data/wing_kirin/dragonsurvival/dragon_ability/fire_ring.json` —
+> **active from the moment the jar loads, with no datapack to enable**
+> (see [05-Bundled-Abilities.md](05-Bundled-Abilities.md)).
 
 #### "Spell Binder" — `wing_kirin:spell_binder`
 
@@ -105,14 +125,14 @@ check still spends mana based on the real level.
 Everything else (damage, weakness, hunger, the exhaustion debuff on `channel_completion`, animations,
 sounds, upgrade rules) is identical to the original.
 
-#### "Fire Ring" - `wing_kirin:fire_ring`
+#### "Fire Ring" — `wing_kirin:fire_ring`
 
-> New ability of Wing Kirin, inspired by Chinese 3A game: **Black Myth:Wukong** 
+> **Moved out of this datapack.** It used to be an original ability added inside the pack; it is now a
+> standalone, always-on ability file at `data/wing_kirin/dragonsurvival/dragon_ability/fire_ring.json`,
+> **usable without enabling any datapack**. See [05-Bundled-Abilities.md](05-Bundled-Abilities.md)
+> for the full write-up.
 
-Utilized new components *Target Type*`additional_abilities:annulus`&`additional_abilities:domain` comprehensively, is the best ability example.
-If you want to know, please start game to experience byself, will not go into further detail here.
-
-#### "Signal Arrow" - `wing_kirin:signal_arrow`
+#### "Signal Arrow" — `wing_kirin:signal_arrow`
 
 | Item | Wing kirin original | This pack |
 |---|---|---|

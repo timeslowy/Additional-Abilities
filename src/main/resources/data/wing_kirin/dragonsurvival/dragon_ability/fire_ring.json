@@ -1,4 +1,10 @@
 {
+    "neoforge:conditions": [
+        {
+            "type": "neoforge:mod_loaded",
+            "modid": "wing_kirin"
+        }
+    ],
     "actions": [
         {
             "target_selection": {

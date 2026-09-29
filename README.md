@@ -22,7 +22,7 @@
 > - Dragon Survival `≥ 2.0.68` 
 > - （可选）Wing Kirin `≥ 3.3.0`  
 
-> 最后核对：2026-09-29
+> 最后核对：2026-09-29  
 > 授权：**Apache-2.0** —— 可自由使用、修改与再发布（含闭源）。本模组是独立第三方附属，与 Dragon Survival 官方**无隶属关系**
 
 本模组给 [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival) 补了两类东西：
@@ -101,10 +101,13 @@
 
 | 包名 | 显示名 | 作用 | 文档 |
 |---|---|---|---|
-| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 | 用本模组的自定义组件重做[翼麒麟](https://www.curseforge.com/minecraft/mc-mods/wing-kirin)的一些技能 | [07](doc/中文/07-内置数据包.md) |
+| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 | 用本模组的自定义组件重做[翼麒麟](https://www.curseforge.com/minecraft/mc-mods/wing-kirin)的 4 个已有技能 | [07](doc/中文/07-内置数据包.md) |
 
 > 启用后要**退出世界重进**。  
 > 详见 [07](doc/中文/07-内置数据包.md)。
+
+> 注意：「安身法」`wing_kirin:fire_ring` 是**随 jar 常驻生效**的技能，**不在**这个数据包里，
+> 也不需要启用任何数据包。包内只放与 Wing Kirin 同名、需要覆盖的技能定义。
 
 ---
 
@@ -166,7 +169,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 | [02-方块效果.md](doc/中文/02-方块效果.md) | `block_quake` / `extinguish` / `glow` |
 | [03-目标选择器.md](doc/中文/03-目标选择器.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-激活类型.md](doc/中文/04-激活类型.md) | `charged`（含蓄力档位换算、HUD 表现、位置与音效配置、查询指令、技能信息面板的激活类型显示） |
-| [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 8 个技能、所属龙种、解锁方式 |
+| [05-技能一览.md](doc/中文/05-技能一览.md) | 本模组随附的 9 个技能、所属龙种、解锁方式 |
 | [06-调试与查询指令.md](doc/中文/06-调试与查询指令.md) | 独立指令树 `/additional-abilities` 与 DS 查询追加项的用法 |
 | [07-内置数据包.md](doc/中文/07-内置数据包.md) | 内置的可选数据包、启用方法与改动明细 |
 | [08-触发类型.md](doc/中文/08-触发类型.md) | `on_block_placed`（放置方块时）、`on_item_consumed`（消耗物品时）、`on_ability_cast`（主动技能结算后），含覆盖范围与谓词写法 |
@@ -217,7 +220,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 > - Dragon Survival `≥ 2.0.68` 
 > - (optional)Wing Kirin `≥ 3.3.0`
 
-> Last verified: 2026-09-29
+> Last verified: 2026-09-29  
 > License: **Apache-2.0** — free to use, modify and redistribute, including in closed-source form. An independent third-party add-on, **not affiliated with** the Dragon Survival project
 
 This mod adds two kinds of things to [Dragon Survival](https://www.curseforge.com/minecraft/mc-mods/dragons-survival):
@@ -300,9 +303,13 @@ exactly where you aim. Wearing the enchanted helmet grants the attribute.
 
 | Pack | Display name | Purpose | Doc |
 |---|---|---|---|
-| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 (Innovative WingKirin's Abilities) | Reworks some [Wing Kirin](https://www.curseforge.com/minecraft/mc-mods/wing-kirin)'s abilities with this mod's custom components | [07](doc/English/07-Bundled-Datapacks.md) |
+| `innovative_wingkirin_abilities` | 翼麒麟革新版技能 (Innovative WingKirin's Abilities) | Reworks 4 existing [Wing Kirin](https://www.curseforge.com/minecraft/mc-mods/wing-kirin) abilities with this mod's custom components | [07](doc/English/07-Bundled-Datapacks.md) |
 
 > When enabling it, you must **leave and re-enter the world** afterwards. See [07](doc/English/07-Bundled-Datapacks.md).
+
+> Note: "Fire Ring" `wing_kirin:fire_ring` is an **always-on** ability shipped in the jar — it is **not**
+> part of this datapack and needs no datapack to be enabled. A bundled pack only carries definitions that
+> share a name with Wing Kirin's and therefore need to override them.
 
 ---
 
@@ -366,7 +373,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<species>.json
 | [02-Block-Effect.md](doc/English/02-Block-Effect.md) | `block_quake` / `extinguish` / `glow` |
 | [03-Target-Type.md](doc/English/03-Target-Type.md) | `anti_dragon_breath` / `annulus` / `domain` |
 | [04-Activation-Type.md](doc/English/04-Activation-Type.md) | `charged` (tier conversion, HUD behaviour, position and sound config, query command, activation type shown in the ability info panel) |
-| [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 8 bundled abilities, their species and unlock conditions |
+| [05-Bundled-Abilities.md](doc/English/05-Bundled-Abilities.md) | The 9 bundled abilities, their species and unlock conditions |
 | [06-Debug-and-Query-Commands.md](doc/English/06-Debug-and-Query-Commands.md) | Usage of the standalone `/additional-abilities` tree and the appended Dragon Survival query entries |
 | [07-Bundled-Datapacks.md](doc/English/07-Bundled-Datapacks.md) | The bundled optional datapack, how to enable it, and what it changes |
 | [08-Trigger-Type.md](doc/English/08-Trigger-Type.md) | `on_block_placed` (on placing a block), `on_item_consumed` (on consuming an item) and `on_ability_cast` (after an active ability's cast settles), including coverage and predicate syntax |

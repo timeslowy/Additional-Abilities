@@ -1,6 +1,7 @@
 {
     "replace": false,
     "values": [
+        "wing_kirin:fire_ring",
         "additional_abilities:entity_marker",
         "additional_abilities:explosion_arrow"
     ]

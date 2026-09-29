@@ -27,8 +27,16 @@
 | `cave_dragon:piercing_eye` | Piercing Eye | Cave Dragon | `passive` | 1 (no upgrade) | Active as soon as the ability is present |
 | `forest_dragon:natural_alies` | Natural Allies | Forest Dragon | `simple` cast | 4 | Growth `30 / 40 / 50 / 60` (upgrade type `dragon_growth`) |
 | `forest_dragon:photorepair` | Photorepair | Forest Dragon | `passive` | 3 | Growth `30 / 40 / 50` (upgrade type `dragon_growth`) |
+| `wing_kirin:fire_ring` | Fire Ring | Wing Kirin | `simple` cast | 4 | Growth `40 / 50 / 60 / 70` (upgrade type `dragon_growth`) |
 | `additional_abilities:explosion_arrow` | Explosion Arrow | Wing Kirin | `simple` cast | 1 | Complete the "Return to Sender" advancement |
 | `additional_abilities:entity_marker` | Entity Marker | Wing Kirin | `passive` + key trigger (left mouse button) | 2 | Complete the "Glow and Behold!" advancement; upgraded with experience points |
+
+> **Why does "Fire Ring" sit under the `wing_kirin:` namespace?** It is an **original** ability of this
+> mod, but its icon textures come from Wing Kirin (`wing_kirin:abilities/fire_ring/*`, as this mod ships
+> no Wing Kirin assets in its jar) and its `usage_blocked` checks the species `dragonsurvival:wing_kirin`
+> directly — hence the namespace. It is **active from the moment the jar loads**, with no datapack to
+> enable, and is skipped automatically by `neoforge:conditions` when Wing Kirin is absent, so it
+> **cannot break world loading**.
 
 Localisation keys for each ability's name and description:
 
@@ -229,6 +237,74 @@ total mana is always 1 lower. Since `percent_base` is **max durability**, the be
 pickaxe, netherite armour) the more it repairs; wear faster than 1.25% per second (the 400-tick cooldown at
 level 3) outpaces it, but normal use is comfortably covered. **Note**: the durability effect resolves
 **instantly**, so the amount repaired is a single fixed value — there is no continuous "repairing" process.
+
+---
+
+## Fire Ring — `fire_ring`
+
+> "A life-saving art: cast it on the spot, and after a moment it draws a **ring of fire centred on
+> yourself** and forms a **lasting formation**."
+> "At the instant it forms you **become briefly invulnerable** and enemies are knocked back outside the ring."
+> "The formation **lasts for a while** — step out and back in whenever you like."
+> "The formation's **radius** grows with **ability level**." "Can only be used on the ground, and not
+> while standing in water."
+
+> An original ability, inspired by the Chinese 3A title **Black Myth: Wukong**. See the note below the
+> [Overview](#overview) for why its id lives under the `wing_kirin:` namespace.
+
+| Item | Value |
+|---|---|
+| Activation | `dragonsurvival:simple`, `cast_time` 20 ticks, initial mana cost 10 (**does not scale with level**) |
+| Cooldown | per level `1600 / 2000 / 2400 / 2800` ticks (80 / 100 / 120 / 140 s; linear `base` 1600, +400 per level) |
+| Can move while casting | No (neck and tail locked while casting; animations `cast_mass_buff` → `mass_buff`) |
+| Usage restrictions | **Must be standing on the ground**; **disabled while your eyes are in water**; **disabled in rain / snow**; **Wing Kirin species only** |
+| Level | Max 4, `dragonsurvival:dragon_growth`: growth `40 / 50 / 60 / 70` → level 1 / 2 / 3 / 4 (fallback `10` beyond) |
+| Targeting | Four selectors working together — annulus / disc / cylinder / domain; all with radius `3 + 3 × (level - 1)` and height 10 (extending downwards) |
+| Sounds | Charging `block.enchantment_table.use`, release `item.firecharge.use` |
+
+**Effect**: seven actions — one telegraph while charging, two instant resolutions on release, then four
+domain actions repeating on a 40-tick interval.
+
+1. **Charging telegraph** (`trigger_point` = `charging`, `trigger_rate` 5):
+   while casting, **every 5 ticks**, tints the **non-air blocks** inside the **ring**
+   (`additional_abilities:annulus`) — radius `3 + 3 × (level - 1)`, width 3, height 10 (downwards) —
+   with this mod's `additional_abilities:glow`: gold `#fbdc92`, `alpha` 0.8,
+   `display_type` = `simple_shader`. This is the visual telegraph of the ring of fire.
+2. **The moment it forms — invulnerability and knockback** (`dragonsurvival:disc`, same radius):
+   - **Allies and self** (`targeting_mode` = `allies_and_self`) receive `dragonsurvival:heal` for **20% max health**
+     plus **Resistance V** (`amplifier` 4) for 40 ticks — the "briefly invulnerable" part;
+   - **Non-allied living entities** (`non_allies` + `living_entity`) take **5** `dragonsurvival:burn` damage and are
+     pushed with force `-3.0` **away from the caster** (negative `towards_entity`) — the "knocked back outside the ring" part.
+3. **The formation — lighting the ground** (`additional_abilities:annulus`, same parameters): every **non-air block**
+   within the ring is set alight (`dragonsurvival:fire`, `ignite_probability` 1.0) — the ring of fire itself.
+4. **The formation — ally buff** (`additional_abilities:domain`, cylinder, same radius, **duration 400 ticks = 20 s**,
+   `apply_interval` 40): allies and self inside keep gaining:
+   - **Regeneration II + Source of Magic II + Fire Resistance II + Speed II + Strength II + Haste II + Health Boost II**
+     (`amplifier` 2, 100 ticks, refreshed every 2 s);
+   - **Burning time −1** (`generic.burning_time`, `add_value`) — you stop burning harmfully, 300 ticks;
+   - **Removes up to 5 harmful effects** (`effect_removal`, `categories` = `HARMFUL`);
+   - **Incoming damage ×0.7** (`#wing_kirin:instant_invisibility_immunity`, 60 ticks) — a continuation of the invulnerability;
+   - **Freeze immunity** (`#is_freezing` multiplier ×0, 6 ticks);
+   - **A gold glow** on yourself (`dragonsurvival:glow`, `#fbdc92`, 60 ticks).
+5. **The formation — enemy suppression** (`additional_abilities:domain`, same parameters): non-allied living entities
+   inside keep gaining:
+   - **Ignited for 60 ticks** (`dragonsurvival:ignite`);
+   - **Slowness I + Weakness I** (`amplifier` 1, 60 ticks) — the "can barely move" part;
+   - **All beneficial effects removed** (`effect_removal`, `categories` = `BENEFICIAL`);
+   - **A red glow** (`#e81313`, 60 ticks);
+   - **Fire damage taken ×3** (`#minecraft:is_fire`, 60 ticks).
+6. **Presentation — sparks** (`additional_abilities:domain`, same parameters): 5 `minecraft:instant_effect`
+   particles burst from non-air blocks inside the domain.
+
+**How to use it**: this is a **static, life-saving** ability — every link in the chain serves one idea:
+**draw a circle, and inside it your word is law**. It takes a 1-second cast during which you **cannot move**,
+so the right rhythm is to **drop the formation a beat before the damage lands**: the instant it forms (step 2)
+it heals the whole team for 20% and grants Resistance V while shoving nearby enemies away; for the next 20 seconds
+the domain stacks seven buffs on your side, clears a harmful effect every 2 seconds, and cuts fire damage to 70%,
+while suppressing enemies in reverse (ignited + slowed + weakened + all buffs stripped + triple fire damage taken).
+**Four restrictions define its use case exactly**: on the ground, not in water, not in rain or snow, Wing Kirin only —
+it is the answer to **land-based positional fights**, not an emergency button. Its 80–140 s cooldown is long, so it
+belongs as a "team-fight opener / eat one burst" trump card rather than something you pop for every pack of mobs.
 
 ---
 

@@ -10,6 +10,7 @@
 3. 新增森林龙技能「草木皆兵」（`forest_dragon:natural_alies`）及配套伤害类型 `forest_dragon:natural_force`；
 4. 新增海洋龙技能「威霆显域」（`sea_dragon:lightning_domain`）—— 攻守兼备的范围领域；
 5. 新增森林龙技能「光补作用」（`forest_dragon:photorepair`）—— 白日户外的被动修补；
+6. 新增翼麒麟原创技能「安身法」（`wing_kirin:fire_ring`）—— 就地布下火圈阵法的阵地型保命技能，随 jar 常驻生效，不需要启用任何数据包；
 
 #### English
 
@@ -18,3 +19,4 @@
 3. New ability for Forest Dragon: 'Natural Allies'(`forest_dragon:natural_alies`) with the damage type `forest_dragon:natural_force`;
 4. New ability for Sea Dragon: 'Lightning Domain'(`sea_dragon:lightning_domain`) - a two-sided area domain;
 5. New ability for Forest Dragon: 'Photorepair'(`forest_dragon:photorepair`) - a passive repair working outdoors by day;
+6. New original ability for Wing Kirin: 'Fire Ring'(`wing_kirin:fire_ring`) - a static, life-saving art that plants a ring of fire; it is always on and needs no datapack to be enabled;
