@@ -220,7 +220,9 @@ above:
 
 ---
 
-## 7. Granting abilities by hand (Dragon Survival's own, not added by this mod)
+## 7. Granting abilities by hand
+
+![test_glow](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/block_glow.png)![test_annulus](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/annulus.png)![test_optional_charged](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/optional_charged.png)![test_block_quake](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/block_quake.png)![test_domain](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/domain.png)![test_screen_vision](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/simple-screen-vision.png)![test_enchantment-bonus](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/enchantment_bonus.png)![test_durability](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/durability.png)![test_anti_dragon_breath](../../src/main/resources/assets/additional_abilities/textures/gui/sprites/abilities/test/anti_dragon_breath.png) ...
 
 This mod's `test_*` abilities are not attached to any species, so grant them manually while debugging:
 

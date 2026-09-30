@@ -49,6 +49,8 @@ dragon_ability.<namespace>.<ability id>.desc     → description
 
 ## Extinguish Breath — `extinguish_breath`
 
+![止火之息Extinguish Breath](../../src/main/resources/assets/dragonsurvival/textures/gui/sprites/abilities/sea/extinguish_breath_4.png)
+
 > "Breathe a deluge of water vapour that extinguishes fire (including burning mobs)."
 > "Its range depends on age, and the duration of effect depends on the experience level."
 > "Cannot be used under lava." 
@@ -73,6 +75,8 @@ allies (and yourself) and to clear a burning area.
 ---
 
 ## Lightning Domain — `lightning_domain`
+
+![威霆显域Lightning Domain](../../src/main/resources/assets/dragonsurvival/textures/gui/sprites/abilities/sea/lightning_domain_5.png)
 
 > "Cast the spell and scatter the 'Thunderling Force' within you into a domain, held for a time."
 > "Any outsider who dares trespass is pulled down by the electricity coursing everywhere and feels far
@@ -121,6 +125,8 @@ make it an opening move for a real fight rather than a throwaway aura.
 
 ## Smoke Breath — `smoke_breath`
 
+![障目之息Smoke Breath](../../src/main/resources/assets/dragonsurvival/textures/gui/sprites/abilities/cave/smoke_breath_3.png)
+
 > "Breathe a deluge of fire and smoke, blinding the enemy."
 > "Its range depends on age, and the duration of effect depends on the experience level."
 > "Cannot be used under water, and during rain."
@@ -144,6 +150,8 @@ point-blank interrupts and blinding. Backing off after the enemy is blinded is w
 
 ## Piercing Eye — `piercing_eye`
 
+![火眼金睛Piercing Eye](../../src/main/resources/assets/dragonsurvival/textures/gui/sprites/abilities/cave/piercing_eye_1.png)
+
 > "the life in lava that make you can have innate immunity the blindness."
 > "Of course, this ability cannot immune the darkness, because cave dragon has never had any relationship
 > with Warden."
@@ -159,6 +167,8 @@ point-blank interrupts and blinding. Backing off after the enemy is blinded is w
 ---
 
 ## Natural Allies — `natural_alies`
+
+![草木皆兵Natural Alies](../../src/main/resources/assets/dragonsurvival/textures/gui/sprites/abilities/forest/natural_alies_4.png)
 
 > "You live in symbiosis with nature, attuned to its every breath — and you have gained the power to
 > make every blade of grass and every tree carry your strike."
@@ -209,6 +219,8 @@ breath attack is where the payoff is.
 
 ## Photorepair — `photorepair`
 
+![光补作用Photorepair](../../src/main/resources/assets/dragonsurvival/textures/gui/sprites/abilities/forest/photorepair_3.png)
+
 > "As the dragon grows in age, the plants it lives in symbiosis with become ever more familiar, and it
 > develops the power to make them settle on its armour and claws — using 'photosynthesis' to repair tools."
 > "The trigger cooldown drops as the skill level (growth stage) rises."
@@ -249,8 +261,8 @@ level 3) outpaces it, but normal use is comfortably covered. **Note**: the durab
 > "The formation's **radius** grows with **ability level**." "Can only be used on the ground, and not
 > while standing in water."
 
-> An original ability, inspired by the Chinese 3A title **Black Myth: Wukong**. See the note below the
-> [Overview](#overview) for why its id lives under the `wing_kirin:` namespace.
+> An original ability, inspired by the Chinese 3A title **Black Myth: Wukong**.  
+> See the note below the [Overview](#overview) for why its id lives under the `wing_kirin:` namespace.
 
 | Item | Value |
 |---|---|
