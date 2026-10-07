@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.common.ability.entity_effects;
+package by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus;
 
 import by.dragonsurvivalteam.dragonsurvival.DragonSurvival;
 import by.dragonsurvivalteam.dragonsurvival.common.codecs.duration_instance.CommonData;
@@ -8,8 +8,10 @@ import by.dragonsurvivalteam.dragonsurvival.common.capability.DragonStateProvide
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.ClawInventoryData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
+import by.timeslowly.additional_abilities.common.ability.entity_effects.HeldItemSlots;
 import by.timeslowly.additional_abilities.registry.AAAttachments;
 import by.timeslowly.additional_abilities.registry.AAComponents;
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -21,7 +23,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Objects;
 
 /**
  * 「时长实例族」数据：临时附魔加成（{@code additional_abilities:enchantment_bonus} 的载荷）。
@@ -56,6 +57,22 @@ import java.util.UUID;
  * 与 {@code dragonsurvival:harvest_bonus} 同构：<b>列表里每个元素各自带一个 {@code base}</b>
  * （独立的 id / 时长 / 自动移除开关），因此同一个技能可以同时挂几组时长不同的附魔加成。
  *
+ * <h2>它是怎么生效的（官方钩子 + 查询期反查）</h2>
+ * 本效果<b>不改物品自己的 {@code ENCHANTMENTS} 组件</b>，也不让物品承载"效果事实"：
+ * <ol>
+ *     <li>结算走 NeoForge 的 {@code GetEnchantmentLevelEvent}（{@code EnchantmentHelper} 的
+ *         {@code runIterationOnItem} / {@code hasTag} / {@code has(组件)} 等出口都已被改道到它）。
+ *         事件只带物品栈、不带持有者 ⇒ 处理器<b>反过来问</b>：遍历 {@link EnchantmentBonusHolders}
+ *         的候选实体，用 {@link HeldItemSlots#holds} 按对象身份确认"这只栈确实在其持有槽里"，
+ *         命中才用 {@link #resolveApplied} 现算条目；</li>
+ *     <li>物品上只留一个 {@code additional_abilities:enchantment_bonus} 组件，载荷是
+ *         本实体对这只物品的<b>贡献指纹</b>（见 {@link Instance#sweep}）。它不携带任何可读的附魔信息，
+ *         唯一用途是让原版 {@code collectEquipmentChanges} 察觉"装备变了"、重收一次属性修饰符。</li>
+ * </ol>
+ * 因此：铁砧 / 砂轮 / 修复合成 / {@code /enchant} 读的是 NBT，天然看不到它（不会出现"用假附魔骗砂轮经验"）；
+ * 附魔光效与原版提示行也不会出现（后者由 {@code EnchantmentBonusHandler} 按同一套判定自行补行）；
+ * 而物品一旦离开持有槽（转手他人、丢在地上、塞进箱子）就<b>立刻</b>不再生效 —— 残留的指纹不可能误导。
+ *
  * <h2>本类承担的三件事</h2>
  * <ol>
  *     <li><b>解码期硬校验</b>：写成常量的等级必须落在 {@code [1, 附魔 maxLevel]}；
@@ -63,7 +80,7 @@ import java.util.UUID;
  *         <b>当场</b>报出来（与 DS {@code DragonAbility#validate} 的取向一致）。
  *         <b>不限制宝藏附魔</b>（见 {@link EnchantmentEntry#validate} 的注释）。</li>
  *     <li><b>侧边栏描述</b>（{@link #getDescriptions(int)}）：技能详情面板里那一行"临时附魔：…"。</li>
- *     <li><b>{@link Instance}：逐刻校准物品标记</b> —— 这是本效果真正的执行体，见 {@link Instance#tick}。</li>
+ *     <li><b>{@link Instance}：逐刻校准物品上的刷新脉冲</b> —— 见 {@link Instance#sweep}。</li>
  * </ol>
  *
  * <h2>为什么是 {@code extends DurationInstanceBase} 而不是像 {@code simple_screen_vision} 那样组合</h2>
@@ -117,6 +134,28 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
         }
     }
 
+    /**
+     * 单条"附魔 + 已钳制等级" —— 结算、提示行、脉冲指纹三条路径的共同产物。
+     *
+     * @param enchantment 附魔的资源键（消费端据此换回 {@code Holder}：事件侧 {@code getHolder}，
+     *                    提示行侧走注册表 lookup）
+     */
+    public record Applied(ResourceKey<Enchantment> enchantment, int level) {}
+
+    /** 旧形态（复合标记）解码后的哨兵值：与任何真实指纹都不相等，因此必然触发一次重写 */
+    public static final long STALE_PULSE = Long.MIN_VALUE;
+
+    /**
+     * 脉冲组件的相容 codec：正常形态是<b>一个数值</b>（本次贡献指纹），
+     * 2.0.0-alpha 早期写下的复合形态（当时的"来源标记"）一律解码成 {@link #STALE_PULSE} ——
+     * 既有物品因此<b>不会</b>解码失败，且会在下一次 sweep 时被重写或清除。
+     * <p>
+     * ⚠️ 不能改组件 id：原版 {@code DataComponentPatch.PatchKey.CODEC} 遇到未注册的组件 id
+     * 直接返回 {@code DataResult.error}（"No component with type: …"），物品会被静默丢弃。
+     */
+    public static final Codec<Long> PULSE_CODEC = Codec.either(Codec.LONG, CompoundTag.CODEC)
+            .xmap(either -> either.left().orElse(STALE_PULSE), Either::left);
+
     public static final Codec<EnchantmentBonus> CODEC = RecordCodecBuilder.<EnchantmentBonus>create(instance -> instance.group(
             DurationInstanceBase.CODEC.fieldOf("base").forGetter(identity -> identity),
             EnchantmentEntry.CODEC.listOf().fieldOf("enchantments").forGetter(EnchantmentBonus::enchantments)
@@ -149,6 +188,50 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
         }
 
         return Math.min(level, entry.enchantment().value().getMaxLevel());
+    }
+
+    /**
+     * 某个实例此刻对这只物品<b>真正给出</b>的条目（物品适用 + 等级已钳制；无一适用时返回空列表）。
+     * <p>
+     * 结算、提示行、脉冲指纹三处共用这一个入口，保证口径永远一致 ——
+     * 尤其是"哪些附魔与这只物品无关"的判定（{@code supportsEnchantment}）只写一次。
+     */
+    public static @NotNull List<Applied> resolveApplied(final @NotNull Instance instance, final @NotNull ItemStack stack) {
+        // 附魔书对"任何附魔"都返回 supportsEnchantment = true（原版为附魔台 / 铁砧准备的语义），
+        // 但书拿在手里 / 穿在身上没有任何"作用"，因此直接排除，避免算出一堆无意义的条目
+        if (stack.isEmpty() || stack.is(Items.ENCHANTED_BOOK)) {
+            return List.of();
+        }
+
+        List<Applied> result = null;
+        int abilityLevel = instance.appliedAbilityLevel();
+
+        for (EnchantmentEntry entry : instance.baseData().enchantments()) {
+            // 与铁砧同口径的"物品是否适用该附魔"判定（NeoForge 的现代 API，非弃用的 Enchantment#canEnchant）
+            if (!stack.supportsEnchantment(entry.enchantment())) {
+                continue;
+            }
+
+            int level = resolveLevel(entry, abilityLevel);
+
+            if (level <= 0) {
+                continue;
+            }
+
+            ResourceKey<Enchantment> key = entry.enchantment().unwrapKey().orElse(null);
+
+            if (key == null) {
+                continue;
+            }
+
+            if (result == null) {
+                result = new ArrayList<>(instance.baseData().enchantments().size());
+            }
+
+            result.add(new Applied(key, level));
+        }
+
+        return result == null ? List.of() : result;
     }
 
     /** 侧边栏描述：本等级下所有可生效条目的名称（带等级罗马数字）+ 时长；无条目可生效时返回空列表 */
@@ -204,13 +287,18 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
     private static final String DESCRIPTION_SEPARATOR = "additional_abilities.ability.enchantment_bonus.separator";
 
     /**
-     * 本效果的运行时实例：除了父类的倒计时与自动移除，它额外负责<b>逐刻校准物品上的标记</b>。
+     * 本效果的运行时实例：除了父类的倒计时与自动移除，它额外负责<b>逐刻校准物品上的刷新脉冲</b>。
      *
      * <h2>为什么是"逐刻校准"而不是"施加时写一次"</h2>
-     * 目标手里的物品是随时会变的（换手、换装、把剑塞回背包、龙生换手时把爪牙工具塞进主手……），
-     * 而标记又必须跟着物品走。逐刻把「持有中的适用物品」与「物品上现有的标记」对齐，
-     * 是唯一能覆盖全部这些情况的做法，代价是每个受影响实体每刻扫约 45 个格子 ——
+     * 目标手里的物品随时会变（换手、换装、把剑塞回背包、龙生换手时把爪牙工具塞进主手……），
+     * 而原版只在"装备变了"时才重收属性修饰符。逐刻把「本实体对每只物品的贡献」与「物品上现有的指纹」
+     * 对齐，是唯一能覆盖全部这些情况的做法，代价是每个受影响实体每刻扫约 45 个格子 ——
      * 一次 {@code ItemStack#get(组件)} 级别的哈希查，可忽略。
+     *
+     * <h2>脉冲不携带任何可读信息</h2>
+     * 载荷只是一个数值（见 {@link #fingerprint}）。因此即便标记因为物品离开可达范围而残留，
+     * 它既不会被结算读到（结算走反查）、也不会被提示行读到（同样走反查），
+     * 更不会随着物品转手把加成带给别人。
      *
      * <h2>清理收口只有一处</h2>
      * {@link #onRemovalFromStorage} —— {@code Storage#remove} / {@code Storage#tick}（到期）/ {@code Storage#clear}
@@ -218,7 +306,7 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
      *
      * <h2>与装备属性附魔的关系</h2>
      * 附魔的属性修饰符由 {@code LivingEntity#collectEquipmentChanges()} 收集，
-     * 而它每刻比对的正是 {@code ItemStack.matches}（含组件）。标记变化 → 装备被视为"变了" →
+     * 而它每刻比对的正是 {@code ItemStack.matches}（含组件）。指纹变化 → 装备被视为"变了" →
      * 同刻内重新收集属性。因此<b>不需要</b>任何手动通知（{@code detectEquipmentUpdates} 在本版本是 private 的）。
      */
     public static class Instance extends DurationInstance<EnchantmentBonus> {
@@ -231,7 +319,7 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
 
         @Override
         public boolean tick(final Entity storageHolder) {
-            // 先问父类要不要移除：要移除的话没必要先写一遍标记再清掉（那会白做一次组件与同步）
+            // 先问父类要不要移除：要移除的话没必要先写一遍指纹再清掉（那会白做一次组件与同步）
             boolean shouldRemove = super.tick(storageHolder);
 
             // 非生物没有装备槽概念（效果本身也只在 apply 时接受 LivingEntity，这里是防御性判定）
@@ -249,9 +337,13 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
          * 中途新增的实例不会自己飞过去；DS 自家的 {@code HarvestBonus} 等也是这样各自补自己的同步包。
          * 这里直接借 DS 的 {@code Storage#sync}（发它自己的 {@code dragonsurvival:sync_data}），
          * 于是<b>不必新增网络包</b>。
+         * <p>
+         * 顺带把目标登记进 {@link EnchantmentBonusHolders}：反查的候选集当刻就可查，
+         * 不必等目标自己 tick 一轮（重登 / 读档那条路没有这个回调，由 {@code EnchantmentBonuses#tickData} 自愈）。
          */
         @Override
         public void onAddedToStorage(final Entity storageHolder) {
+            EnchantmentBonusHolders.register(storageHolder);
             syncToClient(storageHolder);
         }
 
@@ -272,7 +364,6 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
             }
 
             player.getExistingData(AAAttachments.ENCHANTMENT_BONUSES).ifPresent(storage -> storage.sync(player));
-
         }
 
         @Override
@@ -282,33 +373,22 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
         }
 
         /**
-         * 把「本来源的标记」与目标当前的持有状态对齐。
+         * 把「本实体全部实例对每只物品的贡献」与物品上的刷新脉冲对齐。
          *
-         * @param enable {@code true} = 按"手持 / 身穿 + 物品适用"写上标记；
-         *               {@code false} = 一律撤掉本来源的标记（清理收口用）
+         * @param enable {@code true} = 按"手持 / 身穿 + 物品适用"写指纹；
+         *               {@code false} = 一律撤掉本实体的指纹（清理收口用）
          */
         private void sweep(final @NotNull LivingEntity holder, final boolean enable) {
             if (holder.level().isClientSide()) {
                 return;
             }
 
-            UUID owner = source().orElse(null);
-            ResourceLocation effectId = id();
-
-            if (owner == null) {
-                return;
-            }
-
-            List<EnchantmentEntry> configured = baseData().enchantments();
-            int abilityLevel = appliedAbilityLevel();
             boolean clawChanged = false;
 
             for (HeldItemSlots.HeldSlot slot : HeldItemSlots.of(holder)) {
-                List<StampedEnchantments.Entry> wanted = enable && slot.held()
-                        ? applicable(slot.stack(), configured, abilityLevel)
-                        : List.of();
+                Long wanted = enable && slot.held() ? fingerprint(holder, slot.stack()) : null;
 
-                if (!update(slot.stack(), owner, effectId, wanted)) {
+                if (!update(slot.stack(), wanted)) {
                     continue;
                 }
 
@@ -325,91 +405,57 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
             }
         }
 
-        /** 该物品当前应当带上的条目（物品不适用于某附魔时逐条剔除；全都不适用则返回空） */
-        private @NotNull List<StampedEnchantments.Entry> applicable(final @NotNull ItemStack stack,
-                                                                   final @NotNull List<EnchantmentEntry> configured,
-                                                                   final int abilityLevel) {
-            // 附魔书对"任何附魔"都返回 supportsEnchantment = true（原版为附魔台/铁砧准备的语义），
-            // 但书拿在手里/穿在身上没有任何"作用"，因此这里直接排除，避免往书上写一堆没意义的标记
-            if (stack.isEmpty() || stack.is(Items.ENCHANTED_BOOK)) {
-                return List.of();
+        /**
+         * 本实体全部实例对这只物品的贡献指纹；一个都不贡献时返回 {@code null}（= 这只物品不该带脉冲）。
+         * <p>
+         * 只统计<b>真有贡献</b>的实例（用 {@link EnchantmentBonus#resolveApplied} 过滤）：换上一把弓
+         * 不该给剑制造差异，否则会白白触发一次装备变更 / 属性重收。
+         * <p>
+         * 用<b>求和</b>而不是链式相乘，使结果与实例的遍历顺序无关（存储是哈希表，跨次启动的顺序不保证一致）；
+         * 同一只物品上的 id 互不相同（存储按 id 分槽），且指纹只做"变没变"的比较，
+         * 因此极小的碰撞概率只意味着"少一次刷新"，会在下一次自然装备变更时自愈。
+         */
+        private @Nullable Long fingerprint(final @NotNull LivingEntity holder, final @NotNull ItemStack stack) {
+            EnchantmentBonuses storage = holder.getExistingData(AAAttachments.ENCHANTMENT_BONUSES).orElse(null);
+
+            if (storage == null || storage.isEmpty()) {
+                return null;
             }
 
-            List<StampedEnchantments.Entry> result = null;
+            boolean contributed = false;
+            long fingerprint = 0L;
 
-            for (EnchantmentEntry entry : configured) {
-                // 与铁砧同口径的"物品是否适用该附魔"判定（NeoForge 的现代 API，非弃用的 Enchantment#canEnchant）
-                if (!stack.supportsEnchantment(entry.enchantment())) {
+            for (Instance instance : storage.all()) {
+                if (EnchantmentBonus.resolveApplied(instance, stack).isEmpty()) {
                     continue;
                 }
 
-                int level = resolveLevel(entry, abilityLevel);
-
-                if (level <= 0) {
-                    continue;
-                }
-
-                ResourceKey<Enchantment> key = entry.enchantment().unwrapKey().orElse(null);
-
-                if (key == null) {
-                    continue;
-                }
-
-                if (result == null) {
-                    result = new ArrayList<>(configured.size());
-                }
-
-                result.add(new StampedEnchantments.Entry(key, level));
+                fingerprint += instance.id().hashCode() * 31L + instance.appliedAbilityLevel();
+                contributed = true;
             }
 
-            return result == null ? List.of() : result;
+            return contributed ? fingerprint : null;
         }
 
         /**
-         * 把某个来源的条目写进（或从）物品组件，<b>只动自己那一条</b>，其他来源原样保留。
+         * 把指纹写进（或从）物品组件。
          *
          * @return 是否真的发生了变化（没变时返回 {@code false}，避免无谓的组件写入与网络同步）
          */
-        private static boolean update(final @NotNull ItemStack stack, final @NotNull UUID owner,
-                                      final @NotNull ResourceLocation effectId,
-                                      final @NotNull List<StampedEnchantments.Entry> wanted) {
-            StampedEnchantments current = stack.get(AAComponents.ENCHANTMENT_BONUS.get());
+        private static boolean update(final @NotNull ItemStack stack, final @Nullable Long wanted) {
+            Long current = stack.get(AAComponents.ENCHANTMENT_BONUS.get());
 
-            if (wanted.isEmpty()) {
-                if (current == null) {
-                    return false;
-                }
-
-                StampedEnchantments next = current.without(owner, effectId);
-
-                // without 在"本来就没有本来源"时原样返回同一对象（见其实现），以此判定无变化
-                if (next == current) {
-                    return false;
-                }
-
-                if (next.isEmpty()) {
-                    stack.remove(AAComponents.ENCHANTMENT_BONUS.get());
-                } else {
-                    stack.set(AAComponents.ENCHANTMENT_BONUS.get(), next);
-                }
-
-                return true;
-            }
-
-            StampedEnchantments.Provider mine = new StampedEnchantments.Provider(owner, effectId, wanted);
-
-            if (current == null) {
-                stack.set(AAComponents.ENCHANTMENT_BONUS.get(), new StampedEnchantments(List.of(mine)));
-                return true;
-            }
-
-            StampedEnchantments next = current.with(mine);
-
-            if (next.equals(current)) {
+            // Objects.equals 同时覆盖"两边都为 null"（= 本来就该没有脉冲）
+            if (Objects.equals(current, wanted)) {
                 return false;
             }
 
-            stack.set(AAComponents.ENCHANTMENT_BONUS.get(), next);
+            if (wanted == null) {
+                stack.remove(AAComponents.ENCHANTMENT_BONUS.get());
+            } else {
+                stack.set(AAComponents.ENCHANTMENT_BONUS.get(), wanted);
+            }
+
             return true;
         }
 

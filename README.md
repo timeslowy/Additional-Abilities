@@ -12,6 +12,10 @@
 
 ![模组logo](./src/main/resources/pack.jpg)
 
+[![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-green.svg)](https://www.minecraft.net)
+[![Mod Version](https://img.shields.io/badge/Mod-Dragon--Survival-orange.svg)](https://www.curseforge.com/minecraft/mc-mods/dragons-survival)
+
 <a id="lang-zh"></a>
 
 # Additional Abilities for DS · 文档索引
@@ -109,6 +113,13 @@
 > 注意：「安身法」`wing_kirin:fire_ring` 是**随 jar 常驻生效**的技能，**不在**这个数据包里，
 > 也不需要启用任何数据包。包内只放与 Wing Kirin 同名、需要覆盖的技能定义。
 
+### 友情链接
+
+> 作者Fork了龙生附属领域大神、数据包巨佬 @Dragon-LinFeng 的[龙生数据包补全插件](https://github.com/Dragon-LinFeng/dragonsurvival-mcdoc-completion-zh)，并增添了此模组**新技能组件**的补全支持。  
+> 仓库在：https://github.com/timeslowy/dragonsurvival-mcdoc-completion-zh，
+> 目前仅支持中文。  
+> 欢迎体验并使用，也希望一并支持翷风前辈栽下的这棵大树。
+
 ---
 
 ## 二、通用约定
@@ -174,8 +185,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 | [07-内置数据包.md](doc/中文/07-内置数据包.md) | 内置的可选数据包、启用方法与改动明细 |
 | [08-触发类型.md](doc/中文/08-触发类型.md) | `on_block_placed`（放置方块时）、`on_item_consumed`（消耗物品时）、`on_ability_cast`（主动技能结算后），含覆盖范围与谓词写法 |
 
-> 想直接抄一份能跑的技能，看 `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/`
-> 下的 `test_*.json` —— 每个自定义类型都有对应的测试技能。
+> 想直接抄一份能跑的技能，看 `src/main/resources/data/additional_abilities/dragonsurvival/dragon_ability/`下的 `test_*.json` —— 每个自定义类型都有对应的测试技能。
 
 ---
 

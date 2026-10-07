@@ -263,6 +263,41 @@ public final class HeldItemSlots {
         return result;
     }
 
+    /**
+     * 这只栈是否正被该实体<b>持有 / 身穿</b>（装备槽、爪牙槽、换手期间寄存的原主手）。
+     * <p>
+     * 与 {@link #of} 的持有范围一致，但按<b>对象身份</b>比较、且不分配中间列表 ——
+     * 供"每一次附魔查询都要确认物品归属"的 {@code additional_abilities:enchantment_bonus} 使用。
+     * 刻意不用按值相等（{@code ItemStack#matches}）：那会误命中容器里 / 别人手里的同款物品。
+     */
+    public static boolean holds(final @NotNull LivingEntity entity, final @NotNull ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+
+        for (EquipmentSlot equipmentSlot : EQUIPMENT_SLOTS) {
+            if (entity.getItemBySlot(equipmentSlot) == stack) {
+                return true;
+            }
+        }
+
+        if (entity instanceof Player player && DragonStateProvider.isDragon(player)) {
+            ClawInventoryData claws = ClawInventoryData.getData(player);
+            SimpleContainer container = claws.getContainer();
+
+            for (int index = 0; index < container.getContainerSize(); index++) {
+                if (container.getItem(index) == stack) {
+                    return true;
+                }
+            }
+
+            // 换手中的原主手：此刻不在任何槽位里，但换回来就是主手物品（与 of 的口径一致）
+            return claws.switchedTool && claws.storedMainHandTool == stack;
+        }
+
+        return false;
+    }
+
     private static @NotNull SlotKind clawKind(final int index) {
         if (index < 0 || index >= CLAW_KINDS.length) {
             // 容器尺寸理论上恒为 4，这里只是防御：索引越界时不猜槽位，按第一个爪槽归类

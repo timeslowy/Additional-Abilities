@@ -1,0 +1,17 @@
+{
+    "values": [
+        "additional_abilities:test_anti_dragon_breath",
+        "additional_abilities:test_block_quake",
+        "additional_abilities:test_charged",
+        "additional_abilities:test_charged_hold",
+        "additional_abilities:test_domain",
+        "additional_abilities:test_durability",
+        "additional_abilities:test_enchantment_bonus",
+        "additional_abilities:test_glow",
+        "additional_abilities:test_on_ability_cast",
+        "additional_abilities:test_on_block_placed",
+        "additional_abilities:test_on_item_consumed",
+        "additional_abilities:test_optional_charged",
+        "additional_abilities:test_screen_vision"
+    ]
+}

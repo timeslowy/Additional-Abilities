@@ -2,7 +2,7 @@ package by.timeslowly.additional_abilities.registry.dragon.ability.entity_effect
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.entity_effects.AbilityEntityEffect;
-import by.timeslowly.additional_abilities.common.ability.entity_effects.EnchantmentBonus;
+import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonus;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.chat.MutableComponent;
@@ -38,14 +38,16 @@ import java.util.List;
  * ]
  * </pre>
  *
- * <h2>它是怎么生效的（关键在 NeoForge 的官方钩子）</h2>
- * 本效果<b>不改物品自己的 {@code ENCHANTMENTS} 组件</b>，而是：
+ * <h2>它是怎么生效的（官方钩子 + 查询期反查）</h2>
+ * 本效果<b>不改物品自己的 {@code ENCHANTMENTS} 组件</b>，也不在物品上留"效果事实"，而是：
  * <ol>
- *     <li>{@link EnchantmentBonus.Instance} 逐刻把「本效果给这只物品的附魔与等级」写进
- *         物品上的 {@code additional_abilities:enchantment_bonus} 组件（见 {@code StampedEnchantments}）；</li>
  *     <li>NeoForge 的 {@code GetEnchantmentLevelEvent} 在每次游戏性附魔等级查询时触发
  *         （{@code EnchantmentHelper} 的 {@code runIterationOnItem} / {@code hasTag} / {@code has(组件)}
- *         等出口都已被 NeoForge 改道到它），事件处理器把等级补进去。</li>
+ *         等出口都已被改道到它）；处理器据此<b>反查</b>"这只物品此刻在谁手里、那个人身上有没有本效果"
+ *         （候选集见 {@code EnchantmentBonusHolders}，持有关系用 {@code HeldItemSlots#holds}
+ *         按对象身份确认），命中才把等级补进去；</li>
+ *     <li>物品上只留一个不携带可读信息的「刷新脉冲」组件（{@code additional_abilities:enchantment_bonus}），
+ *         作用是让原版装备变更检测重收一次属性修饰符 —— 见 {@code EnchantmentBonus.Instance#sweep}。</li>
  * </ol>
  * 因此伤害、保护、挖掘速度、耐久与经验修补、弩 / 三叉戟 / 钓鱼、以及<b>附魔属性修饰符</b>
  * 都会按"真附魔"的方式生效，同时：
@@ -53,7 +55,9 @@ import java.util.List;
  *     <li>铁砧 / 砂轮 / 修复合成 / {@code /enchant} 读的是 NBT，天然看不到它 ——
  *         不会出现"用假附魔骗砂轮经验"这类漏洞；</li>
  *     <li>附魔光效与原版提示行也不会出现（前者无钩子，后者由
- *         {@code common.eventhandler.abilities.EnchantmentBonusHandler} 自行补一行说明）。</li>
+ *         {@code common.eventhandler.abilities.EnchantmentBonusHandler} 自行补一行说明）；</li>
+ *     <li>物品一旦离开持有槽（含转手他人、丢在地上、塞进箱子）就<b>立刻</b>不再生效 ——
+ *         残留的脉冲既不参与结算也不参与提示，因此不可能误导。</li>
  * </ul>
  *
  * <h2>只作用于 {@link LivingEntity}</h2>

@@ -1,4 +1,4 @@
-package by.timeslowly.additional_abilities.common.ability.entity_effects;
+package by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.DSDataAttachments;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.Storage;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * <h2>为什么用 {@code EntityTickEvent.Pre} 而不是 {@code .Post}</h2>
  * DS 的 {@code HarvestBonuses} 用的是 Post，但那是"读取当前状态"（挖掘速度）的语义。
- * 本效果要在末尾校准的物品标记，紧接着会被原版自己的
+ * 本效果要逐刻校准的刷新脉冲（并在同一处维护反查候选集），紧接着会被原版自己的
  * {@code LivingEntity#collectEquipmentChanges()}（在 {@code LivingEntity#tick()} 的<b>尾部</b>、
  * 而 {@code EntityTickEvent.Pre/Post} 分别在头部 / 尾部触发）拿去比对 {@code ItemStack.matches} ——
  * 用 Pre 才能让"标记换来"与"属性附魔因此生效"落在<b>同一刻</b>，而不是差一刻。
@@ -74,13 +74,21 @@ public class EnchantmentBonuses extends Storage<EnchantmentBonus.Instance> {
      */
     @SubscribeEvent
     public static void tickData(final EntityTickEvent.@NotNull Pre event) {
-        event.getEntity().getExistingData(AAAttachments.ENCHANTMENT_BONUSES).ifPresent(storage -> {
-            storage.tick(event.getEntity());
+        Entity entity = event.getEntity();
 
-            // 空存储直接摘掉附件，避免实体身上长期挂一个空壳（与 DS HarvestBonuses 同处理）
+        entity.getExistingData(AAAttachments.ENCHANTMENT_BONUSES).ifPresent(storage -> {
+            storage.tick(entity);
+
             if (storage.isEmpty()) {
-                event.getEntity().removeData(AAAttachments.ENCHANTMENT_BONUSES);
+                // 空存储直接摘掉附件，避免实体身上长期挂一个空壳（与 DS HarvestBonuses 同处理）
+                entity.removeData(AAAttachments.ENCHANTMENT_BONUSES);
+                EnchantmentBonusHolders.unregister(entity);
+                return;
             }
+
+            // 反查候选集的"每帧自愈"：重登 / 读档那条路不会走 onAddedToStorage
+            //（DS 的同步包在客户端只做 deserializeNBT），靠这里补登记；重复登记是幂等的
+            EnchantmentBonusHolders.register(entity);
         });
     }
 

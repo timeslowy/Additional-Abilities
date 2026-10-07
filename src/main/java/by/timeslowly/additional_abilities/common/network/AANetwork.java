@@ -39,8 +39,12 @@ public class AANetwork {
      * 它虽不是 payload，但会<b>随物品栈上线</b>、并进入登录期的注册表同步：
      * 旧客户端收到带该组件的物品栈会解码失败、或直接卡在注册表同步。
      * 递增后版本不匹配会在协商阶段被明确拒绝，而不是在游戏中途炸出难查的解码错误。
+     * <p>
+     * 11 → 12：{@code additional_abilities:enchantment_bonus} 的载荷由"来源标记（复合结构）"改为
+     * "刷新脉冲（一个数值）"（见 {@code EnchantmentBonus#PULSE_CODEC}）。
+     * 组件 id 不变，但线上字节格式变了：旧客户端按旧结构解析新值会失败，因此同样递增。
      */
-    private static final String PROTOCOL_VERSION = "11";
+    private static final String PROTOCOL_VERSION = "12";
 
     @SubscribeEvent
     public static void register(final @NotNull RegisterPayloadHandlersEvent event) {

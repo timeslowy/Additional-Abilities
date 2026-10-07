@@ -3,7 +3,7 @@ package by.timeslowly.additional_abilities.registry;
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.DSDataAttachments;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.DamageReflections;
-import by.timeslowly.additional_abilities.common.ability.entity_effects.EnchantmentBonuses;
+import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonuses;
 import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainData;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;

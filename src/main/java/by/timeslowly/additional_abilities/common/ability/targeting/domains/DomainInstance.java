@@ -12,6 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -129,7 +130,7 @@ public class DomainInstance {
     private long nextApplyTick;
 
     public DomainInstance(final UUID casterUUID,
-                          final DragonAbilityInstance ability,
+                          final @NotNull DragonAbilityInstance ability,
                           final int level,
                           final Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effects,
                           final DomainShape shape,
@@ -267,7 +268,7 @@ public class DomainInstance {
     private void applySet(final ServerLevel level,
                           final ServerPlayer caster,
                           final Vec3 origin,
-                          final Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effectSet) {
+                          final @NotNull Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effectSet) {
         AABB area = DomainShape.createArea(shape, origin, radius, height, heightStartsBelow);
 
         effectSet.ifLeft(blockTarget -> BlockPos.betweenClosedStream(area).forEach(position -> {
@@ -296,7 +297,7 @@ public class DomainInstance {
     }
 
     /** 实体取点口径：{@code entity.position()}（脚部中心），与 DS / 本模组既有目标类型一致。 */
-    private boolean isInside(final Vec3 origin, final Entity entity) {
+    private boolean isInside(final Vec3 origin, final @NotNull Entity entity) {
         return DomainShape.contains(shape, origin, radius, entity.getX(), entity.getY(), entity.getZ());
     }
 
@@ -311,7 +312,7 @@ public class DomainInstance {
      *         而领域遍历的是本维度的坐标，二者混用会取到错误的世界。</li>
      * </ul>
      */
-    private @Nullable ServerPlayer resolveCaster(final ServerLevel level) {
+    private @Nullable ServerPlayer resolveCaster(final @NotNull ServerLevel level) {
         ServerPlayer caster = level.getServer().getPlayerList().getPlayer(casterUUID);
 
         if (caster == null || caster.serverLevel() != level) {

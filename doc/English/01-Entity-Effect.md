@@ -325,17 +325,21 @@ One cast granting four enchantments to nearby allies:
   and recognition by the anvil / grindstone / repair recipe / `/enchant`. The first two are trade-offs (this mod
   draws its own "temporary enchantment" tooltip line); the other four are actually a *feature* — those read the
   item's NBT, cannot see a temporary enchantment, and therefore cannot be abused for free grindstone XP.
-- **It never touches the item's data**: the effect does **not** write the `enchantments` component. It stamps a
-  small `additional_abilities:enchantment_bonus` marker on the item, and an enchantment-query hook supplies the
-  levels from that marker; the marker is cleared when the effect ends. Even if a marker is left behind (say the
-  item was dropped into a chest as the effect ended), the hook first verifies that its source is still alive —
-  so a **permanently active fake enchantment can never happen**.
+- **It never touches the item's data**: the effect does **not** write the `enchantments` component, and it does
+  **not** leave any "effect truth" on the item either. Resolution happens at the very moment an enchantment is
+  queried — the mod looks up *who is holding this item right now* and reads that holder's duration instances.
+  All that remains on the item is a numeric pulse carrying no readable information, used solely to make vanilla
+  re-collect attribute modifiers; it is cleared when the effect ends.
+- **Only the current holder counts**: an item **stops benefiting the instant it leaves a held slot** — hand it to
+  a teammate, drop it on the ground, or stash it in a chest and the bonus is gone. Even if that numeric pulse is
+  left behind (say the item was dropped into a chest right as the effect ended), it takes part in neither
+  resolution nor the tooltip — it **cannot mislead, and can never become a permanently active fake enchantment**.
 - **Item eligibility** uses the same test as the anvil (`ItemStack#supportsEnchantment`): an item that does not
   support the enchantment simply does nothing while held; enchanted books are excluded.
 - **Levels**: a **fixed** level above the enchantment's maximum **fails at data pack load**; a level that scales
   with the ability level is clamped to the maximum at runtime.
 - **UI / commands**: the effect shows up in the **ability effect list and HUD** ,
-  `/dragon-modifiers clear <targets>` removes it, along with the markers on the items.
+  `/dragon-modifiers clear <targets>` removes it, along with the pulse marks on the items.
 - **Multiple sources stack**: when several abilities or several casters hit the same item, each is tracked
   separately and the **higher level wins** — a lower one never overwrites it.
 - **Infinite duration**: omitting `duration` means "until removed", so collection then relies entirely on
