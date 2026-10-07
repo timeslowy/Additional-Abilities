@@ -116,7 +116,7 @@
 ### 友情链接
 
 > 作者Fork了龙生附属领域大神、数据包巨佬 @Dragon-LinFeng 的[龙生数据包补全插件](https://github.com/Dragon-LinFeng/dragonsurvival-mcdoc-completion-zh)，并增添了此模组**新技能组件**的补全支持。  
-> 仓库在：https://github.com/timeslowy/dragonsurvival-mcdoc-completion-zh，
+> 仓库在：https://github.com/timeslowy/dragonsurvival-mcdoc-completion-zh/tree/AA-expanded，
 > 目前仅支持中文。  
 > 欢迎体验并使用，也希望一并支持翷风前辈栽下的这棵大树。
 
