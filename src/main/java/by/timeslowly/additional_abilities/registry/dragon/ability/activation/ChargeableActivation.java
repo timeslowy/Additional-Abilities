@@ -30,7 +30,8 @@ import java.util.Optional;
  *         DS 原生流程自动释放；为 {@code true} 时由
  *         {@code mixins.DragonAbilityInstanceMixin} 撑开完成判定，可以继续按住 ——
  *         这段"超限窗口"的长度由 {@link #maxOverchargedDuration()} 给出上限，
- *         到点仍会回到 DS 原生流程自动释放（见 {@link #getHoldLimitTicks(int)}）；
+ *         到点由 {@code common.ability.activation.ChargedCasts#settleOvercharged} 接管，
+ *         走与手动松手相同的结算（见 {@link #getHoldLimitTicks(int)}）；
  *         不配置该字段则无限按住。</li>
  * </ul>
  *
@@ -203,7 +204,7 @@ public interface ChargeableActivation extends Activation {
     }
 
     /**
-     * 按住释放的上限：到达这一刻，DS 就会走原生"读条完成"流程自动释放
+     * 按住释放的上限：到达这一刻，本模组就会接管并完成释放
      * （以玩家自身等级执行一次动作、扣初始魔力、进冷却）。
      * <ul>
      *     <li>{@link #canChargeExceedCastTime()} 为 {@code false} → 不适用，
@@ -213,8 +214,10 @@ public interface ChargeableActivation extends Activation {
      *     <li>为 {@code true} 且配置了该字段 → {@code cast_time + max_overcharged_duration}，到点自动释放
      *         （并保证严格晚于 {@link #chargeCapTicks(int)}，见下）。</li>
      * </ul>
-     * 该值被 {@code mixins.DragonAbilityInstanceMixin} 用作 {@code tickActions} 的完成判定阈值，
-     * 因此"到点自动释放"完全走 DS 原生路径，本模组不需要额外接管。
+     * 该值被 {@code mixins.DragonAbilityInstanceMixin} 用作 {@code tickActions} 的完成判定阈值
+     * （撑开原生的 {@code cast_time}），并在到达时由
+     * {@code common.ability.activation.ChargedCasts#settleOvercharged} 接管结算，
+     * 因此"到点自动释放"与"手动松手"走的是同一份代码、结果一致。
      * <p>
      * <b>不变量</b>：该值严格大于 {@link #chargeCapTicks(int)}。DS 在到达该值的那一帧才释放，
      * 所以只有"阈值上限 + 1 ≤ 释放点"才能保证最高档在释放之前至少有一帧是可以被看到、可以被松手放出的。
@@ -223,7 +226,7 @@ public interface ChargeableActivation extends Activation {
      * 前者是<b>按住时长上限</b>。
      *
      * @param level 求值等级（DS 完成判定用的是玩家自身的技能升级等级）
-     * @return DS 完成判定的阈值（游戏刻）
+     * @return 完成判定的阈值（游戏刻）
      */
     default int getHoldLimitTicks(final int level) {
         if (!canChargeExceedCastTime()) {

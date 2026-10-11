@@ -22,7 +22,9 @@ import java.util.Optional;
  * <ul>
  *     <li>蓄力未达 {@link #getMinimumChargeTicks()}（即档位 1 所需时长）就松手 → 视为取消施法；
  *         与服务端 {@code stopCasting} 的原生"提前松手"路径一致，<b>不产生冷却</b>。</li>
- *     <li>蓄力达到档位 1 起松手 → 以该档位执行一次技能动作，随后按该档位结算冷却 / 结束音效 / 结束动画。</li>
+ *     <li>蓄力达到档位 1 起松手 → 以该档位执行一次技能动作，随后按该档位结算冷却 / 结束音效 / 结束动画。
+ *         档位以<b>服务端实际蓄力时间</b>为准，客户端上报的时长只是上限声明
+ *         （见 {@code common.ability.activation.ChargedCasts} 的类注释）。</li>
  *     <li>一直按到 {@code cast_time}（= 总蓄力上限）→ 由 {@code DragonSurvival} 自己的
  *         {@code DragonAbilityInstance#tickActions} 原生自动释放，档位即玩家自身升级等级（满档）。</li>
  * </ul>

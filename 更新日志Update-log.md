@@ -1,7 +1,7 @@
 ### 2.0.0
 
 > **如你已在之前安装过此模组的`1.0.0`版本，务必认真阅读此条更新日志！！！此次更新为颠覆性的更新，请慎重考虑！！！**  
-> **If you has installed version `1.0.0` of this mod, please read this update log seriously!!! This update is revolutionary, please consider prudently before updating!!!**
+> **If you have installed version `1.0.0` of this mod, please read this update log seriously!!! This update is revolutionary, please consider prudently before updating!!!**
 
 #### 中文
 

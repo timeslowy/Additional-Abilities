@@ -27,11 +27,19 @@ import org.jetbrains.annotations.NotNull;
  * 只上报"蓄力时长"与"请求的档位"，<b>不信任任何换算结果</b>：
  * 档位由服务端按同一套
  * {@link by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation}
- * 规则复算，并先把时长钳制在 {@code [0, cast_time]} 内，再校验请求档位不超过"已达成档位"，
+ * 规则复算，并校验请求档位不超过"已达成档位"，
  * 因此客户端无法通过改包直接指定一个超出自身水平的结果。
+ * <p>
+ * <b>上报时长只是上限声明</b>：服务端还会与自己的刻计数
+ * （{@code DragonAbilityInstance#getCurrentTick()}，由 DS 的玩家 tick 循环维护、客户端改不到）
+ * 以及 {@code cast_time} 三者取最小。仅按 {@code cast_time} 钳制是不够的 ——
+ * 合法起手后立刻谎报 {@code cast_time} 就能跳到自身最高档。因此本包<b>不保证</b>
+ * "上报多少就按多少结算"：边界处可能低一档，甚至不足最低档而改为取消
+ * （此时服务端会回传权威的法力与冷却来纠正客户端预测，见
+ * {@link ChargedCasts#fire}）。
  *
  * @param ability     技能注册键
- * @param chargeTicks 客户端松手那一刻的已蓄力游戏刻数
+ * @param chargeTicks 客户端松手那一刻的已蓄力游戏刻数；服务端只把它当作上限声明
  * @param releaseLevel 请求的释放档位：
  *                     <ul>
  *                         <li>{@link #AUTO}（{@code -1}）—— 采用服务端算出的"已达成档位"，
@@ -40,6 +48,8 @@ import org.jetbrains.annotations.NotNull;
  *                         <li>{@code >= 1} —— 指定档位，必须不超过服务端复算出的"已达成档位"
  *                             （{@code optional_charged} 由鼠标滚轮选出的档位）。</li>
  *                     </ul>
+ *                     <b>不要把本字段当作解析后的业务档位</b>：它是"请求值"，
+ *                     {@link #AUTO} 是哨兵而非档位。
  */
 public record ChargedReleasePayload(ResourceKey<DragonAbility> ability, int chargeTicks, int releaseLevel) implements CustomPacketPayload {
     /** 释放档位取值：采用服务端复算出的"已达成档位"（{@code charged} 使用）。 */
@@ -81,8 +91,11 @@ public record ChargedReleasePayload(ResourceKey<DragonAbility> ability, int char
                 return;
             }
 
-            // 未达最低蓄力时长 / 已经蓄满被原生释放过 / 类型不匹配 / 请求档位不合理时，
-            // fire 会返回 false 并什么都不做，等价于"取消施法"
+            // 返回值刻意不处理：false 表示"这次请求不该由本模组结算"
+            // （类型不匹配 / 已经蓄满被原生释放过 / 技能未解锁），
+            // 此时什么都不做才是正确的 —— 服务端既不该释放也不该额外收尾，
+            // 客户端的停机由它自己的本地收尾完成。
+            // 而"服务端复算后档位不足"属于<b>已经接管</b>的情形，由 fire 内部按取消收尾并回传权威值
             ChargedCasts.fire(player, instance, payload.chargeTicks(), payload.releaseLevel());
         });
     }

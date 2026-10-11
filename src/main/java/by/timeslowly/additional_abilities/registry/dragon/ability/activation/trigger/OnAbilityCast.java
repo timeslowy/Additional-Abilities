@@ -65,6 +65,7 @@ import java.util.Optional;
  *     <tr><td>simple 读条完成，动作已执行</td><td>✅</td></tr>
  *     <tr><td>channeled 引导中松手 / 达到 {@code max_duration}</td><td>✅（一次）</td></tr>
  *     <tr><td>本模组蓄力族系按档位释放（{@code ChargedCasts#fire}）</td><td>✅</td></tr>
+ *     <tr><td>本模组蓄力族系超限窗口到点自动释放（{@code ChargedCasts#settleOvercharged}）</td><td>✅</td></tr>
  *     <tr><td>本模组蓄力族系「改为取消」（滚到 0 档松手）</td><td>❌ 传 {@code withCooldown = false}</td></tr>
  *     <tr><td>松手早于 {@code cast_time}（客户端提前停手）</td><td>❌ 效果未生效</td></tr>
  *     <tr><td>用另一个技能打断上一次施法</td><td>❌ 走 {@code release()} 而非 {@code stopCasting}</td></tr>
