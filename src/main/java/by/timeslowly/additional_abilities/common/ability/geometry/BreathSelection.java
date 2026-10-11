@@ -4,6 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilit
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.targeting.AbilityTargeting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -50,14 +51,28 @@ public final class BreathSelection {
     private BreathSelection() { /* 工具类 */ }
 
     /**
-     * 光束版的方块分支。与 DS 原实现相比只改了两处：
-     * 枚举前先做窄相、坐标改用不可变副本（{@code betweenClosed} 复用同一个 MutableBlockPos）。
+     * 光束版的方块分支。与 DS 原实现相比改了三处：
+     * 枚举前先做窄相、坐标改用不可变副本（{@code betweenClosed} 复用同一个 MutableBlockPos）、
+     * 以及<b>未加载区块门控</b>（见下）。
      * {@code direction} 与 DS 完全一致（{@code Direction.getNearest(眼睛世界坐标)}），未做任何修正。
+     *
+     * <h2>未加载区块门控（F20）</h2>
+     * {@code blockTarget.matches()} 内部会建 {@code Condition#blockContext}，而它读
+     * {@code getBlockState} —— <b>那会同步加载 / 生成区块</b>。收束光束的包围盒在斜视时很大
+     * （见 {@link BreathBeam} 类注释），因此必须逐格挡下未加载位置。
+     * <p>
+     * 门控刻意放在<b>窄相判定之后</b>：几何判定是纯浮点、不需要碰世界，先跑它能把绝大多数位置
+     * 刷掉，只剩光束真正覆盖的那几十格去查区块表。
+     * <p>
+     * 判据 {@code level.isLoaded(position)} 在本模组共有四处方块扫描入口（本方法、
+     * {@code AnnulusTarget}、{@code AntiDragonBreathTarget}、{@code DomainInstance#applySet}），
+     * 四处的理由与写法完全一致 —— 新增扫描点时请照抄这一行，不要漏掉任何一处。
      */
     public static void applyToBlocks(final @NotNull ServerPlayer dragon, final DragonAbilityInstance ability,
                                      final @NotNull BreathBeam beam, final AbilityTargeting.BlockTargeting blockTarget) {
         AABB area = beam.boundingBox();
         Direction direction = Direction.getNearest(dragon.getEyePosition());
+        ServerLevel level = dragon.serverLevel();
 
         BlockPos min = new BlockPos(Mth.floor(area.minX), Mth.floor(area.minY), Mth.floor(area.minZ));
         BlockPos max = new BlockPos(Mth.floor(area.maxX), Mth.floor(area.maxY), Mth.floor(area.maxZ));
@@ -71,6 +86,13 @@ public final class BreathSelection {
             }
 
             if (!beam.intersectsBlock(cursor.getX(), cursor.getY(), cursor.getZ())) {
+                continue;
+            }
+
+            // 窄相通过之后才问区块：未加载的位置连 matches() 都不进（否则会同步加载区块）。
+            // Level#isLoaded 不触发加载（内部 ChunkSource#hasChunk 的 requireChunk = false），
+            // 且顺带覆盖"坐标在建筑高度之外"；已弃用的 LevelReader#hasChunkAt 两者都不管。
+            if (!level.isLoaded(cursor)) {
                 continue;
             }
 
@@ -90,7 +112,9 @@ public final class BreathSelection {
     /**
      * 光束版的实体分支。谓词顺序与 DS 一致（阵营 → 战利品条件 → 我们的几何判定），
      * 只在末尾追加一条 {@link BreathBeam#intersects(AABB)}，
-     * 用实体的**完整碰撞箱**参与 6 轴分离轴测试（大体积实体贴在光束边缘时不会被漏判）。
+     * 用实体的**完整碰撞箱**参与完整分离轴测试（大体积实体贴在光束边缘时不会被漏判）。
+     * <p>
+     * <b>不需要区块门控</b>：{@code getEntities} 只遍历已经加载的实体，不会为了一次查询去加载区块。
      */
     public static void applyToEntities(final @NotNull ServerPlayer dragon, final DragonAbilityInstance ability,
                                        final @NotNull BreathBeam beam, final AbilityTargeting.EntityTargeting entityTarget) {

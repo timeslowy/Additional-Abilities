@@ -449,7 +449,7 @@ public class DomainInstance {
 
             // 必须先挡未加载区块：ServerLevel#getBlockState 会同步加载 / 生成区块，
             // 而 Condition#blockContext 内部就读 getBlockState（DS 内置 area 没做这层保护）。
-            // 用 Level#isLoaded 而非已弃用的 LevelReader#hasChunkAt，两者都不触发加载。
+            // 判据与 annulus / anti_dragon_breath / 收束光束三处完全一致（见 BreathSelection 的说明）。
             if (!level.isLoaded(position)) {
                 return;
             }

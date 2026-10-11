@@ -88,13 +88,21 @@ public record PercentagedDamageEffect(Holder<DamageType> damageType, LevelBasedV
         }
 
         boolean swap = swap(dragon);
-        livingTarget.hurt(new DamageSource(damageType, dragon), calculate(dragon, livingTarget, ability.level()));
 
-        // Used by 'OwnerHurtTargetGoal'
-        dragon.setLastHurtMob(target);
+        // try/finally 收口（异常恢复）：表达式求值（Expression#eval）与伤害回调
+        // （LivingEntity#hurt → 其他模组的 LivingHurtEvent / 反伤 / 死亡处理）都可能抛异常。
+        // 没有 finally 时 swapFinish 不会执行，龙爪剑会**永久留在主手**、玩家原来的主手物品
+        // 被寄存不还 —— 一次第三方异常就造成不可逆的物品状态错乱。
+        // 这里只保证恢复，**不吞异常**：异常照原样向外传播，DS/原版的既有错误处理不受影响。
+        try {
+            livingTarget.hurt(new DamageSource(damageType, dragon), calculate(dragon, livingTarget, ability.level()));
 
-        if (swap) {
-            ClawInventoryData.getData(dragon).swapFinish(dragon);
+            // Used by 'OwnerHurtTargetGoal'
+            dragon.setLastHurtMob(target);
+        } finally {
+            if (swap) {
+                ClawInventoryData.getData(dragon).swapFinish(dragon);
+            }
         }
     }
 

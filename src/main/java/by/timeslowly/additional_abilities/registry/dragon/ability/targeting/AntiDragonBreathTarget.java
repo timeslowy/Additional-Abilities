@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -62,6 +63,8 @@ import org.jetbrains.annotations.NotNull;
  *     <li>方块分支传入的 {@code direction} 与 DS 龙息完全一致
  *         （{@code Direction.getNearest(dragon.getEyePosition())}，按眼睛世界坐标取最近轴向，
  *         与视线朝向无关），未做反向处理。</li>
+ *     <li>方块分支会<b>跳过未加载区块</b>（F20）：{@code matches} 内部的条件上下文要读
+ *         {@code getBlockState}，那会同步加载 / 生成区块。这是与本模组其它方块目标类型一致的取舍。</li>
  *     <li>本类只负责"选谁"。谁能被打由 {@code applied_effects.targeting_mode} 决定，
  *         与目标类型无关（与 DS 其它目标类型同理）。</li>
  * </ul>
@@ -86,8 +89,16 @@ public record AntiDragonBreathTarget(Either<AbilityTargeting.BlockTargeting, Abi
         target.ifLeft(blockTarget -> {
             // 与 DS DragonBreathTarget 一致：忽略视线朝向，仅按眼睛世界坐标取最近轴向
             Direction direction = Direction.getNearest(dragon.getEyePosition());
+            ServerLevel level = dragon.serverLevel();
+            AABB area = calculateReverseBreathArea(dragon, ability);
 
-            BlockPos.betweenClosedStream(calculateReverseBreathArea(dragon, ability)).forEach(position -> {
+            BlockPos.betweenClosedStream(area).forEach(position -> {
+                // 未加载区块门控（F20）：matches 内部建 Condition#blockContext 会读 getBlockState，
+                // 而 ServerLevel#getBlockState 会同步加载 / 生成区块。必须挡在 matches 之前。
+                if (!level.isLoaded(position)) {
+                    return;
+                }
+
                 if (blockTarget.matches(dragon, position)) {
                     blockTarget.effects().forEach(effect -> effect.apply(dragon, ability, position, direction));
                 }

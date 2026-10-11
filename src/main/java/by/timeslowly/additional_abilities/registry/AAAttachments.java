@@ -2,6 +2,7 @@ package by.timeslowly.additional_abilities.registry;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.DSDataAttachments;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
+import by.timeslowly.additional_abilities.common.ability.activation.PendingBlockPlaceData;
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlowData;
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockQuakeData;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.DamageReflections;
@@ -17,7 +18,8 @@ import java.util.function.Supplier;
 
 // 注册 NeoForge Data Attachment（附加数据）
 // 实体附件：damage_reflection（伤害反震参数载体）
-// 维度附件：domain（领域数据）、block_glow（方块发光条目）、block_quake（震动冷却与待发缓冲）
+// 维度附件：domain（领域数据）、block_glow（方块发光条目）、block_quake（震动冷却与待发缓冲）、
+//   pending_block_place（待确认的方块放置，F21）
 //   —— 维度状态一律挂 Level，绝不用静态 Map 按维度 ResourceKey 分区（那会跨存档串味）
 // ⚠️ 另有一个例外：enchantment_bonuses 注册在 DS 自己的注册表里（见该字段的注释，那里说明了原因）
 public class AAAttachments {
@@ -73,6 +75,24 @@ public class AAAttachments {
     public static final Supplier<AttachmentType<BlockQuakeData>> BLOCK_QUAKE = ATTACHMENTS.register(
             "block_quake",
             () -> AttachmentType.builder(BlockQuakeData::new).build());
+
+    /**
+     * 待确认的方块放置队列：由 {@code OnBlockPlaced#enqueue} 登记、{@code PendingBlockPlaces#confirm}
+     * 在下一个维度刻确认后分发（F21）。
+     * <p>
+     * <b>为什么需要它</b>：{@code EntityPlaceEvent} 在 {@code EventBus#post(...)} <b>内部</b>逐监听器派发，
+     * 本模组的监听器被调用时"最终会不会被取消"还未知 —— 排在其后的同优先级 / 低优先级监听器
+     * 随时可能取消这次放置。把放置登记下来、等派发结束后再确认，才能做到只响应最终未取消的放置（C09）。
+     * <p>
+     * 与 {@link #BLOCK_GLOW} / {@link #BLOCK_QUAKE} / {@link #DOMAIN} 同因挂在 {@code Level} 上：
+     * 这是"按维度"的服务端状态，静态 {@code Map<ResourceKey<Level>, …>} 会在换存档后串味。
+     * <p>
+     * <b>刻意不做序列化</b>：队列活不过一个服务端刻，没有跨重启的意义；况且它持有的事件对象
+     * 也不适合写进存档。
+     */
+    public static final Supplier<AttachmentType<PendingBlockPlaceData>> PENDING_PLACE = ATTACHMENTS.register(
+            "pending_block_place",
+            () -> AttachmentType.builder(PendingBlockPlaceData::new).build());
 
     /**
      * 临时附魔加成的时长实例存储：由 {@code additional_abilities:enchantment_bonus} 实体效果写入，

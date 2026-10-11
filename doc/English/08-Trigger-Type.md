@@ -74,10 +74,18 @@ and any "when a block is broken" passive becomes "when a block is placed".**
 ### When it fires
 
 - Once, when a player **right-clicks with an item in hand to place a block**.
+- **Only placements that end up uncancelled count**: if another mod (land protection, anti-cheat, …)
+  cancels the placement, the block is not actually placed and the ability does **not** fire. To achieve
+  this the trigger is **two-phase** — the placement is recorded when the event fires, and the ability runs
+  on the **next server tick**, once the event has finished dispatching and the final cancel state is known.
+- **The cost**: the ability runs up to **one server tick (≈50 ms) after** the placement. That is
+  imperceptible for a passive ability, and it is unavoidable — while the event is still dispatching there
+  is no way to know whether a later listener will cancel it (listeners of the same priority have no
+  ordering guarantee relative to each other).
 - One interaction that places **several** blocks (bed / door / tall plants) still counts as **one** —
   the position and block state are taken from the **first** block (`snapshot[0]`).
-- Only **players in dragon form** trigger it (same as `on_block_break`), and it triggers the
-  **placing player's own** abilities, not everyone's nearby.
+- Only **players in dragon form** trigger it (same as `on_block_break`; the form is checked **at
+  placement time**), and it triggers the **placing player's own** abilities, not everyone's nearby.
 - Each firing calls `ability.tick(player)` once: the actions resolve for **a single frame**. For effects
   that must persist (attribute modifiers, status effects) use a `constant` passive instead.
 
@@ -98,6 +106,12 @@ and any "when a block is broken" passive becomes "when a block is placed".**
 The reason: this trigger listens to NeoForge's `BlockEvent.EntityPlaceEvent`. That event is only posted
 when a **player's `ItemStack#useOn` completes the placement flow**; none of the other sources above go
 through that path (bucket items do not even capture a BlockSnapshot, so no event is produced at all).
+
+> **Cancellation semantics**: `EntityPlaceEvent` is cancellable — cancelling it means "do not place, refund
+> the item". This trigger only **observes** and never cancels, but it does **respect** other mods'
+> cancellations: a cancelled placement does not fire the ability. Because "was it finally cancelled?" is
+> only knowable after the event finishes dispatching, the actual ability execution is deferred by one
+> server tick.
 
 > So its scope is "**a player placed a block**", not "a block appeared somewhere in the world".
 > Covering the latter would require separate events such as `FluidPlaceBlockEvent`; this mod does not
@@ -135,6 +149,9 @@ through that path (bucket items do not even capture a BlockSnapshot, so no event
   the block; the placed version **deliberately does not** replicate that — the place event is posted
   *after* the block is already in the world, so cancelling would mean "roll the placement back and refund
   the item", which is a completely different meaning. Treat it as a pure **observation** trigger.
+- **This mod never cancels a placement, but it honours someone else's cancellation**: if another mod
+  cancels it the ability does not fire (see the two-phase explanation above). This mod neither clears that
+  cancel state nor rolls the placement back on its behalf.
 - **No per-tick involvement**: like every event-driven passive, it runs only on the placing frame.
 - **Use `cooldown` to throttle.** Building places blocks rapidly, and each placement walks that player's
   entire ability list doing an `instanceof` plus predicate test (Dragon Survival has no cache yet), so
