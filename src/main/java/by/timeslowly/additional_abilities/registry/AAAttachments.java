@@ -2,6 +2,8 @@ package by.timeslowly.additional_abilities.registry;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.DSDataAttachments;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
+import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlowData;
+import by.timeslowly.additional_abilities.common.ability.block_effects.BlockQuakeData;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.DamageReflections;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonuses;
 import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainData;
@@ -15,7 +17,8 @@ import java.util.function.Supplier;
 
 // 注册 NeoForge Data Attachment（附加数据）
 // 实体附件：damage_reflection（伤害反震参数载体）
-// 维度附件：domain（领域数据，挂在 Level 上而非实体上）
+// 维度附件：domain（领域数据）、block_glow（方块发光条目）、block_quake（震动冷却与待发缓冲）
+//   —— 维度状态一律挂 Level，绝不用静态 Map 按维度 ResourceKey 分区（那会跨存档串味）
 // ⚠️ 另有一个例外：enchantment_bonuses 注册在 DS 自己的注册表里（见该字段的注释，那里说明了原因）
 public class AAAttachments {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(
@@ -39,6 +42,37 @@ public class AAAttachments {
     public static final Supplier<AttachmentType<DomainData>> DOMAIN = ATTACHMENTS.register(
             "domain",
             () -> AttachmentType.builder(DomainData::new).build());
+
+    /**
+     * 方块发光的服务端状态：由 {@code block_effects.GlowEffect} 写入、{@code BlockGlows} 逐 tick 推进。
+     * <p>
+     * <b>为什么挂在 Level 上</b>：原先这份状态是 {@code BlockGlows} 里的
+     * {@code static Map<ResourceKey<Level>, …>}，键是维度 ResourceKey 而非 Level 实例，
+     * 因此世界切换后表依然存活，里面却是上一个存档的 {@code getGameTime()} 数值 ——
+     * 进入游戏时间较小的存档后，同维度同坐标的「已发送时刻」会算成未来值，
+     * 新效果长时间不发包、旧到期时间还会污染新存档。挂到 Level 附件后状态随实例生灭，
+     * 与 {@link #DOMAIN} 同理，不再需要额外的世界停止清理钩子。
+     * <p>
+     * <b>刻意不做序列化</b>：纯视觉的短生命周期状态，重启后重新触发即可；
+     * 若序列化反而会留下「重启后仍在倒计时」的发光。
+     */
+    public static final Supplier<AttachmentType<BlockGlowData>> BLOCK_GLOW = ATTACHMENTS.register(
+            "block_glow",
+            () -> AttachmentType.builder(BlockGlowData::new).build());
+
+    /**
+     * 方块震动的服务端调度状态：由 {@code block_effects.BlockQuakeEffect} 写入、
+     * {@code BlockQuakes} 逐 tick 推进。
+     * <p>
+     * 与 {@link #BLOCK_GLOW} 同因、同取舍：位置冷却表与待发缓冲原先都在静态 Map 上按维度 ResourceKey 分区，
+     * 换存档后会拿着旧世界的刻数判定冷却，使新世界同坐标的震动被长期拒绝。
+     * <p>
+     * <b>刻意不做序列化</b>：冷却窗口只有 {@code BlockQuakes.COOLDOWN_TICKS} 刻，
+     * 待发缓冲活不过一个服务端刻，都没有跨重启的意义。
+     */
+    public static final Supplier<AttachmentType<BlockQuakeData>> BLOCK_QUAKE = ATTACHMENTS.register(
+            "block_quake",
+            () -> AttachmentType.builder(BlockQuakeData::new).build());
 
     /**
      * 临时附魔加成的时长实例存储：由 {@code additional_abilities:enchantment_bonus} 实体效果写入，

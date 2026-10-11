@@ -24,8 +24,14 @@ import java.util.Map;
  * —— 这就是"续命"：引导类技能持续触发时发光常亮，技能停止后服务端不再刷新，客户端各自到期消失。
  * 因此两端都不需要移除包。
  * <p>
- * <b>生命周期</b>：剩余刻逐客户端刻递减，归零即移除。世界实例变化（进出存档、跨维度）时整表作废，
- * 靠比对 {@link ClientLevel} 实例统一清理 —— 这比逐事件挂钩更不容易漏。
+ * <b>生命周期</b>：剩余刻逐客户端刻递减，归零即移除。
+ * <p>
+ * <b>世界归属必须是"当前 ClientLevel"</b>：条目里存的是绝对方块坐标，只对生成它的那个世界有意义。
+ * 因此 {@link #onReceive}、{@link #tick}、{@link #entries} 三个入口<b>都会</b>先比对
+ * {@code Minecraft.getInstance().level} 与记录的世界实例，一旦不同立刻整表作废。
+ * 只在收包时比对是不够的：换维度（乃至退出到主菜单）后<b>可能一个包都不来</b>，
+ * 旧坐标就会一直挂在表里继续渲染、且 {@link #tick} 会让它们照常倒计时。
+ * 也不能只依赖 {@code LoggingOut} 事件 —— 那只是"断开连接"，覆盖不到"换维度但连接仍在"。
  * <p>
  * <b>不做遮挡剔除</b>：被完全遮挡 / 形状不完整的方块已在服务端源头滤掉（见
  * {@code BlockGlows.register}），若两端各判一次等于把同一份计算成本乘以在线人数。
@@ -38,7 +44,7 @@ public final class ClientBlockGlowState {
     /** 同时存活的条目上限，超出直接丢弃（防止大范围技能叠加把内存与渲染拖崩） */
     private static final int MAX_ENTRIES = 4096;
 
-    /** 条目键：与服务端 {@code BlockGlows.GlowKey} 同构 */
+    /** 条目键：与服务端 {@code BlockGlowData.GlowKey} 同构 */
     private record EntryKey(long packedPos, int colorARGB, GlowDisplayType displayType) {}
 
     /** 一条客户端发光记录（可变：剩余刻逐刻递减） */
@@ -102,8 +108,16 @@ public final class ClientBlockGlowState {
 
     private ClientBlockGlowState() {}
 
-    /** 供渲染层遍历。收包与推进都在客户端主线程，渲染也在主线程，无并发问题 */
+    /**
+     * 供渲染层遍历。
+     * <p>
+     * 作为<b>读取入口</b>同样先做世界归属检查（见类注释）：渲染是每帧都跑的最频繁路径，
+     * 跨维度后即便一个包都没来，这里也能保证旧坐标<b>当帧</b>就不再被画出来。
+     * <p>
+     * 收包、推进与渲染都在客户端主线程，因此无并发问题。
+     */
     public static @NotNull Collection<GlowEntry> entries() {
+        ensureCurrentLevel();
         return ENTRIES.values();
     }
 
@@ -115,7 +129,7 @@ public final class ClientBlockGlowState {
             return;
         }
 
-        ensureLevel(level);
+        adoptLevel(level);
 
         long[] positions = payload.positions();
         int[] remaining = payload.remainingTicks();
@@ -141,8 +155,10 @@ public final class ClientBlockGlowState {
                 continue;
             }
 
+            // 只在"这一项确实进不来"时跳过它，而不是直接 return 整包放弃：
+            // 容量满时若提前返回，包里排在后面的**已有条目**就拿不到续期，会提前消失
             if (ENTRIES.size() >= MAX_ENTRIES) {
-                return;
+                continue;
             }
 
             ENTRIES.put(key, new GlowEntry(BlockPos.of(packed), payload.colorARGB(), payload.displayType(), ticks));
@@ -155,6 +171,8 @@ public final class ClientBlockGlowState {
             return;
         }
 
+        // 推进前先确认世界没变：换维度后旧条目不该继续倒计时（它们已经不该存在于这个表里）
+        ensureCurrentLevel();
         ENTRIES.values().removeIf(glowEntry -> --glowEntry.remainingTicks <= 0);
     }
 
@@ -164,11 +182,27 @@ public final class ClientBlockGlowState {
         currentLevel = null;
     }
 
-    /** 世界实例变化（进出存档、跨维度）时整表作废：旧坐标在新世界里没有任何意义 */
-    private static void ensureLevel(final @NotNull ClientLevel level) {
+    /**
+     * 世界实例变化（进出存档、跨维度）时整表作废：旧坐标在新世界里没有任何意义。
+     * <p>
+     * 由 {@link #onReceive} 在收包路径调用（那里已经拿到了 level，不必再查一次）。
+     *
+     * @param level 当前世界；{@code null}（已退回主菜单）同样视为"变了"，会清空整表
+     */
+    private static void adoptLevel(final @Nullable ClientLevel level) {
         if (currentLevel != level) {
             clear();
             currentLevel = level;
         }
+    }
+
+    /**
+     * 读取 / 推进路径的世界归属检查：直接取当前 {@code ClientLevel} 比对。
+     * <p>
+     * 这里刻意<b>不</b>提前 {@code return} 而是继续走 {@link #adoptLevel} ——
+     * 世界为 {@code null}（退出到主菜单）时同样要清空，否则表会一直留到下次进入世界。
+     */
+    private static void ensureCurrentLevel() {
+        adoptLevel(Minecraft.getInstance().level);
     }
 }

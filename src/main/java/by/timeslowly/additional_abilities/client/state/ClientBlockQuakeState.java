@@ -12,6 +12,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -30,6 +31,12 @@ import java.util.Map;
  * <b>同位置去重</b>：若该位置已有假身在空中，直接忽略新触发。
  * 这样即便服务端冷却（10 刻）短于一次跃起时长（最长 24 刻），也不会出现"跳到半空被拽回地面"
  * 的瞬移；代价是持续震动时以首次触发的高度为准。
+ * <p>
+ * <b>世界归属必须是"当前 ClientLevel"</b>：假身是直接 {@code addEntity} 到某个 {@code ClientLevel}
+ * 里的实体，位置记的是绝对坐标，只对那个世界有意义。因此 {@link #onReceive} 与 {@link #tick}
+ * 都会先比对 {@code Minecraft.getInstance().level} 与记录的世界实例，一旦不同立刻丢弃全部假身。
+ * 只在收包时比对不够：换维度后可能一个包都不来，旧假身会留在旧世界里继续推进抛物线；
+ * 也不能只依赖 {@code LoggingOut} —— 那只是"断开连接"，覆盖不到"换维度但连接仍在"。
  * <p>
  * <b>光照必须显式写入</b>：假身的渲染亮度默认只来自实体光照探针
  * （{@code EntityRenderer#getPackedLightCoords} →
@@ -58,6 +65,10 @@ public final class ClientBlockQuakeState {
 
     /** 位置（打包 long）→ 假身。收包经 enqueueWork、推进在客户端 tick，均在主线程访问 */
     private static final Map<Long, Instance> ACTIVE = new HashMap<>();
+
+    /** 当前假身所属的世界实例；与 {@code Minecraft.getInstance().level} 不同即整表作废 */
+    @Nullable
+    private static ClientLevel currentLevel;
 
     /** 客户端专属实体使用负数 id，避免与真实实体（正数）撞号 */
     private static int nextEntityId = -1;
@@ -128,6 +139,8 @@ public final class ClientBlockQuakeState {
             return;
         }
 
+        adoptLevel(level);
+
         for (long packed : payload.positions()) {
             if (ACTIVE.containsKey(packed)) {
                 continue;
@@ -176,6 +189,9 @@ public final class ClientBlockQuakeState {
             return;
         }
 
+        // 推进前先确认世界没变：换维度后旧假身已随旧世界消失，不该再被 setPos / 倒计时
+        adoptLevel(Minecraft.getInstance().level);
+
         Iterator<Map.Entry<Long, Instance>> iterator = ACTIVE.entrySet().iterator();
 
         while (iterator.hasNext()) {
@@ -197,5 +213,19 @@ public final class ClientBlockQuakeState {
     public static void clear() {
         ACTIVE.values().forEach(instance -> instance.display.discard());
         ACTIVE.clear();
+        currentLevel = null;
+    }
+
+    /**
+     * 世界实例变化（进出存档、跨维度）时整表作废：假身属于旧世界，旧坐标在新世界里没有意义。
+     * <p>
+     * {@code null}（已退回主菜单）同样视为"变了"，因此这里用 {@link Nullable} 而非 {@code @NotNull}。
+     * 收包路径可传入已取到的 level 省一次查询；推进路径由 {@link #tick} 自行取当前世界。
+     */
+    private static void adoptLevel(final @Nullable ClientLevel level) {
+        if (currentLevel != level) {
+            clear();
+            currentLevel = level;
+        }
     }
 }

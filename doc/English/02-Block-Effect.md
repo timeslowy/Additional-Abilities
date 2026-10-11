@@ -85,6 +85,12 @@ clamped to **6 – 24 ticks**, so there is nothing to tune by hand.
   - **Position cooldown**: the same coordinate only quakes once every 10 ticks;
   - Triggers within the same tick are merged into as few network packets as possible and only sent to
     nearby players.
+  - The cooldown records and the pending buffer live on **each dimension's own data** and are reclaimed with
+    the world instance — so a save change cannot leave the cooldown test using the previous world's timestamps
+    (which would otherwise keep rejecting quakes at the same coordinates for a long time).
+- **Changing dimension clears the fake blocks immediately**: as soon as the client sees a different world
+  instance (dimension change, return to the main menu) every fake block is dropped, **without waiting for a
+  packet from the new dimension** — so they never keep bouncing in the old world.
 - This effect only moves the **shape** of the blocks and **deals no damage**. Add a `dragonsurvival:damage`
   style entity effect for that, and remember to use a **separate action** — entity effects and block
   effects cannot live in the same `applied_effects`.
@@ -231,6 +237,15 @@ is glowing", **not** as X-ray.
   alive", and the client counts down locally from the remaining duration carried in the packet. A repeatedly
   triggered ability stays lit; once it stops, the glow expires on its own. The trade-off: **if the ability is
   interrupted early, the glow lingers until `duration` runs out.**
+- **State belongs strictly to the current world**: the server keeps live entries on **each dimension's own
+  data**, and the client keeps entries only for the **current world instance** —
+  - **No bleed between saves**: entries are created and reclaimed together with the world instance, so
+    "enter save A with a large game time, quit, then enter save B with a smaller one" cannot let A's leftover
+    timestamps affect B (which would otherwise stop new glows at the same coordinates from showing for a long
+    time);
+  - **Changing dimension clears immediately**: as soon as the client sees a different world instance
+    (dimension change, return to the main menu) the whole table is dropped, **without waiting for a packet from
+    the new dimension** — so old coordinates are neither drawn nor counted down any further.
 - **The occlusion filter serves `simple_shader` only**: it asks whether **all six** neighbouring blocks are
   solid-rendered — a strict definition of "completely occluded", so visible blocks are never dropped by mistake.
   `outline` skips this filter: its cost is independent of visibility, and with the depth test on the GPU hides
