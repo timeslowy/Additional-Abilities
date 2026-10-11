@@ -2,6 +2,7 @@ package by.timeslowly.additional_abilities.mixins;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
+import by.timeslowly.additional_abilities.common.ability.activation.ChargedCasts;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnAbilityCast;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -49,11 +50,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(MagicData.class)
 public abstract class MagicDataMixin {
     /**
-     * 施法结算后分发 {@code on_ability_cast} 触发器。
+     * 施法结算后分发 {@code on_ability_cast} 触发器，并统一维护蓄力查询记录的生命周期。
      *
      * @param player      施法者（双端都会到达这里，非服务端玩家在此被拦下）
-     * @param instance    刚完成结算的技能实例；{@code null} 表示「停止当前施法但未命中具体实例」
-     * @param withCooldown 效果是否已生效（{@code true} 才是一次真正的「使用」）
+     * @param instance    刚完成结算的技能实例；{@code null} 表示「停止当前施法但未能解析出具体实例」
+     * @param withCooldown 效果是否已生效（{@code true} 才是一次真正的「使用」/「释放」）
      */
     @Inject(
             method = "stopCasting(Lnet/minecraft/world/entity/player/Player;Lby/dragonsurvivalteam/dragonsurvival/registry/dragon/ability/DragonAbilityInstance;Z)V",
@@ -61,8 +62,13 @@ public abstract class MagicDataMixin {
     )
     private void additional_abilities$onAbilityCast(final Player player, final DragonAbilityInstance instance,
                                                     final boolean withCooldown, final CallbackInfo callbackInfo) {
-        if (withCooldown && instance != null && player instanceof ServerPlayer serverPlayer) {
-            OnAbilityCast.trigger(serverPlayer, instance);
+        if (player instanceof ServerPlayer serverPlayer) {
+            // 选档记录：取消同样是一次终结，所以清理不依赖 withCooldown；是否算"释放"由该方法内部判定
+            ChargedCasts.onCastingStopped(serverPlayer, instance, withCooldown);
+
+            if (withCooldown && instance != null) {
+                OnAbilityCast.trigger(serverPlayer, instance);
+            }
         }
     }
 }

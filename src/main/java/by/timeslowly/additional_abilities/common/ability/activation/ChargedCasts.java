@@ -13,12 +13,14 @@ import by.timeslowly.additional_abilities.common.network.charged.ChargedReleaseP
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -97,6 +99,20 @@ import java.util.UUID;
  * 故意只纠正"法力 + 冷却"这两个会被玩家直接看到的数值：客户端可能已经多播了一次结束音效 /
  * 结束动画，那属于观感残差，用它换来"不加新包、不动协议版本"。
  *
+ * <h2>查询记录的生命周期</h2>
+ * 本类维护两份仅供查询指令使用的记录，两者的生命周期口径刻意不同：
+ * <ul>
+ *     <li>{@link #LAST_CHARGED_LEVELS}（最近一次实际释放的档位）——按"玩家 + 技能"记录，
+ *         因为"上次放了几档"本就是每个技能各自的属性；取消不写入（取消不是释放）；</li>
+ *     <li>{@link #SELECTED_LEVELS}（本次施法的选档）——<b>每名玩家至多一条</b>，
+ *         因为同一时刻只可能在施放一个技能（理由见该字段的注释）。</li>
+ * </ul>
+ * 选档的<b>写入</b>受 {@link #onSelectionChanged} 校验（必须正在施放该技能 + 允许选档 + 档位钳制），
+ * <b>清理</b>则统一挂在 {@link #onCastingStopped}（由 {@code MagicDataMixin} 在
+ * {@code MagicData#stopCasting} 尾部调用）—— 那里是所有终结路径的共同漏斗，
+ * 覆盖"手动松手 / 超限自动释放 / 取消 / DS 原生读条完成"全部四条，包括 T01 统一结算服务
+ * 覆盖不到的第四条。两条记录都在玩家下线时清空。
+ *
  * <h2>已知边界</h2>
  * "延迟型效果"（例如生成实体后由该实体在后续游戏刻才去读 {@code ability.level()}）会读到
  * 玩家自身的升级等级而非档位。对本窗口内立即结算的效果（伤害、弹射物生成、方块效果、概率判定）
@@ -107,21 +123,36 @@ public final class ChargedCasts {
     /**
      * 最近一次<b>实际释放</b>所用的档位，按"玩家 + 技能"记录，仅供查询指令展示，
      * 不参与任何数值结算。取消施法不会写入这里（取消不是"释放"）。
+     * <p>
+     * 按技能分别记录是有意义的：同一名玩家的多个蓄力技能各有各的"上次放了几档"。
+     * 表大小因此天然被"该玩家拥有的技能数"限住，并在下线时清空。
      */
     private static final Map<PlayerAbility, Integer> LAST_CHARGED_LEVELS = new HashMap<>();
 
     /**
-     * 玩家当前用滚轮指定的释放档位（{@link ChargedReleasePayload#AUTO} 表示"自动跟随已达档位"），
-     * 按"玩家 + 技能"记录。
+     * 玩家<b>当前这次施法</b>用滚轮指定的释放档位，<b>每名玩家至多一条</b>。
      * <p>
      * 只由客户端在滚动时主动同步（频率极低），服务于
      * {@code /dragon-ability query … current_selected_level}；不参与任何数值结算 ——
      * 真正生效的释放档位随 {@link ChargedReleasePayload} 单独上报，并在 {@link #fire} 中重新校验。
      * <p>
-     * 这里存的是<b>原始值</b>（可能为哨兵 {@code AUTO}）；查询时由
-     * {@link #resolveSelectedLevel} 把哨兵解析成"已蓄到的档位"，不要把原始值直接透给调用方。
+     * <b>为什么是"每玩家一条"而不是"每玩家 + 每技能一条"</b>：同一个玩家同一时刻只可能在施放一个技能
+     * （{@code MagicData} 只有一份 {@code currentlyCasting}），所以按技能分开存只会让
+     * "曾经施放过的技能各留一条"慢慢堆积，而其中除了当前那个之外<b>永远读不到</b>。
+     * 收敛成单槽后，记录数量与施法数量同阶，结构上不可能随在线时长增长。
+     * <p>
+     * 写入前必须通过 {@link #onSelectionChanged} 的校验（当前正在施法 + 允许选档 + 档位钳制），
+     * 因此这个槽位不会被任意技能键占用。
      */
-    private static final Map<PlayerAbility, Integer> SELECTED_LEVELS = new HashMap<>();
+    private static final Map<UUID, Selection> SELECTED_LEVELS = new HashMap<>();
+
+    /**
+     * 一次施法内的选档记录。
+     *
+     * @param ability 归属的技能注册键。查询时与目标实例比对，避免把别的技能的选档错报过来
+     * @param level   选定档位；{@link ChargedReleasePayload#AUTO} 表示"自动跟随已达档位"
+     */
+    private record Selection(ResourceKey<DragonAbility> ability, int level) { }
 
     private ChargedCasts() {
         // 工具类
@@ -221,9 +252,6 @@ public final class ChargedCasts {
     private static void settle(final @NotNull ServerPlayer player, final @NotNull DragonAbilityInstance instance,
                                final @NotNull ChargeableActivation chargeable, final @NotNull MagicData magic,
                                final int achievedLevel, final int requestedLevel, final int predictedLevel) {
-        // 本轮施法到此结束，无论释放还是取消都清掉选档记录，避免残留到下一次施法
-        SELECTED_LEVELS.remove(new PlayerAbility(player.getUUID(), instance.key()));
-
         int releasedLevel = ChargeableActivation.NO_CHARGED_LEVEL;
 
         if (achievedLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
@@ -251,9 +279,10 @@ public final class ChargedCasts {
             syncSettlement(player, instance, magic);
         }
 
-        if (releasedLevel >= DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
-            LAST_CHARGED_LEVELS.put(new PlayerAbility(player.getUUID(), instance.key()), releasedLevel);
-        }
+        // 这里刻意<b>不</b>记 LAST_CHARGED_LEVELS / 不清 SELECTED_LEVELS：
+        // 两条记录统一由 onCastingStopped 在所有终结路径的共同漏斗上处理（见该方法的注释）。
+        // 本方法体内必定会调用 release / cancel，两者都经由 MagicData#stopCasting，
+        // 因此清理与记账都会在本次调用返回前完成
     }
 
     /**
@@ -388,7 +417,25 @@ public final class ChargedCasts {
     }
 
     /**
-     * 记录玩家当前的选档（客户端滚动后同步过来）。
+     * 记录玩家当前的选档（客户端滚动后同步过来）。<b>这是唯一的写入入口，且会先校验。</b>
+     *
+     * <h2>为什么要校验</h2>
+     * 本方法由网络包直接驱动，因此调用方是<b>不可信</b>的。若照单全收，在线期间只要持续发包，
+     * 就能用任意技能键（包括根本不存在的技能、非蓄力类型的技能）往表里塞条目 ——
+     * 记录数随发包次数无上限增长，构成一个稳定的服务端内存增长面。
+     * <p>
+     * 校验分三层，与 {@link #fire} 的口径保持一致：
+     * <ol>
+     *     <li><b>必须正在施法，且就是这个技能</b> —— 只有此刻真正在蓄力的那个实例才谈得上"选档"。
+     *         这一条同时挡掉了"随便挑个技能键乱写"：没在施法就一律不记；</li>
+     *     <li><b>该激活类型必须允许选档</b>（{@link ChargeableActivation#selectsReleaseLevel()}）——
+     *         {@code additional_abilities:charged} 不接受选档，给它写记录没有意义；</li>
+     *     <li><b>档位钳制到 {@code [0, 已达档位]}</b> —— 与客户端
+     *         {@code OptionalChargedSelection} 的取值域一致。{@link ChargedReleasePayload#AUTO}
+     *         作为哨兵原样放行（它表示"自动跟随"，不是档位）。</li>
+     * </ol>
+     * 校验不过就<b>原样返回、不写任何东西</b>（不新增、也不清除）——
+     * 清掉反而是给攻击者一个"用脏包把别人选档清空"的能力。
      *
      * @param player        玩家
      * @param ability       技能注册键
@@ -396,7 +443,97 @@ public final class ChargedCasts {
      */
     public static void onSelectionChanged(final @NotNull Player player, final @NotNull ResourceKey<DragonAbility> ability,
                                           final int selectedLevel) {
-        SELECTED_LEVELS.put(new PlayerAbility(player.getUUID(), ability), selectedLevel);
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+
+        MagicData magic = MagicData.getData(serverPlayer);
+
+        // getCurrentlyCasting() 内部已经判过 isCasting，未施法时返回 null，因此不需要再判一次
+        DragonAbilityInstance casting = magic.getCurrentlyCasting();
+
+        // 只有"此刻正在施放的那个技能"能登记选档：其余技能键一律忽略，表因此不会增长
+        if (casting == null || !casting.key().equals(ability)) {
+            return;
+        }
+
+        if (!(casting.value().activation() instanceof ChargeableActivation chargeable)
+                || !chargeable.selectsReleaseLevel()) {
+            return;
+        }
+
+        int clamped = selectedLevel;
+
+        if (selectedLevel != ChargedReleasePayload.AUTO) {
+            int achieved = chargeable.getChargedLevel(casting.getCurrentTick(), casting.level());
+            clamped = Mth.clamp(selectedLevel, ChargeableActivation.NO_CHARGED_LEVEL, achieved);
+        }
+
+        SELECTED_LEVELS.put(serverPlayer.getUUID(), new Selection(ability, clamped));
+    }
+
+    /**
+     * 施法终结时统一清理选档记录。<b>由 {@code mixins.MagicDataMixin} 在
+     * {@code MagicData#stopCasting(Player, DragonAbilityInstance, boolean)} 的尾部调用。</b>
+     *
+     * <h2>为什么挂在这里而不是各结算分支里</h2>
+     * 一次蓄力有<b>四条</b>终结路径，而 T01 的统一结算服务只覆盖其中三条：
+     * <ul>
+     *     <li>手动松手提前释放 → {@link #fire} ✅ 覆盖；</li>
+     *     <li>超限窗口到点自动释放 → {@link #settleOvercharged} ✅ 覆盖；</li>
+     *     <li>松手时档位不足 / 选定为取消 → {@link #settle} 的取消分支 ✅ 覆盖；</li>
+     *     <li><b>DS 原生读条完成</b>（{@code can_charge_exceed_cast_time} 为 {@code false} 的
+     *         默认配置，按满 {@code cast_time} 自动释放）→ <b>完全不经过本类</b>，
+     *         走的是 {@code SyncStopCast#handleServer} → {@code MagicData#stopCasting}。</li>
+     * </ul>
+     * 这正是 F05 记录的那条漏洞：{@code optional_charged} 也可以显式把
+     * {@code can_charge_exceed_cast_time} 配成 {@code false}（手册里明确允许），
+     * 此时玩家先滚轮选个低档、再一路按到自动释放，选档记录就会残留到下一次施法，
+     * 使下一次施法的查询继承上一次的选择。
+     * <p>
+     * 与其在第四条路径上再补一次调用（容易再漏），不如把清理挂在<b>所有路径的共同漏斗</b>上：
+     * DS 的三个 {@code stopCasting} 重载最终都汇聚到带 {@code withCooldown} 的那个，
+     * 因此挂它的尾部即可覆盖全部四条路径，且将来 DS 新增终结路径时也自动涵盖。
+     * <p>
+     * <b>打断也走这里</b>：{@code attemptCast} 切技能时服务端调用的是 {@code release()} 而非
+     * {@code stopCasting}，但客户端在按下另一个技能键时已经先发过 {@code SyncStopCast}
+     * （见 DS 的 {@code ClientCastingHandler#handleSlotSelection}），那条路径同样经过这里。
+     * 即使某条极端路径真的绕过了清理，{@link #resolveSelectedLevel} 还会用技能键比对兜住 ——
+     * 残留记录只在<b>同一个技能</b>再次施法时才会被读到，而那种情况下它本就是同一次施法延续的语义。
+     *
+     * @param instance 被终结的技能实例；{@code null} 表示"停止当前施法但未能解析出具体实例"
+     *                 （例如 {@code SyncStopCast} 携带了一个该玩家并没有的技能键）
+     * @param withCooldown 本次终结是否算一次<b>真正的释放</b>（DS 对"效果已生效"的官方判定）
+     */
+    public static void onCastingStopped(final @NotNull Player player, final @Nullable DragonAbilityInstance instance,
+                                        final boolean withCooldown) {
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+
+        Selection selection = SELECTED_LEVELS.get(serverPlayer.getUUID());
+
+        if (selection != null) {
+            // instance == null 时 stopCasting 必定把 isCasting 置为 false（它那条判定的左半边就是这个条件），
+            // 也就是本次施法<b>已经确定结束</b>，选档记录必然过期 —— 直接清，不必也无法再问是哪个技能。
+            //
+            // 这里不能改用 getCurrentlyCasting() 兜底推断：本方法注入在 TAIL，
+            // 此时 isCasting 已被置 false，而 getCurrentlyCasting() 的实现是
+            // `isCasting ? fromSlot(...) : null`，因此它<b>恒返回 null</b>，兜底会退化成"永不清除"。
+            if (instance == null || instance.key().equals(selection.ability())) {
+                SELECTED_LEVELS.remove(serverPlayer.getUUID());
+            }
+        }
+
+        // 最近一次"实际释放"的档位同样在这里记录 —— 理由与清理相同：这是所有终结路径的共同漏斗。
+        // 尤其是 DS 原生读条完成那条（can_charge_exceed_cast_time = false 的默认配置）：
+        // 它完全不经过本类的结算服务，若不在这里记，查询会一直停留在上一次的值。
+        // 此刻 instance.level() 就是本次实际使用的档位（本类的 release 会在窗口内临时换成档位；
+        // DS 原生路径用的则是玩家自身的升级等级，即满档），因此无需再换算。
+        if (withCooldown && instance != null
+                && instance.value().activation() instanceof ChargeableActivation) {
+            LAST_CHARGED_LEVELS.put(new PlayerAbility(serverPlayer.getUUID(), instance.key()), instance.level());
+        }
     }
 
     /**
@@ -417,15 +554,20 @@ public final class ChargedCasts {
      * 客户端一旦滚到顶端就恢复自动跟随，两者在效果上完全等同。
      */
     public static int resolveSelectedLevel(final @NotNull Player player, final @NotNull DragonAbilityInstance instance) {
+        // 这里刻意<b>只</b>判"是否蓄力族系"，不额外要求 selectsReleaseLevel：
+        // 对不接受选档的 charged 而言，"此刻松手会放几档"同样是已蓄到的档位，查询应当照答。
+        // 它的选档记录永远不会存在（onSelectionChanged 会拒绝写入），自然落到下面的自动跟随分支。
         if (!(instance.value().activation() instanceof ChargeableActivation chargeable)) {
             return ChargedReleasePayload.AUTO;
         }
 
-        Integer stored = SELECTED_LEVELS.get(new PlayerAbility(player.getUUID(), instance.key()));
+        Selection stored = SELECTED_LEVELS.get(player.getUUID());
 
-        // 手动指定（含 0 = 取消）：直接返回玩家选定的档位
-        if (stored != null && stored != ChargedReleasePayload.AUTO) {
-            return stored;
+        // 手动指定（含 0 = 取消）：直接返回玩家选定的档位。
+        // 记录归属别的技能时不采用（清理漏网时的兜底，见 onCastingStopped）
+        if (stored != null && stored.ability().equals(instance.key())
+                && stored.level() != ChargedReleasePayload.AUTO) {
+            return stored.level();
         }
 
         // 自动跟随：答案为"已蓄到的档位"。未在蓄力时 currentTick 为 0，没有可参照的档位
@@ -467,7 +609,7 @@ public final class ChargedCasts {
     public static void onLoggedOut(final @NotNull PlayerEvent.PlayerLoggedOutEvent event) {
         UUID uuid = event.getEntity().getUUID();
         LAST_CHARGED_LEVELS.keySet().removeIf(key -> key.player().equals(uuid));
-        SELECTED_LEVELS.keySet().removeIf(key -> key.player().equals(uuid));
+        SELECTED_LEVELS.remove(uuid);
     }
 
     /** "玩家 + 技能"复合键：同一个玩家的多个蓄力技能各记各的档位。 */
