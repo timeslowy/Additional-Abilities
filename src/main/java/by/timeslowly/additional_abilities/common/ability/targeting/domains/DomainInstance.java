@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * 一个已建立、正在存活的<b>领域实例</b>（{@code additional_abilities:domain} 目标类型的运行时载体）。
@@ -39,7 +40,24 @@ import java.util.UUID;
  *         不会让清单无限增长；两个字段完全相同的 action 也只会生效一次（重复施加同效果本就无意义）。</li>
  *     <li>{@code max_domains} 因此被解释为「同一技能<b>同时存在几次施法的领域</b>」，
  *         而不是"几个 action"，这才是玩家能理解的语义。</li>
+ *     <li><b>每个新增组都立即执行首轮</b>（{@link #applyGroupNow}），不等到下一个
+ *         {@code apply_interval}；同组续帧不重复执行。理由见该方法的注释（{@code duration}
+ *         小于 {@code apply_interval} 时后续组会彻底丢失）。首批仍由 {@link #applyNow} 统一执行。</li>
  * </ul>
+ *
+ * <h2>回调重入</h2>
+ * 效果回调（{@code AbilityEntityEffect#apply} / {@code AbilityBlockEffect#apply}）可以执行任意技能效果，
+ * 包括 {@code run_function} —— 也就是说回调链完全可能反过来触发新施法、{@link #join} 新组、
+ * 甚至把本领域整个清掉。本类对此有三道处理：
+ * <ol>
+ *     <li><b>遍历前先做快照</b>（{@link #effectSets} 字段注释）：避免
+ *         {@code ConcurrentModificationException}；</li>
+ *     <li><b>执行前复查 {@link #removed}</b>：领域已被移除就不再结算，
+ *         且在 {@link #applySet} 里<b>逐目标</b>复查 —— 回调在结算途中移除领域时，
+ *         剩余目标不会继续吃效果；</li>
+ *     <li><b>收尾幂等</b>（{@link #end} 的 {@code ended} 闸门）：同一次收尾被重入时不会重复施加移除。</li>
+ * </ol>
+ * 另需注意：快照<b>只</b>解决并发修改异常，不解决"结算顺序"问题 —— 见 {@link DomainData#tick}。
  *
  * <h2>如何识别「同一次施法」——castStartTick（施法起点世界刻）</h2>
  * DS 没有暴露"施法 ID"，但 {@code now - (currentTick - 1)} 在语义上就是
@@ -108,8 +126,32 @@ public class DomainInstance {
      * <p>
      * 用列表而非单值，是为了支持"同一技能里一个 action 管实体、另一个管方块"
      * （{@code applied_effects} 是 Either，装不下两者）。详见类注释。
+     * <p>
+     * <b>遍历它时必须先做快照</b>：效果回调可以执行任意技能效果（含 {@code run_function}），
+     * 而那些效果可能反过来触发新的施法，经 {@link #join} 往这个列表里追加 ——
+     * 直接在 {@code for-each} 里遍历会抛 {@code ConcurrentModificationException}。
+     * 见 {@link #applyNow} / {@link #end}。
      */
     private final List<Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting>> effectSets;
+
+    /**
+     * 本领域是否已被移出 {@code DomainData}。
+     * <p>
+     * 置位后<b>不再产生任何结算</b>（{@link #applyNow} / {@link #applyGroupNow} 直接返回）。
+     * 置位时机见 {@link DomainData#remove}：先置位、再 {@link #end}，这样收尾回调里发生的重入
+     * 也能看到"本领域已撤"。
+     * <p>
+     * 为什么需要这个显式标志，而不是只靠"还在不在 DomainData 的表里"：
+     * {@link DomainData#tick} 遍历的是表快照，某个领域的效果在回调里清掉了<b>后面的</b>领域时，
+     * 快照里那个已被移除的对象仍会被依次访问到 —— 没有这个标志，它还会照常结算一次。
+     */
+    private boolean removed;
+
+    /**
+     * 收尾是否已执行过（幂等闸门）。与 {@link #removed} 分开：那个表示"已被移出、不得再结算"，
+     * 这个表示"{@link #end} 已经跑过一遍"，防止重入时把移除回调重复施加到同一批实体上。
+     */
+    private boolean ended;
 
     private final DomainShape shape;
     private final DomainAnchor anchor;
@@ -189,14 +231,22 @@ public class DomainInstance {
      * {@link DomainAnchor} 的说明。这样 {@code channeled} 的语义就是"引导期间维持领域，
      * 松手 / 断魔 / 到 {@code max_duration} 之后领域再按 {@code duration} 自然消散"。
      *
-     * @param effects 本次 action 的效果集；已存在（{@code equals}）时不重复加入
+     * @param effects 本次 action 的效果集
+     * @return {@code true} 表示这是<b>新加入</b>的一组（调用方应对它立即执行首轮，见 F14）；
+     *         {@code false} 表示这组已存在（{@code equals}），即 {@code channeled} 的续帧 ——
+     *         此时<b>不</b>执行，否则续帧会变成高频重复结算
      */
-    public void join(final long now, final Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effects) {
+    public boolean join(final long now, final Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effects) {
         this.expireTick = Math.max(this.expireTick, now + duration);
 
-        if (!effectSets.contains(effects)) {
-            effectSets.add(effects);
+        // 已有（内容相等）→ 续帧，返回 false；否则登记为新组并返回 true。
+        // 返回值是调用方"要不要跑首轮"的唯一判据，务必与去重判定共用同一次比较
+        if (effectSets.contains(effects)) {
+            return false;
         }
+
+        effectSets.add(effects);
+        return true;
     }
 
     public boolean isExpired(final long now) {
@@ -212,8 +262,70 @@ public class DomainInstance {
         this.nextApplyTick = now + applyInterval;
     }
 
-    /** 立即结算一次（用于首次建立领域时"效果即时生效"）。 */
+    /**
+     * 解析施法者；返回 {@code null} 表示"本 tick 施法者不可用"。
+     * <p>
+     * 三种不可用情形都要挡成 {@code null}：
+     * <ul>
+     *     <li><b>离线</b>——拿不到 {@code ServerPlayer}，效果回调无法执行；</li>
+     *     <li><b>已跨维度</b>——战利品条件上下文（{@code Condition#abilityContext} /
+     *         {@code #blockContext}）会读 {@code dragon.serverLevel()} 的方块状态，
+     *         而领域遍历的是本维度的坐标，二者混用会取到错误的世界；</li>
+     *     <li><b>没有可用世界</b>（{@code level == null}）——只可能来自单元测试夹具。
+     *         生产路径永远传入真实的 {@code ServerLevel}。</li>
+     * </ul>
+     * 最后一种情形之所以要显式挡下而不是让 NPE 抛出去：本类全部结算入口都先查
+     * {@code removed} / 成员资格，再解析施法者。若不挡，单元测试就只能连"守卫是否生效"
+     * 这类纯状态机断言都无法进行（会先炸在 {@code level.getServer()} 上）。
+     * 挡下之后，{@code null} 世界与"施法者不可用"走完全相同的短路路径，
+     * 生产行为不变。
+     */
+    private @Nullable ServerPlayer resolveCaster(final @Nullable ServerLevel level) {
+        if (level == null) {
+            return null;
+        }
+
+        ServerPlayer caster = level.getServer().getPlayerList().getPlayer(casterUUID);
+
+        if (caster == null || caster.serverLevel() != level) {
+            return null;
+        }
+
+        return caster;
+    }
+
+    /**
+     * 按<b>快照</b>遍历效果集并对每组执行一次 {@code action}。
+     * <p>
+     * 快照是 T04 重入保护的核心：效果回调可以执行任意技能效果（含 {@code run_function}），
+     * 完全可能反过来触发新施法、经 {@link #join} 往 {@code effectSets} 里追加。
+     * 直接 {@code for-each} 活列表会抛 {@code ConcurrentModificationException}。
+     * <p>
+     * 抽成独立方法是为了让 {@link #applyNow} 与 {@link #end} 共用同一份遍历语义 ——
+     * 两条路径都必须防重入，散在两处容易漏改一处；同时它也是一个可直接断言的接缝
+     * （见 {@code DomainInstanceReentrancyTest} 的遍历快照用例）。
+     *
+     * @param action 对每组执行的动作；<b>不得</b>依赖"本次遍历会看到本次遍历中新增的组"
+     */
+    void forEachEffectSet(final Consumer<Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting>> action) {
+        for (Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effectSet
+                : List.copyOf(effectSets)) {
+            action.accept(effectSet);
+        }
+    }
+
+    /**
+     * 立即执行<b>全部</b>效果组一次（用于首次建立领域时"效果即时生效"）。
+     * <p>
+     * 遍历快照（见 {@link #forEachEffectSet}）：回调里若发生 {@link #join}，
+     * 新组不会在本次遍历中被执行 —— 它由调用方通过 {@link #applyGroupNow} 单独跑首轮，
+     * 从而保证"每个新增组恰好首轮执行一次"。
+     */
     public void applyNow(final ServerLevel level) {
+        if (removed) {
+            return;
+        }
+
         ServerPlayer caster = resolveCaster(level);
 
         if (caster == null) {
@@ -221,10 +333,41 @@ public class DomainInstance {
         }
 
         Vec3 origin = resolveOrigin(caster);
+        forEachEffectSet(effectSet -> applySet(level, caster, origin, effectSet));
+    }
 
-        for (Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effectSet : effectSets) {
-            applySet(level, caster, origin, effectSet);
+    /**
+     * 只对<b>新加入的那一组</b>立即执行一次首轮（F14）。
+     * <p>
+     * <b>为什么需要它</b>：技能 {@code actions[]} 里的后续 action 通过 {@link #join} 并入同一个领域，
+     * 而它们原本要等到下一个 {@code apply_interval} 才第一次生效。当
+     * {@code duration < apply_interval} 时，{@link DomainData#tick} 会先发现领域已到期、
+     * 直接移出并跳过结算 —— 于是<b>后续组从未执行过</b>，效果静默丢失。
+     * 对 {@code simple} 这类"打一下就完"的技能尤其明显：第一组落下了，第二组没有。
+     * <p>
+     * 刻意只跑新增组、而不再次 {@link #applyNow} 整个领域：否则第一组会在同一次施法里被执行两次，
+     * 概率判定、伤害、扣蓝之类都会翻倍。
+     *
+     * @param effects 要立即执行的组（必须已通过 {@link #join} 加入）
+     */
+    public void applyGroupNow(final ServerLevel level,
+                              final @NotNull Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effects) {
+        if (removed) {
+            return;
         }
+
+        // 成员资格先于施法者解析：这是纯粹的本地状态判定，也更便宜
+        if (!effectSets.contains(effects)) {
+            return;
+        }
+
+        ServerPlayer caster = resolveCaster(level);
+
+        if (caster == null) {
+            return;
+        }
+
+        applySet(level, caster, resolveOrigin(caster), effects);
     }
 
     /**
@@ -242,9 +385,13 @@ public class DomainInstance {
      * 施法者离线时跳过收尾（拿不到 {@code ServerPlayer}），残留效果由自身的 duration 过期。
      */
     public void end(final ServerLevel level) {
-        if (!removeEffectsOnEnd) {
+        if (!removeEffectsOnEnd || ended) {
             return;
         }
+
+        // 幂等标记：收尾会执行任意技能效果（可能经 run_function 反过来触发 clear / 再次移除），
+        // 没有这道闸门时同一次收尾可能被重入执行多遍
+        ended = true;
 
         ServerPlayer caster = resolveCaster(level);
 
@@ -255,16 +402,39 @@ public class DomainInstance {
         Vec3 origin = resolveOrigin(caster);
         AABB area = DomainShape.createArea(shape, origin, radius, height, heightStartsBelow);
 
-        for (Either<AbilityTargeting.BlockTargeting, AbilityTargeting.EntityTargeting> effectSet : effectSets) {
-            effectSet.ifRight(entityTarget -> level.getEntities(EntityTypeTest.forClass(Entity.class), area,
-                    entity -> isInside(origin, entity)
-                            && entityTarget.targetingMode().isEntityRelevant(caster, entity, entityTarget.isHarmful())
-                            && entityTarget.matches(caster, entity, entity.position())
-            ).forEach(entity -> entityTarget.effects().forEach(effect -> effect.remove(caster, ability, entity, false))));
-        }
+        // 快照遍历：收尾回调同样可能触发新施法并向 effectSets 追加（见 forEachEffectSet）
+        forEachEffectSet(effectSet -> effectSet.ifRight(entityTarget ->
+                level.getEntities(EntityTypeTest.forClass(Entity.class), area,
+                        entity -> isInside(origin, entity)
+                                && entityTarget.targetingMode().isEntityRelevant(caster, entity, entityTarget.isHarmful())
+                                && entityTarget.matches(caster, entity, entity.position())
+                ).forEach(entity -> entityTarget.effects().forEach(effect -> effect.remove(caster, ability, entity, false)))));
     }
 
-    /** 结算单个效果集：方块分支逐格、实体分支逐实体。 */
+    /**
+     * 标记"本领域已被移出 {@code DomainData}"。由 {@link DomainData#remove} 在调用
+     * {@link #end} <b>之前</b>置位，使收尾回调里发生的重入也能立刻看到本领域已撤。
+     */
+    public void markRemoved() {
+        this.removed = true;
+    }
+
+    /** 本领域是否已被移出（供调试 / 断言使用）。 */
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    /**
+     * 结算单个效果集：方块分支逐格、实体分支逐实体。
+     * <p>
+     * <b>逐目标复查 {@link #removed}</b>：效果回调可以执行任意技能效果（含 {@code run_function}），
+     * 完全可能在第 3 个方块处把本领域整个清掉。若只在组粒度上检查，剩下的上百个格子仍会照常吃一遍效果 ——
+     * 那正是"回调重入"最直观的表现（领域已经消失了，效果却还在往外泼）。
+     * <p>
+     * 这里的写法是"跳过后续目标"而非"中断遍历"（{@code forEach} 无法 break）：代价是剩余目标仍会被
+     * 逐个访问一次，但真正的昂贵部分（{@code getBlockState} / {@code matches} / 效果回调）全部跳过，
+     * 而"已移除领域不再产生后续结算"这条保证是完整的。
+     */
     private void applySet(final ServerLevel level,
                           final ServerPlayer caster,
                           final Vec3 origin,
@@ -272,6 +442,11 @@ public class DomainInstance {
         AABB area = DomainShape.createArea(shape, origin, radius, height, heightStartsBelow);
 
         effectSet.ifLeft(blockTarget -> BlockPos.betweenClosedStream(area).forEach(position -> {
+            // 本次结算中途被移除（见方法注释）：不再对后续目标施加效果
+            if (removed) {
+                return;
+            }
+
             // 必须先挡未加载区块：ServerLevel#getBlockState 会同步加载 / 生成区块，
             // 而 Condition#blockContext 内部就读 getBlockState（DS 内置 area 没做这层保护）。
             // 用 Level#isLoaded 而非已弃用的 LevelReader#hasChunkAt，两者都不触发加载。
@@ -293,33 +468,18 @@ public class DomainInstance {
                 entity -> isInside(origin, entity)
                         && entityTarget.targetingMode().isEntityRelevant(caster, entity, entityTarget.isHarmful())
                         && entityTarget.matches(caster, entity, entity.position())
-        ).forEach(entity -> entityTarget.effects().forEach(effect -> effect.apply(caster, ability, entity))));
+        ).forEach(entity -> {
+            if (removed) {
+                return;
+            }
+
+            entityTarget.effects().forEach(effect -> effect.apply(caster, ability, entity));
+        }));
     }
 
     /** 实体取点口径：{@code entity.position()}（脚部中心），与 DS / 本模组既有目标类型一致。 */
     private boolean isInside(final Vec3 origin, final @NotNull Entity entity) {
         return DomainShape.contains(shape, origin, radius, entity.getX(), entity.getY(), entity.getZ());
-    }
-
-    /**
-     * 解析施法者；返回 {@code null} 表示"本 tick 施法者不可用"。
-     * <p>
-     * 两种不可用情形都要挡成 {@code null}：
-     * <ul>
-     *     <li><b>离线</b>——拿不到 {@code ServerPlayer}，效果回调无法执行；</li>
-     *     <li><b>已跨维度</b>——战利品条件上下文（{@code Condition#abilityContext} /
-     *         {@code #blockContext}）会读 {@code dragon.serverLevel()} 的方块状态，
-     *         而领域遍历的是本维度的坐标，二者混用会取到错误的世界。</li>
-     * </ul>
-     */
-    private @Nullable ServerPlayer resolveCaster(final @NotNull ServerLevel level) {
-        ServerPlayer caster = level.getServer().getPlayerList().getPlayer(casterUUID);
-
-        if (caster == null || caster.serverLevel() != level) {
-            return null;
-        }
-
-        return caster;
     }
 
     private Vec3 resolveOrigin(final ServerPlayer caster) {

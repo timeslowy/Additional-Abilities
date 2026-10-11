@@ -218,7 +218,13 @@ public record DomainTarget(Either<AbilityTargeting.BlockTargeting, AbilityTarget
         // 同一次施法（含 channeled 的续帧、以及同一帧里的后续 action）：续命 + 并入效果集。
         // 刻意不动锚点——否则 channeled 下领域会跟着施法者一跳一跳地迁移。
         if (latest != null && latest.castStartTick() == castStartTick) {
-            latest.join(now, target);
+            // 并入成功（即这是一组**新**效果）时立即执行首轮，不等到下一个 apply_interval：
+            // duration < apply_interval 时周期结算永远不会到来，后续组会彻底静默丢失（F14）。
+            // 续帧（join 返回 false）刻意不执行，否则引导类技能会变成高频重复结算。
+            if (latest.join(now, target)) {
+                latest.applyGroupNow(level, target);
+            }
+
             return;
         }
 

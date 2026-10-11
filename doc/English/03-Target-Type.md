@@ -260,11 +260,20 @@ the frame the cast finishes (currentTick == cast_time)
  ├─ the domain is created: anchor = dragon.position() at that moment; radius / shape / interval /
  │  duration / effect sets are all frozen
  ├─ it settles once immediately — effects land right away, without waiting for the first apply_interval
+ ├─ later actions in the same frame join in: every newly added effect set runs its first pass at once (below)
  └─ with simple, stopCasting then fires at once and the caster is free to move
 afterwards it settles once every apply_interval ticks
 when duration runs out the domain vanishes (calling remove on the entities inside first, if
 remove_effects_on_end: true)
 ```
+
+> **Several actions in the same frame share one domain**: `applied_effects` is an Either (entity and block
+> are mutually exclusive), so "affects both entities and blocks" has to be written as two `target_selection`
+> entries both pointing at this target type. They **join the same domain** (one anchor, one set of timers)
+> instead of replacing each other. Each set runs its **first pass the moment it joins**, rather than waiting
+> for the next `apply_interval` — otherwise, when `duration < apply_interval`, the later sets would **never
+> run at all** because the domain expires first. Re-joining the same set during a channelled cast does **not**
+> run it again (sets are de-duplicated by content), so it never turns into a high-frequency replay.
 
 ### Example 1 — `simple`, the primary use case
 

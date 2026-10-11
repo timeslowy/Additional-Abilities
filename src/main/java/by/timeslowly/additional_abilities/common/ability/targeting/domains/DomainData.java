@@ -39,18 +39,41 @@ public class DomainData {
      * 逐 tick 推进本维度的所有领域。
      * <p>
      * 遍历的是快照：{@link DomainInstance#applyNow} 会执行任意技能效果，理论上存在
-     * （经 {@code run_function} 这类效果）间接触发新施法的可能；用快照避免
-     * {@code ConcurrentModificationException}。
+     * （经 {@code run_function} 这类效果）间接触发新施法、甚至把后续领域整个清掉的
+     * 可能；用快照避免 {@code ConcurrentModificationException}。
+     * <p>
+     * <b>但快照只挡并发修改异常，不等于"安全的结算顺序"</b>：快照里排在后面的领域若已被
+     * 前面的回调移除，它依然会被本次循环访问到。因此这里在结算前复查
+     * {@link DomainInstance#isRemoved()} —— 已被移除的领域<b>不再产生任何结算</b>。
      */
     public void tick(final ServerLevel level) {
+        tick(level.getGameTime(), level);
+    }
+
+    /**
+     * {@link #tick(ServerLevel)} 的实现体，但把"当前时刻"作为显式参数。
+     * <p>
+     * 抽出来的唯一目的是<b>可测试性</b>：结算顺序与重入保护（{@code isRemoved} 复查、到期收集）
+     * 全都只依赖 {@code now} 与列表本身，与 {@code ServerLevel} 无关。把时间显式传进来之后，
+     * 这些逻辑就能在不起服务端的前提下直接断言。生产路径行为完全一致
+     * （{@link #tick(ServerLevel)} 只是把 {@code level.getGameTime()} 传进来）。
+     *
+     * @param now   当前游戏刻
+     * @param level 领域所在维度；调用方需保证只在会真正执行效果的领域上依赖它非空
+     */
+    void tick(final long now, final ServerLevel level) {
         if (domains.isEmpty()) {
             return;
         }
 
-        long now = level.getGameTime();
         List<DomainInstance> finished = null;
 
         for (DomainInstance domain : new ArrayList<>(domains)) {
+            // 已被移除（可能是本次循环中靠前的回调干的）：跳过，不结算、不重复收尾
+            if (domain.isRemoved()) {
+                continue;
+            }
+
             if (domain.isExpired(now)) {
                 if (finished == null) {
                     finished = new ArrayList<>();
@@ -107,12 +130,20 @@ public class DomainData {
         domains.add(domain);
     }
 
-    /** 移除并执行收尾（到期 / 顶替共用同一条收尾路径）。 */
+    /**
+     * 移除并执行收尾（到期 / 顶替 / 调试清空共用同一条收尾路径）。
+     * <p>
+     * <b>先 {@code markRemoved} 再 {@code end}</b>：收尾会执行任意技能效果，那些效果可能
+     * 反过来触发新的施法或清空，从而重入到本类。先把"已撤"标志立起来，重入路径就能立刻看到
+     * 本领域已失效，而不是让它继续结算一次。配合 {@link DomainInstance#end} 内部的幂等闸门，
+     * 同一次收尾也不会被执行两遍。
+     */
     public void remove(final ServerLevel level, final DomainInstance domain) {
         if (!domains.remove(domain)) {
             return;
         }
 
+        domain.markRemoved();
         domain.end(level);
     }
 
