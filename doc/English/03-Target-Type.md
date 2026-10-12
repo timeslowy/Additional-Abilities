@@ -370,8 +370,14 @@ each other.
   running. Nothing breaks, and there is no hidden "the domain resumes once the caster returns" pause.
 - **`should_remove_automatically` measures something else**: Dragon Survival's flag on duration-based
   effects compares the target's distance to the **caster** against `getDistance()`, while this target type
-  normally anchors at the casting spot. Use `remove_effects_on_end: true` when you want "leaving the
-  domain ends the effect".
+  normally anchors at the casting spot.
+- ⚠️ **`remove_effects_on_end` does *not* mean "leaving the domain ends the effect"**: it calls `remove`
+  once, **when the domain ends** (`duration` expires, it is evicted by `max_domains`, or a command clears
+  it), and only on the targets that are **still inside at that moment**. A target that walks out mid-way
+  is neither reverted nor removed at the moment it leaves — the flag governs the *ending*, not the
+  *leaving*. Use `should_remove_automatically` (distance to the caster — a good fit for domains with
+  `anchor: caster`) or a plain duration-based effect in `applied_effects` when you want
+  "out of the area ⇒ effect gone".
 - **Block-branch iteration count**: the `cube` / `sphere` box holds `(2r+1)³` positions, and the spherical
   refinement leaves roughly half of them. When `radius` grows, raise `apply_interval` too (the default of
   20 is already conservative; going below 10 is not advised). The entity branch is unaffected (a single

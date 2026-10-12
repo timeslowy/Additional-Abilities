@@ -53,7 +53,7 @@ public class AdditionalAbilities {
         NeoForge.EVENT_BUS.addListener(OnItemConsumed::trigger);
         // 接线：维度 tick 末尾 → 推进本模组 additional_abilities:domain 建立的领域（按维度分区）
         NeoForge.EVENT_BUS.addListener(DomainTickHandler::onLevelTick);
-        // 注册网络通道（屏幕视觉 / 方块震动 的服务端 → 客户端同步）
+        // 注册本模组网络 payload（注册清单与协议版本见 AANetwork）
         modEventBus.addListener(AANetwork::register);
         // 注册客户端专属内容（蓄力档位 HUD 图层 + 配置界面扩展点；
         AAClientSetup.register(modEventBus, modContainer);

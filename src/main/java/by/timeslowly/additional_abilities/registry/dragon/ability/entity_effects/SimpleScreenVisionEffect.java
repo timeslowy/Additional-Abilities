@@ -205,8 +205,10 @@ public record SimpleScreenVisionEffect(DurationInstanceBase<?, ?> base, ScreenVi
                     "additional_abilities.ability.simple_screen_vision.type." + type.getSerializedName());
 
             // 色值直接渲染成它自己的写法（颜色名或 #RRGGBB），并染上该颜色本身，一眼能看出遮罩是什么色。
-            // 用 withColor(int) 而不是 DSColors.withColor：后者内部会走 I18n.exists（客户端专属类），
-            // 而本类登记在公共源码集、专用服务端也会加载它。
+            // 用 withColor(int) 而不是 DSColors.withColor：后者对传入的 Component 虽然也只是
+            // 转调 withColor，但它的签名是 Object —— 非 MutableComponent 入参会走 I18n.exists
+            // （客户端专属类），而本类登记在公共源码集、专用服务端也会加载它。
+            // 这里本来就拿的是 MutableComponent，直接调既等价又免掉那条客户端类引用。
             MutableComponent colorText = Component.literal(this.color.serialize())
                     .withColor(this.color.getValue());
 

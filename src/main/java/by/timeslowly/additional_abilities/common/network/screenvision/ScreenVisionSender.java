@@ -131,8 +131,16 @@ public final class ScreenVisionSender {
     /**
      * 各类型的初始记录：tick = 0、强度 = 0、尺寸 = 0、颜色 = 0、覆盖终点 = 0。
      * <p>
-     * 因为调用方已保证 {@code amplitude > 0}，所以"参数没变"必然不成立 → 首次下发一定放行。
-     * 覆盖终点取 {@code 0} 也让余量判据必然为负，两条独立理由都指向"首包必发"。
+     * <b>"首次下发一定放行"靠的是覆盖终点，不是强度比较</b>：{@code coveredUntil = 0} 使
+     * 余量判据 {@code remaining >= COVERAGE_SAFETY_TICKS} 对任何非负的游戏刻都不成立
+     * （{@code 0 - now} 不可能达到安全余量），因此 {@code coveredLongEnough} 恒为 {@code false}
+     * —— 这一条与参数变没变无关，是首包的充分保证。
+     * <p>
+     * <b>不能把"强度 &gt; 0 所以参数必然变了"当作理由</b>：容差是
+     * {@code PARAM_EPSILON = 1.0E-4}，而初始强度正是 {@code 0.0F}，
+     * 因此 {@code amplitude ≤ 1.0E-4} 的极弱效果满足"参数没变"。
+     * 结论仍然成立（由上一条保证），但推理链里只有覆盖终点那一条是无条件成立的
+     * —— 审查报告 §6.2 要求的正是把这类断言改写成与实现一致的口径。
      */
     private static @NotNull LastSend @NotNull [] createSlots() {
         LastSend[] slots = new LastSend[ScreenVisionType.values().length];

@@ -57,7 +57,14 @@ import java.util.Map;
 public final class ClientBlockQuakeState {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    /** 临时诊断开关：首次生成假身时打印一次取样值，确认修复后删除 */
+    /**
+     * 一次性诊断开关：首次生成假身时打印一次取样值。
+     * <p>
+     * <b>默认关闭</b>：判据是 {@code isDebugEnabled()}，即只有把本模组的日志级别调到 DEBUG 才会输出
+     * —— 这是审查报告对这条诊断的要求（"回归后删除，或改为默认关闭的调试日志"）。
+     * 保留而不删除的理由：{@link #sampleBrightness} 的取样口径依赖"本格与上方格取较大值"这一
+     * 与直觉相反的事实，实机排查假身发黑时它是唯一的直接证据；而它在关闭状态下没有任何开销。
+     */
     private static boolean diagnosticsLogged = false;
 
     /** 同时存在的假身上限，超出直接丢弃（防止大范围技能造成实体爆炸） */
@@ -117,16 +124,20 @@ public final class ClientBlockQuakeState {
         return brightness;
     }
 
-    /** 临时诊断：打印一次本格 / 上方格的实际光照值，用于确认取样口径 */
+    /**
+     * 一次性诊断：打印一次本格 / 上方格的实际光照值，用于确认取样口径。
+     * <p>
+     * 默认关闭（见 {@link #diagnosticsLogged}），只有日志级别到 DEBUG 时才输出。
+     */
     private static void logLuminanceOnce(final @NotNull ClientLevel level, final @NotNull BlockPos position,
                                          final @NotNull BlockState state) {
-        if (diagnosticsLogged) {
+        if (diagnosticsLogged || !LOGGER.isDebugEnabled()) {
             return;
         }
 
         diagnosticsLogged = true;
         BlockPos above = position.above();
-        LOGGER.info("[block_quake] 取样诊断 pos={} state={} 本格(block={}, sky={}) 上方(block={}, sky={})",
+        LOGGER.debug("[block_quake] 取样诊断 pos={} state={} 本格(block={}, sky={}) 上方(block={}, sky={})",
                 position, state,
                 level.getBrightness(LightLayer.BLOCK, position), level.getBrightness(LightLayer.SKY, position),
                 level.getBrightness(LightLayer.BLOCK, above), level.getBrightness(LightLayer.SKY, above));

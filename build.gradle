@@ -111,7 +111,8 @@ sourceSets {
             include 'META-INF/**' // 必须包含，否则模组元数据会缺失
             include '*.mixins.json' // Mixin 配置必须位于 jar 根目录，否则 FML 找不到它
             // 2. 图标和数据参数
-            include 'pack.png'
+            // 模组 logo：文件名必须与 neoforge.mods.toml 的 logoFile 一致（当前为 pack.jpg）。
+            include 'pack.jpg'
             include 'pack.mcmeta'
         }
     }

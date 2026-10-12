@@ -122,23 +122,28 @@ public record ChargedActivation(
     /**
      * 基础 codec + 跨字段校验（{@code max_overcharged_duration} 以 {@code can_charge_exceed_cast_time} 为前提）。
      * <p>
+     * 字段片段来自 {@link ChargeableActivationCodecs}，与 {@link OptionalChargedActivation} 共用，
+     * 使两个类型的 JSON 结构不会各自漂移。
+     * <p>
+     * 唯一的不同是 {@code can_charge_exceed_cast_time} 的默认值（本类型 {@code false}），
+     * 因此它单独写在这里而不是共用 —— 差异留在明面上。
+     * <p>
      * 刻意先落一个局部变量再调 {@code validate}，而不是直接在链式调用末尾追加：
      * 接收者本身是个泛型方法调用（{@code RecordCodecBuilder.mapCodec(...)}）时，
      * javac 无法把外层的目标类型传进去，会把接收者推断成 {@code MapCodec<Object>} 而编译失败。
      */
     private static MapCodec<ChargedActivation> createCodec() {
         MapCodec<ChargedActivation> base = RecordCodecBuilder.mapCodec(instance -> instance.group(
-                LevelBasedValue.CODEC.fieldOf("charged_duration_per_level").forGetter(ChargedActivation::chargedDurationPerLevel),
-                ChargeableActivation.CAST_TIME_CODEC.fieldOf("cast_time").forGetter(ChargedActivation::castTime),
+                ChargeableActivationCodecs.CHARGED_DURATION_PER_LEVEL.forGetter(ChargedActivation::chargedDurationPerLevel),
+                ChargeableActivationCodecs.CAST_TIME.forGetter(ChargedActivation::castTime),
                 Codec.BOOL.optionalFieldOf("can_charge_exceed_cast_time", false).forGetter(ChargedActivation::canChargeExceedCastTime),
-                // 缺省 = 无限按住（保持该字段引入之前的行为）
-                ChargeableActivation.MAX_OVERCHARGED_DURATION_CODEC.optionalFieldOf("max_overcharged_duration").forGetter(ChargedActivation::maxOverchargedDuration),
-                LevelBasedValue.CODEC.optionalFieldOf("cooldown").forGetter(ChargedActivation::cooldown),
-                LevelBasedValue.CODEC.optionalFieldOf("initial_mana_cost").forGetter(ChargedActivation::initialManaCost),
-                Notification.CODEC.optionalFieldOf("notification", Notification.DEFAULT).forGetter(ChargedActivation::notification),
-                Codec.BOOL.optionalFieldOf("can_move_while_casting", true).forGetter(ChargedActivation::canMoveWhileCasting),
-                ChargeableActivation.SOUND_CODEC.optionalFieldOf("sound").forGetter(ChargedActivation::sound),
-                ChargeableActivation.ANIMATIONS_CODEC.optionalFieldOf("animations").forGetter(ChargedActivation::animations)
+                ChargeableActivationCodecs.MAX_OVERCHARGED_DURATION.forGetter(ChargedActivation::maxOverchargedDuration),
+                ChargeableActivationCodecs.COOLDOWN.forGetter(ChargedActivation::cooldown),
+                ChargeableActivationCodecs.INITIAL_MANA_COST.forGetter(ChargedActivation::initialManaCost),
+                ChargeableActivationCodecs.NOTIFICATION.forGetter(ChargedActivation::notification),
+                ChargeableActivationCodecs.CAN_MOVE_WHILE_CASTING.forGetter(ChargedActivation::canMoveWhileCasting),
+                ChargeableActivationCodecs.SOUND.forGetter(ChargedActivation::sound),
+                ChargeableActivationCodecs.ANIMATIONS.forGetter(ChargedActivation::animations)
         ).apply(instance, ChargedActivation::new));
 
         return base.validate(ChargeableActivation::validateOverchargeSupport);

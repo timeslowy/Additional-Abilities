@@ -15,7 +15,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -193,14 +192,8 @@ public final class BlockQuakes {
                 packed[index] = slice.get(index);
             }
 
-            double[] center = center(slice);
-            double maxDistanceSqr = 0.0;
-
-            for (long position : packed) {
-                maxDistanceSqr = Math.max(maxDistanceSqr, BlockPos.of(position).distToCenterSqr(center[0], center[1], center[2]));
-            }
-
-            double radiusSqr = Math.pow(Math.sqrt(maxDistanceSqr) + VIEW_MARGIN, 2.0);
+            double[] center = BlockBatchGeometry.center(slice);
+            double radiusSqr = BlockBatchGeometry.radiusSqr(packed, center, VIEW_MARGIN);
             BlockQuakePayload payload = new BlockQuakePayload(packed, shape.height(), shape.durationTicks());
 
             for (ServerPlayer player : level.players()) {
@@ -223,28 +216,10 @@ public final class BlockQuakes {
      */
     private static void playSound(final @NotNull ServerLevel level, final @NotNull QuakeShape shape, final @NotNull List<Long> positions) {
         shape.sound().ifPresent(sound -> {
-            double[] center = center(positions);
+            double[] center = BlockBatchGeometry.center(positions);
 
             // 首参为"要排除的玩家"，传 null 表示不排除任何人 —— 施法者本人也应听到声响
             level.playSound(null, center[0], center[1], center[2], sound, SoundSource.BLOCKS, SOUND_VOLUME, SOUND_PITCH);
         });
-    }
-
-    /** 一批方块的几何中心（各取方块中心，即整数坐标 +0.5） */
-    @Contract("_ -> new")
-    private static double @NotNull [] center(final @NotNull List<Long> positions) {
-        double sumX = 0.0;
-        double sumY = 0.0;
-        double sumZ = 0.0;
-
-        for (long position : positions) {
-            BlockPos pos = BlockPos.of(position);
-            sumX += pos.getX() + 0.5;
-            sumY += pos.getY() + 0.5;
-            sumZ += pos.getZ() + 0.5;
-        }
-
-        int count = positions.size();
-        return new double[]{sumX / count, sumY / count, sumZ / count};
     }
 }

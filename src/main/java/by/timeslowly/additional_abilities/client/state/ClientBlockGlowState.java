@@ -9,6 +9,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,14 @@ public final class ClientBlockGlowState {
         private final int colorARGB;
         private final GlowDisplayType displayType;
         private final AABB bounds;
+        /**
+         * 包围盒中心（= 方块中心 {@code (x+0.5, y+0.5, z+0.5)}），构造时算一次。
+         * <p>
+         * {@link AABB#getCenter()} 每次都 {@code new Vec3(...)}，而距离判定每帧对每个条目都要用一次
+         * （超限排序时还会被比较器反复调用）。位置与包围盒都不可变，因此在这里缓存，
+         * 让逐帧路径真正做到零分配。
+         */
+        private final Vec3 center;
         private int remainingTicks;
 
         /**
@@ -69,6 +78,8 @@ public final class ClientBlockGlowState {
             this.colorARGB = colorARGB;
             this.displayType = displayType;
             this.bounds = new AABB(position);
+            // 方块中心恒为整数坐标 +0.5，直接算出来即可，无需再走一次 getCenter()
+            this.center = new Vec3(position.getX() + 0.5, position.getY() + 0.5, position.getZ() + 0.5);
             this.remainingTicks = remainingTicks;
         }
 
@@ -86,6 +97,16 @@ public final class ClientBlockGlowState {
 
         public @NotNull AABB bounds() {
             return bounds;
+        }
+
+        /**
+         * 包围盒中心（构造时缓存）。
+         * <p>
+         * <b>内部渲染入口，不属于正式 API</b>：调用方（剔除与排序）只读不写，且返回的 {@link Vec3}
+         * 是不可变值对象，因此共享同一实例是安全的。
+         */
+        public @NotNull Vec3 center() {
+            return center;
         }
 
         /** 取（必要时重建）着色器渲染载荷。range / particleRate 对 {@code simple_shader} 分支无用，填中性值 */

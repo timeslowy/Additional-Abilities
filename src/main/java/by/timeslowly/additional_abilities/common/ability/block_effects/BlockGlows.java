@@ -15,7 +15,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -295,14 +294,8 @@ public final class BlockGlows {
                 remaining[index] = item.remainingTicks();
             }
 
-            double[] center = center(packed);
-            double maxDistanceSqr = 0.0;
-
-            for (long position : packed) {
-                maxDistanceSqr = Math.max(maxDistanceSqr, BlockPos.of(position).distToCenterSqr(center[0], center[1], center[2]));
-            }
-
-            double radiusSqr = Math.pow(Math.sqrt(maxDistanceSqr) + VIEW_MARGIN, 2.0);
+            double[] center = BlockBatchGeometry.center(packed);
+            double radiusSqr = BlockBatchGeometry.radiusSqr(packed, center, VIEW_MARGIN);
             BlockGlowPayload payload = new BlockGlowPayload(packed, remaining, batch.colorARGB(), batch.displayType());
 
             for (ServerPlayer player : level.players()) {
@@ -311,23 +304,5 @@ public final class BlockGlows {
                 }
             }
         }
-    }
-
-    /** 一批方块的几何中心（各取方块中心，即整数坐标 +0.5） */
-    @Contract("_ -> new")
-    private static double @NotNull [] center(final long @NotNull [] positions) {
-        double sumX = 0.0;
-        double sumY = 0.0;
-        double sumZ = 0.0;
-
-        for (long position : positions) {
-            BlockPos pos = BlockPos.of(position);
-            sumX += pos.getX() + 0.5;
-            sumY += pos.getY() + 0.5;
-            sumZ += pos.getZ() + 0.5;
-        }
-
-        int count = positions.length;
-        return new double[]{sumX / count, sumY / count, sumZ / count};
     }
 }

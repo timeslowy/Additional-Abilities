@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * 长度 length = range_multiplier × dragonsurvival:dragon_breath_range × k     （k = 1 / w）
  * 横向半宽 halfWidth  = getScale()      × w        （沿 right，水平横向）
  * 纵向半高 halfHeight = getEyeHeight()/2 × w        （沿 up，垂直方向）
- * 其中 w = 1 - 收束属性值（属性上限 0.8 ⇒ w ∈ [0.2, 1]）
+ * 其中 w = 1 - 收束属性值（属性上限 0.9 ⇒ w ∈ [0.1, 1]）
  * </pre>
  * 纵向以**眼睛为中心**是刻意选择：DS 原式把 {@code eyeHeight} 整体放在 +Y 侧，
  * 若改成对 y 跨度直接乘 w，箱体会连带整体下沉到下巴高度。

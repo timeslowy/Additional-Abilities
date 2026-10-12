@@ -44,7 +44,10 @@ import java.util.Optional;
  * <ol>
  *     <li>把包目录放进 {@code src/main/resources/}，例如
  *         {@code src/main/resources/data/<modid>/datapacks/<pack_name>/}；</li>
- *     <li>目录根部<b>必须</b>有 {@code pack.mcmeta}（含 {@code pack.pack_format}）与 {@code pack.png}；</li>
+ *     <li>目录根部<b>必须</b>有 {@code pack.mcmeta}（含 {@code pack.pack_format}）；
+ *         {@code pack.png} 是<b>可选</b>的展示图标，缺失不影响注册与加载
+ *         （{@code PackSelectionScreen#loadPackIcon} 取不到时回退原版 {@code unknown_pack} 图标）——
+ *         不要把它当成加载前提；</li>
  *     <li>在 {@link #addPackFinders} 里加一行调用，第一个参数写
  *         {@code "data/<modid>/datapacks/<pack_name>"}（<b>必须与实际目录完全一致</b>）；</li>
  *     <li>在 {@code lang/en_us.json} 与 {@code lang/zh_cn.json} 里补上显示名语言键；</li>

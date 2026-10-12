@@ -48,11 +48,15 @@ public final class GlowOutlineRenderer {
         buffer = Tesselator.getInstance().begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
     }
 
-    /** 画一个以 {@code (0,0,0)~(1,1,1)} 为单位立方体的线框，调用方需先把 pose 平移到方块坐标 */
+    /**
+     * 画一个以 {@code (0,0,0)~(1,1,1)} 为单位立方体的线框，调用方需先把 pose 平移到方块坐标。
+     * <p>
+     * <b>刻意不在这里重设管线状态</b>：本方法只允许在 {@link #beginBatch()} 与 {@link #endBatch()}
+     * 之间被连续调用（调用方 {@code BlockGlowRenderHandler} 就是这么一个循环），
+     * 两者之间不会有别的绘制插进来改状态，因此逐块重设是纯粹的重复开销
+     * （满额 256 块时每帧 5×255 次多余的 GL 状态调用）。收批时会再 {@code prepare()} 一次兜底。
+     */
     public static void render(final @NotNull PoseStack pose, final int colorARGB) {
-        // 每个方块之间可能有其它绘制改过全局状态，逐次重设最省心
-        prepare();
-
         PoseStack.Pose last = pose.last();
         float min = -INFLATE;
         float max = 1.0F + INFLATE;
@@ -76,22 +80,34 @@ public final class GlowOutlineRenderer {
         line(last, min, min, max, min, max, max, colorARGB);
     }
 
+    /**
+     * 收批并恢复管线状态。
+     * <p>
+     * <b>恢复必须走 {@code finally}</b>：{@code BufferBuilder#build()} 与 {@code drawWithShader}
+     * 都会直接调 GL，任一步抛异常都不能把上一帧备份的状态留在原地 —— 否则后续所有绘制
+     * （世界、HUD、界面）都会带着线框的混合 / 深度设置继续跑。
+     * 同时把 {@code backup} / {@code buffer} 一并清空，使下一个 {@link #beginBatch()} 从干净状态开始。
+     */
     public static void endBatch() {
-        // 收批前同样重设：中间可能有其它渲染阶段插进来改过状态
+        // 收批前同样重设：中间可能有其它渲染阶段（或别的模组）插进来改过状态
         prepare();
 
-        if (buffer != null) {
-            MeshData meshData = buffer.build();
+        try {
+            if (buffer != null) {
+                MeshData meshData = buffer.build();
 
-            if (meshData != null) {
-                BufferUploader.drawWithShader(meshData);
+                if (meshData != null) {
+                    BufferUploader.drawWithShader(meshData);
+                }
             }
+        } finally {
+            if (backup != null) {
+                RenderSystem.restoreGlState(backup);
+            }
+
+            backup = null;
+            buffer = null;
         }
-
-        RenderSystem.restoreGlState(backup);
-
-        backup = null;
-        buffer = null;
     }
 
     private static void line(final PoseStack.Pose pose, final float fromX, final float fromY, final float fromZ,
