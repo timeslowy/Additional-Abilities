@@ -1,6 +1,8 @@
 package by.timeslowly.additional_abilities.common.ability.block_effects;
 
+import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 一个维度内的<b>方块震动调度状态</b>，承载在 {@code Level} 的数据附件上
@@ -33,6 +36,12 @@ import java.util.Optional;
  *     <li>{@link #pending}：每刻冲刷后立即清空，正常情况下一个服务端刻结束即为空 ——
  *         因此它不会跨 tick 累积，也不需要独立的上限。</li>
  * </ul>
+ *
+ * <h2>待发项为什么还要记「谁、用什么技能」（F13）</h2>
+ * 视觉包可以跨施法者合并 —— 同参数的两批方块在画面上本就无法区分。
+ * <b>声音不行</b>：声源取的是那一批方块的几何中心，合并相距很远的两批会把声源
+ * 放到两者中间，而音量固定为 1.0（可听半径约 16 格），结果是<b>两边都听不到</b>。
+ * 因此 {@link Entry} 额外带上动作身份，使 {@code BlockQuakes} 能按"原施法动作"分别发声。
  */
 public class BlockQuakeData {
     /** 位置（打包 long）→ 上次震动刻。条目只保留冷却窗口内的 */
@@ -41,8 +50,14 @@ public class BlockQuakeData {
     /** 本刻待发送的方块：位置 → 该项的完整参数 */
     private final Map<Long, Entry> pending = new LinkedHashMap<>();
 
-    /** 本刻待发送的一项：位置 + 跃起参数 + 音效 */
-    record Entry(BlockPos position, float height, int durationTicks, Optional<SoundEvent> sound) {}
+    /**
+     * 本刻待发送的一项：位置 + 跃起参数 + 音效 + <b>动作身份</b>。
+     * <p>
+     * {@code caster} / {@code ability} 只服务于声音分组（见类注释 F13），不进网络包，
+     * 也不参与位置冷却判定。
+     */
+    record Entry(BlockPos position, float height, int durationTicks, Optional<SoundEvent> sound,
+                 UUID caster, ResourceKey<DragonAbility> ability) {}
 
     /** 本刻是否有待发的震动（冲刷路径的早退判据） */
     public boolean hasPending() {
@@ -62,10 +77,13 @@ public class BlockQuakeData {
     /**
      * 登记一次震动。
      *
+     * @param caster  施法者 uuid；与 {@code ability} 一起标识"这一次动作"，仅用于声音分组
+     * @param ability 施法者正在使用的技能键，同上
      * @return {@code false} 表示该位置仍在冷却窗口内、本次应被静默丢弃
      */
     boolean enqueue(final @NotNull BlockPos position, final long now, final float height,
-                    final int durationTicks, final @NotNull Optional<SoundEvent> sound) {
+                    final int durationTicks, final @NotNull Optional<SoundEvent> sound,
+                    final @NotNull UUID caster, final @NotNull ResourceKey<DragonAbility> ability) {
         long key = position.asLong();
         Long lastTick = lastQuake.get(key);
 
@@ -74,7 +92,7 @@ public class BlockQuakeData {
         }
 
         lastQuake.put(key, now);
-        pending.put(key, new Entry(position.immutable(), height, durationTicks, sound));
+        pending.put(key, new Entry(position.immutable(), height, durationTicks, sound, caster, ability));
 
         return true;
     }

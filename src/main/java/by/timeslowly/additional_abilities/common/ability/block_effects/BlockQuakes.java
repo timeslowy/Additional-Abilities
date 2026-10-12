@@ -1,10 +1,12 @@
 package by.timeslowly.additional_abilities.common.ability.block_effects;
 
+import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockQuakeData.Entry;
 import by.timeslowly.additional_abilities.common.network.BlockQuakePayload;
 import by.timeslowly.additional_abilities.registry.AAAttachments;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -21,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 方块震动的服务端调度（仅服务端逻辑，客户端状态见 {@code client.ClientBlockQuakeState}）。
@@ -42,6 +45,10 @@ import java.util.Optional;
  * {@code getGameTime()} 数值：进入时间较小的存档后 {@code now - lastQuake} 为负，
  * {@code now - lastTick < COOLDOWN_TICKS} 恒成立，新存档里同坐标的震动会被长期拒绝。
  * 挂到 Level 附件后状态随实例生灭，结构上不可能串味。
+ *
+ * <h2>发包与发声用两套分组（F13）</h2>
+ * 视觉包跨施法者合并（同参数同刻的两批方块并成一个包，协议与包数量都不变），
+ * 声音则按"原施法动作"各自保留本地声源。理由见 {@link #group}。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class BlockQuakes {
@@ -58,8 +65,23 @@ public final class BlockQuakes {
     private static final float SOUND_VOLUME = 1.0F;
     private static final float SOUND_PITCH = 1.0F;
 
-    /** 同一批发包与发声的参数。音效计入分组键，使不同技能的声音不会被合并到一起 */
-    private record QuakeShape(float height, int durationTicks, Optional<SoundEvent> sound) {}
+    /** 同一批发包与发声的参数：音效计入分组键，使不同技能的声音不会被合并到一起 */
+    record QuakeShape(float height, int durationTicks, Optional<SoundEvent> sound) {}
+
+    /**
+     * <b>发声</b>分组键：形状 + 施法者 + 技能。
+     * <p>
+     * 比 {@link QuakeShape} 多了动作身份，理由见 {@link #group}。
+     * {@code ability} 取的是 {@link ResourceKey} 而非技能实例：同一次动作在 {@code trigger_rate}
+     * 内会重复触发很多次，它们必须落在同一个声源上（"一次范围动作只响一次"）。
+     */
+    record QuakeSource(QuakeShape shape, UUID caster, ResourceKey<DragonAbility> ability) {}
+
+    /**
+     * 一次冲刷的两套分组：{@code visual} 用于发包，{@code sound} 用于发声。
+     * <p>两者的键口径刻意不同，见 {@link #group}。
+     */
+    record Batches(Map<QuakeShape, List<Long>> visual, Map<QuakeSource, List<Long>> sound) {}
 
     private BlockQuakes() {}
 
@@ -69,15 +91,18 @@ public final class BlockQuakes {
      * @param height        跃起高度（方块），已钳制
      * @param durationTicks 一次完整升落的时长
      * @param sound         跃起时播放的音效，空则无声
+     * @param caster        施法者 uuid；与 {@code ability} 一起标识本次动作，仅用于声音分组
+     * @param ability       施法者正在使用的技能键，同上
      */
     public static void trigger(final @NotNull ServerLevel level, final @NotNull BlockPos position,
-                               final float height, final int durationTicks, final @NotNull Optional<SoundEvent> sound) {
+                               final float height, final int durationTicks, final @NotNull Optional<SoundEvent> sound,
+                               final @NotNull UUID caster, final @NotNull ResourceKey<DragonAbility> ability) {
         if (height <= 0.0F || durationTicks <= 0) {
             return;
         }
 
         level.getData(AAAttachments.BLOCK_QUAKE)
-                .enqueue(position, level.getGameTime(), height, durationTicks, sound);
+                .enqueue(position, level.getGameTime(), height, durationTicks, sound, caster, ability);
     }
 
     /**
@@ -114,19 +139,49 @@ public final class BlockQuakes {
         data.dropExpiredCooldowns(level.getGameTime());
     }
 
-    private static void flush(final @NotNull ServerLevel level, final @NotNull BlockQuakeData data) {
-        // 按「高度 + 时长 + 音效」分组：不同强度的效果恰好落在同一刻时，各自保持各自的参数
-        Map<QuakeShape, List<Long>> grouped = new LinkedHashMap<>();
+    /**
+     * 按两种口径分别聚合本刻的待发震动：<b>视觉包</b>跨施法者合并，<b>声音</b>按动作分离。
+     * <p>
+     * <b>为什么两者口径不同（F13）</b>：视觉包只描述"哪些方块要跳"，同参数的两批方块在画面上
+     * 本就无法区分，合并成尽量少的包是纯收益。而声音的声源取该批方块的<b>几何中心</b>，
+     * 音量固定 {@link #SOUND_VOLUME}（可听半径约 16 格）——
+     * 两名玩家相距 100 格、同刻触发同参数震动时，合并后的中心落在两人之间，
+     * <b>两边都听不到</b>。因此声音必须按"原施法动作"各自保留本地声源。
+     * <p>
+     * 视觉分组仍用 {@link QuakeShape}（不含施法者），所以这次修复<b>不改变任何网络字节</b>：
+     * 协议未变、包数量未变，只是多响了几声该响的声。
+     * <p>
+     * 抽成纯函数的理由是<b>可测性</b>：{@link #flush} 要把结果发出去 / 播出来，
+     * 那需要真实的 {@code ServerLevel}，本机造不出。分组决策本身只依赖待发表内容，
+     * 单独提出来后就能用普通单元测试逐条钉住（见 {@code BlockQuakeSoundGroupingTest}）。
+     */
+    static @NotNull Batches group(final @NotNull BlockQuakeData data) {
+        Map<QuakeShape, List<Long>> visual = new LinkedHashMap<>();
+        Map<QuakeSource, List<Long>> sound = new LinkedHashMap<>();
 
         for (Entry entry : data.pending().values()) {
-            grouped.computeIfAbsent(new QuakeShape(entry.height(), entry.durationTicks(), entry.sound()), ignored -> new ArrayList<>())
-                    .add(entry.position().asLong());
+            QuakeShape shape = new QuakeShape(entry.height(), entry.durationTicks(), entry.sound());
+
+            // 视觉：跨施法者合并（同参数同刻的两批方块并成一个包）
+            visual.computeIfAbsent(shape, ignored -> new ArrayList<>()).add(entry.position().asLong());
+
+            // 声音：同一施法者的同一次动作（同技能）仍合并为一声，跨施法者 / 跨技能各自成组。
+            // 音效为空的项不必建立发声分组
+            if (shape.sound().isPresent()) {
+                sound.computeIfAbsent(new QuakeSource(shape, entry.caster(), entry.ability()),
+                                ignored -> new ArrayList<>())
+                        .add(entry.position().asLong());
+            }
         }
 
-        grouped.forEach((shape, positions) -> {
-            send(level, shape, positions);
-            playSound(level, shape, positions);
-        });
+        return new Batches(visual, sound);
+    }
+
+    private static void flush(final @NotNull ServerLevel level, final @NotNull BlockQuakeData data) {
+        Batches batches = group(data);
+
+        batches.visual().forEach((shape, positions) -> send(level, shape, positions));
+        batches.sound().forEach((source, positions) -> playSound(level, source.shape(), positions));
     }
 
     private static void send(final @NotNull ServerLevel level, final @NotNull QuakeShape shape, final @NotNull List<Long> positions) {
@@ -161,7 +216,10 @@ public final class BlockQuakes {
      * <p>
      * <b>每次技能动作只响一次</b>：声源取该批方块的几何中心，而不是每个方块各响一次 ——
      * 一次范围震动往往同时抬起几十个方块，逐方块播放等于几十个音源同时叠加，
-     * 听感上是爆音而不是"一下砸地"。同一批内的方块本就来自同一次动作，中心足以代表声源。
+     * 听感上是爆音而不是"一下砸地"。
+     * <p>
+     * <b>但"一批"的粒度按施法动作划分</b>（见 {@link #flush}）：同一动作内的方块本就来自一次触发，
+     * 中心足以代表声源；而两个相距很远的动作合并发声会让两边都听不到。
      */
     private static void playSound(final @NotNull ServerLevel level, final @NotNull QuakeShape shape, final @NotNull List<Long> positions) {
         shape.sound().ifPresent(sound -> {

@@ -119,7 +119,7 @@ public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probab
             return;
         }
 
-        BlockQuakes.trigger(level, position, height, durationFor(height), sound);
+        BlockQuakes.trigger(level, position, height, durationFor(height), sound, dragon.getUUID(), ability.key());
     }
 
     /** 施法一次可用的跃起高度（方块），已钳制到上限 */
