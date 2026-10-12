@@ -1,6 +1,6 @@
 # Entity Effects (`entity_effect`)
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71`
 > Location: `actions[].target_selection.applied_effects.entity_effect[]`
 
 An entity effect lives inside the `applied_effects.entity_effect[]` array. Each element selects its type

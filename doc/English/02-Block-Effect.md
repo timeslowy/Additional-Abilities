@@ -1,6 +1,6 @@
 # Block Effects (`block_effect`)
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71`
 > Location: `actions[].target_selection.applied_effects.block_effect[]`
 
 A block effect lives inside the `applied_effects.block_effect[]` array. Each element selects its type with

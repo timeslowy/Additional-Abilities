@@ -1,6 +1,6 @@
 # Activation Types (`activation_type`)
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71`
 > Location: `activation.activation_type`
 > See also: [08-Trigger-Type.md](08-Trigger-Type.md) — passive abilities
 > (`activation_type: dragonsurvival:passive`) carry a further `trigger.trigger_type` that decides

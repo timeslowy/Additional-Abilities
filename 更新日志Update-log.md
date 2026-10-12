@@ -11,6 +11,7 @@
 4. 新增海洋龙技能「威霆显域」（`sea_dragon:lightning_domain`）—— 攻守兼备的范围领域；
 5. 新增森林龙技能「光补作用」（`forest_dragon:photorepair`）—— 白日户外的被动修补；
 6. 新增翼麒麟原创技能「安身法」（`wing_kirin:fire_ring`）—— 就地布下火圈阵法的阵地型保命技能，随 jar 常驻生效，不需要启用任何数据包；
+7. **前置 Dragon Survival 的最低版本提升至 `2.0.71`**（原为 `2.0.68`）—— 本模组贴附了 Dragon Survival 的多处内部结构，低版本会直接拒绝加载；
 
 #### English
 
@@ -20,3 +21,4 @@
 4. New ability for Sea Dragon: 'Lightning Domain'(`sea_dragon:lightning_domain`) - a two-sided area domain;
 5. New ability for Forest Dragon: 'Photorepair'(`forest_dragon:photorepair`) - a passive repair working outdoors by day;
 6. New original ability for Wing Kirin: 'Fire Ring'(`wing_kirin:fire_ring`) - a static, life-saving art that plants a ring of fire; it is always on and needs no datapack to be enabled;
+7. **Minimum required Dragon Survival version raised to `2.0.71`** (was `2.0.68`) - this mod attaches to several Dragon Survival internals and older builds are rejected at load time;

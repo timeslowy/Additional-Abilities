@@ -1,6 +1,6 @@
 # Java API（给附属模组 / 扩展作者）
 
-> 适用：Additional Abilities for DS `2.0.0` · Minecraft `1.21.1` · NeoForge · Dragon Survival `≥ 2.0.68`
+> 适用：Additional Abilities for DS `2.0.0` · Minecraft `1.21.1` · NeoForge · Dragon Survival `≥ 2.0.71`
 > 相关：[README](../../README.md)（数据包字段手册索引）· [doc/中文](../中文/)（数据包用法）
 > 本文面向**写 Java 的**扩展作者。只用数据包的话不需要看这里。
 

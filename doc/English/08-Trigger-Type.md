@@ -1,6 +1,6 @@
 # Trigger Types (`trigger_type`)
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71`
 > Location: `activation.trigger.trigger_type` — **only `activation_type: dragonsurvival:passive` has a `trigger`**
 
 A passive ability uses `trigger` to decide **when** it runs. `trigger_type` sits at the **same level** as

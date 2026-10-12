@@ -1,6 +1,6 @@
 # Bundled Datapacks
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71` · Wing Kirin `≥ 3.3.0`
 
 This mod ships **optional** datapacks — off by default, the player has to enable them manually.
 Their purpose is to rework abilities that already exist in another mod (currently Wing Kirin) using

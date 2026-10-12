@@ -23,7 +23,7 @@
 >  **Additional Abilities for DS `2.0.0`**  
 > 适用版本：Minecraft `1.21.1` · NeoForge   
 > 前置：
-> - Dragon Survival `≥ 2.0.68` 
+> - Dragon Survival `≥ 2.0.71` 
 > - （可选）Wing Kirin `≥ 3.3.0`  
 
 > 最后核对：2026-09-29  
@@ -227,7 +227,7 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 >  **Additional Abilities for DS `2.0.0`**  
 > Applies to: Minecraft `1.21.1` · NeoForge   
 > Requirements: 
-> - Dragon Survival `≥ 2.0.68` 
+> - Dragon Survival `≥ 2.0.71` 
 > - (optional)Wing Kirin `≥ 3.3.0`
 
 > Last verified: 2026-09-29  
