@@ -5,7 +5,6 @@ import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.DamageReflections;
 import by.timeslowly.additional_abilities.registry.AADamageTypes;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
@@ -64,8 +63,9 @@ public class DamageReflectionEventHandler {
             return;
         }
 
-        // 守卫②：所受伤害本身为反伤伤害时跳过，防止双方无限反弹
-        if (source.is(AADamageTypes.COUNTER_SHOCK.getKey())) {
+        // 守卫②：所受伤害本身为反伤伤害时跳过，防止双方无限反弹。
+        // ResourceKey 可直接用于 DamageSource#is（1.21.1 有该重载），无需先取 Holder
+        if (source.is(AADamageTypes.COUNTER_SHOCK)) {
             return;
         }
 
@@ -78,7 +78,8 @@ public class DamageReflectionEventHandler {
 
         // 只处理有效期内（未过期）的条目：主动技能施法结束 / 被动技能条件不满足后条目自然失效，
         // 反伤随技能结束自动消失（见 DamageReflections#active / REFLECTION_TTL_TICKS）
-        // 多个技能各自独立结算（每个技能各按自身比例反弹一次）
+        // 多个技能各自独立结算（每个技能各按自身比例反弹一次）。
+        // active() 返回的是不可变快照，因此下方 reflect 内的重入（反伤本身又触发事件）不会影响本次遍历
         for (DamageReflections.Entry entry : reflections.active(player.level().getGameTime())) {
             reflect(player, source, amount, entry);
         }
@@ -99,14 +100,18 @@ public class DamageReflectionEventHandler {
         // 守卫③（重入标志）：本段结算期间造成的任何伤害（含目标玩家的反伤）都不再触发反伤
         isReflecting = true;
         try {
-            // 默认使用 additional_abilities:counter_shock；开启同类型反伤时沿用原始伤害类型
-            // 注意：counter_shock 必须从世界的数据包注册表（registryAccess）中取 Holder。
-            // AADamageTypes 里的 DeferredHolder 指向 BuiltInRegistries，而 damage_type 是纯数据包注册表、
-            // 静态注册表集合中不存在该注册表，DeferredHolder 永远无法绑定——直接传入会导致
-            // ClientboundDamageEventPacket 在网络编码时抛 IllegalStateException，踢出客户端。
+            // 默认使用 additional_abilities:counter_shock；开启同类型反伤时沿用原始伤害类型。
+            // counter_shock 是纯数据包注册表里的伤害类型，必须从世界注册表取 Holder ——
+            // 它没有可用的 DeferredHolder（DeferredRegister 对数据包注册表永不绑定，见 AADamageTypes）。
+            // 取不到（数据包缺失 / 被改坏）时退化为"不反伤"，而不是让一次普通伤害把服务端打崩
             Holder<DamageType> damageType = entry.useSameDamageType()
                     ? original.typeHolder()
-                    : player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(AADamageTypes.COUNTER_SHOCK.getKey());
+                    : AADamageTypes.counterShock(player.level().registryAccess());
+
+            if (damageType == null) {
+                return;
+            }
+
             DamageSource reflection = new DamageSource(damageType, player);
 
             for (Entity target : targets) {

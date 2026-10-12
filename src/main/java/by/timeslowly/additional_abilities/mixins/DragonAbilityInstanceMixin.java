@@ -139,8 +139,9 @@ public abstract class DragonAbilityInstanceMixin {
             return;
         }
 
-        // 结算成功才取消；返回 false 表示"这不是此刻正在施法的实例"，应放行 DS 原生流程
-        if (ChargedCasts.settleOvercharged(serverPlayer, self)) {
+        // 结算成功才取消；未接管（handled() == false）表示"这不是此刻正在施法的实例"，
+        // 应放行 DS 原生流程
+        if (ChargedCasts.settleOvercharged(serverPlayer, self).handled()) {
             callbackInfo.cancel();
         }
     }

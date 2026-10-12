@@ -219,6 +219,66 @@ public class DomainInstance {
         return castStartTick;
     }
 
+    /**
+     * 领域锚点是否<b>跟随施法者移动</b>（{@code anchor: caster}），而不是固定在施法位置。
+     * <p>
+     * 只读查询用：配合 {@link #anchorPosition()} 才能说明"这块区域现在到底在哪"。
+     * 跟随型领域的实际原点每帧都在施法者脚下，因此 {@link #anchorPosition()} 对它没有意义。
+     */
+    public boolean followsCaster() {
+        return anchor.followsCaster();
+    }
+
+    /**
+     * 建立时固化的锚点坐标（{@link #followsCaster()} 为 {@code false} 时才有意义）。
+     * <p>
+     * 这是<b>首次结算那一刻</b>的施法者位置快照，不会随后续续帧漂移 —— 正是"一次施法 = 一份固化快照"
+     * 的体现（见类注释）。{@link Vec3} 不可变，可直接交出。
+     */
+    public @NotNull Vec3 anchorPosition() {
+        return anchorPosition;
+    }
+
+    /** 领域形状（球形 / 方形 / 柱形）。 */
+    public @NotNull DomainShape shape() {
+        return shape;
+    }
+
+    /** 领域半径（格），已在建立时按技能等级求值固化。 */
+    public double radius() {
+        return radius;
+    }
+
+    /** 柱形领域的高度（格）；球形 / 方形下与 {@link #radius()} 相同。 */
+    public double height() {
+        return height;
+    }
+
+    /** 结算间隔（游戏刻）：领域存活期间每隔这么久执行一次效果集。 */
+    public int applyInterval() {
+        return applyInterval;
+    }
+
+    /** 领域总时长（游戏刻）：每次续命都会把到期时刻推后这么多。 */
+    public int duration() {
+        return duration;
+    }
+
+    /** 本领域消散时是否对当时范围内的目标执行一次收尾 {@code remove}（对应 {@code remove_effects_on_end}）。 */
+    public boolean removesEffectsOnEnd() {
+        return removeEffectsOnEnd;
+    }
+
+    /** 到期时刻（维度自己的 {@code getGameTime()} 轴）。 */
+    public long expireTick() {
+        return expireTick;
+    }
+
+    /** 下一次结算时刻（维度自己的 {@code getGameTime()} 轴）。 */
+    public long nextApplyTick() {
+        return nextApplyTick;
+    }
+
     /** 同施法者 + 同技能（领域的"流"身份键之一）。 */
     public boolean matches(final UUID caster, final ResourceKey<DragonAbility> key) {
         return casterUUID.equals(caster) && abilityKey.equals(key);

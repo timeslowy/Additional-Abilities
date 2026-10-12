@@ -89,6 +89,21 @@ import java.util.Set;
 public record DurabilityChange(List<HeldItemSlots.SlotSelector> slots, Optional<ItemPredicate> item,
                                Operation operation, LevelBasedValue amount, Unit unit,
                                Optional<PercentBase> percentBase, boolean breakItem) {
+    /**
+     * <b>参数所有权：构造期防御性复制</b>（审查报告 §4.1"列表和数组的可变所有权不明确"）。
+     * <p>
+     * record 的紧凑构造器不会自动复制集合，所以直接写 {@code new DurabilityChange(mutableList, ...)}
+     * 会让"这条规则"与调用方共享同一个列表 —— 调用方此后往列表里加一项，
+     * 就会<b>静默改变一条已经解码完成的技能规则</b>的行为。技能配置是"一次解码、全程只读"的东西，
+     * 因此这里在构造期固定下来。{@link List#copyOf} 对已是不可变列表的入参不会再复制一遍。
+     * <p>
+     * {@code ItemPredicate} / {@code LevelBasedValue} 与两个枚举都不在这里复制：
+     * 它们要么是不可变值对象，要么由数据包编解码器构造后就不再被修改，且没有公开的改写入口。
+     */
+    public DurabilityChange {
+        slots = List.copyOf(slots);
+    }
+
     public static final Codec<DurabilityChange> CODEC = RecordCodecBuilder.<DurabilityChange>create(instance -> instance.group(
             HeldItemSlots.SlotSelector.CODEC.listOf().fieldOf("slots").forGetter(DurabilityChange::slots),
             ItemPredicate.CODEC.optionalFieldOf("item").forGetter(DurabilityChange::item),

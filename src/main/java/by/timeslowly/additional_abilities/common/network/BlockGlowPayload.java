@@ -21,6 +21,12 @@ import org.jetbrains.annotations.NotNull;
  * 由一个整批共用的数值表达不了各自的到期时刻。剩余时长用 VarInt 与位置交错写出，开销可忽略。
  * 客户端据此本地倒计时，因此服务端<b>不需要额外的移除包</b>。
  *
+ * <b>本类型是内部协议</b>：它描述的是两端之间的<b>字节格式</b>，不是给第三方调用的入口。
+ * 正式 API 只看 {@code api.Visuals}（见 {@code api} 包的说明）。
+ * 因此这里<b>不做</b>防御性数组复制 —— 那会让每个包多一次等长分配，而调用方全是本模组自己的
+ * 编码/解码路径。但两数组的<b>长度一致性与数量上限必须校验</b>：它们是后续按索引并行读取的前提，
+ * 一旦错位就会读到越界或张冠李戴的剩余时长，而那种错误在客户端表现为"某个方块永远不消失"。
+ *
  * @param positions      打包后的 {@link net.minecraft.core.BlockPos}（{@code asLong()}）
  * @param remainingTicks 与 {@code positions} 一一对应的剩余时长（游戏刻）
  * @param colorARGB      颜色，{@code FastColor.ARGB32} 形态（alpha 已补齐，见 GlowEffect）
@@ -30,6 +36,25 @@ public record BlockGlowPayload(long[] positions, int[] remainingTicks, int color
         implements CustomPacketPayload {
     /** 单包位置数上限，服务端按此切分；解码侧据此拒绝异常包 */
     public static final int MAX_POSITIONS = 256;
+
+    /**
+     * 两数组必须等长且不超上限。
+     * <p>
+     * 校验放在构造器里，因此<b>编码侧与解码侧走的是同一道闸门</b>：解码侧原本只校验了
+     * {@code count}（数组长度由它决定，必然自洽），但编码侧此前完全没有约束 ——
+     * 一旦将来有人手工构造出长度不一致的包，会一路发到客户端才在按索引读取时炸掉。
+     * 在这里拦下，错误就停在做错的那一端、并带上可定位的信息。
+     */
+    public BlockGlowPayload {
+        if (positions.length != remainingTicks.length) {
+            throw new IllegalArgumentException(
+                    "positions (" + positions.length + ") and remainingTicks (" + remainingTicks.length + ") must have the same length");
+        }
+
+        if (positions.length > MAX_POSITIONS) {
+            throw new IllegalArgumentException("Invalid block glow position count: " + positions.length);
+        }
+    }
 
     public static final CustomPacketPayload.Type<BlockGlowPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "block_glow"));

@@ -9,7 +9,8 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilit
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
-import by.timeslowly.additional_abilities.common.ability.activation.ChargedCasts;
+import by.timeslowly.additional_abilities.api.ChargedCasting;
+import by.timeslowly.additional_abilities.common.network.charged.ChargedReleasePayload;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicNCommandExceptionType;
@@ -19,7 +20,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -53,10 +54,14 @@ import java.util.function.ToIntBiFunction;
  *         未在蓄力 → 最近一次实际释放所用的档位（取消不写入）；技能不属于本族系 → 0。</li>
  *     <li>{@code current_selected_level}：手动选定过 → 该选定值（含 0 = 取消）；
  *         自动跟随 → 已蓄到的档位；未在蓄力 / 尚未达最低档 / 不属于本族系 → -1。
- *         详见 {@link ChargedCasts#resolveSelectedLevel}。</li>
+ *         详见 {@link ChargedCasting#pendingLevel}。</li>
  * </ul>
  * 输出文案直接复用 DS 自己的 {@code ability.query_result} 语言键，
  * 与 {@code level} / {@code cast_time} 等既有条目的显示格式完全一致。
+ * <p>
+ * 取值一律经 {@link ChargedCasting} 这个正式入口：指令层不直接依赖内部实现类，
+ * 也不依赖网络协议里的哨兵常量（{@code -1} 只作为本指令自己的输出约定出现在这一处，
+ * 由 {@code OptionalInt} 到哨兵的映射显式表达）。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class ChargedQueryCommand {
@@ -87,11 +92,14 @@ public final class ChargedQueryCommand {
         }
 
         abilityNode.addChild(Commands.literal(CURRENT_CHARGED_LEVEL)
-                .executes(source -> query(source, ChargedCasts::resolveQueryLevel))
+                .executes(source -> query(source, ChargedCasting::lastOrCurrentLevel))
                 .build());
 
         abilityNode.addChild(Commands.literal(CURRENT_SELECTED_LEVEL)
-                .executes(source -> query(source, ChargedCasts::resolveSelectedLevel))
+                .executes(source -> query(source, (player, instance) ->
+                        ChargedCasting.pendingLevel(player, instance)
+                                // 指令沿用既有输出口径：-1 表示"未指定"（见该类注释与文档）
+                                .orElse(ChargedReleasePayload.AUTO)))
                 .build());
     }
 
@@ -114,13 +122,13 @@ public final class ChargedQueryCommand {
      * 两个子命令共用的查询主体：解析目标与技能，再交给具体的取值函数。
      *
      * @param source   指令上下文
-     * @param resolver 取值函数，见 {@link ChargedCasts#resolveQueryLevel} /
-     *                 {@link ChargedCasts#resolveSelectedLevel}
+     * @param resolver 取值函数，见 {@link ChargedCasting#lastOrCurrentLevel} /
+     *                 {@link ChargedCasting#pendingLevel}
      * @return 取到的档位值（同时作为指令返回值，便于 {@code /execute store} 使用）
      */
     private static int query(final @NotNull CommandContext<CommandSourceStack> source,
-                             final @NotNull ToIntBiFunction<Player, DragonAbilityInstance> resolver) throws CommandSyntaxException {
-        Player player = EntityArgument.getPlayer(source, DSCommands.TARGET);
+                             final @NotNull ToIntBiFunction<ServerPlayer, DragonAbilityInstance> resolver) throws CommandSyntaxException {
+        ServerPlayer player = EntityArgument.getPlayer(source, DSCommands.TARGET);
         Holder<DragonAbility> ability = DragonAbilityArgument.get(source);
 
         // 与 DS 的 query 保持一致的报错条件：目标不是龙、或目标没有该技能

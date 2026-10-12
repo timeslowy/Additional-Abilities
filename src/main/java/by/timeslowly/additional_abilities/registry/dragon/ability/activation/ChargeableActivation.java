@@ -61,12 +61,21 @@ public interface ChargeableActivation extends Activation {
      * 总蓄力上限。必须为正 —— 否则蓄力过程无意义（第 1 刻就读条完成），
      * 因此在解析期直接拦下，而不是留到运行时。
      * <p>
-     * 两个实现共用一份校验器，故报错文案不含具体类型名。
+     * <b>判据是"折算成整数刻之后 ≥ 1"</b>，不是"浮点值 &gt; 0"（审查报告 §4.2 的 tick 值有效性）。
+     * 这两者之间有一条真实的缝隙：{@code 0.5} 能通过"正数"校验，却在运行时被
+     * {@link #getCastTime(int)} 转成 {@code 0} —— 于是这个技能第 1 刻就读条完成，
+     * 而配置里明明写着一个正数，报错信息也无从解释。合成一个 tick 是运行时唯一的粒度，
+     * 所以校验必须就按那个粒度做。
+     * <p>
+     * 注意这里<b>只</b>校验"最低计算等级"这一个点：{@code LevelBasedValue} 允许在更高等级返回别的值
+     * （例如 {@code linear} 配负数增量），逐级校验等于替数据包作者决定他的成长曲线，
+     * 且会拒绝现有正常配置。因此运行时的 {@link #getCastTime(int)} 仍按"至少 1 刻"兜底，
+     * 使越界值退化为"最短读条"而不是"第 0 刻完成"。
      */
     Codec<LevelBasedValue> CAST_TIME_CODEC = LevelBasedValue.CODEC.validate(value ->
-            value.calculate(DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) > 0
+            value.calculate(DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) >= 1.0F
                     ? DataResult.success(value)
-                    : DataResult.error(() -> "Chargeable activation requires a positive [cast_time] (it is the maximum charge duration)"));
+                    : DataResult.error(() -> "Chargeable activation requires [cast_time] to be at least 1 tick at the lowest level (it is the maximum charge duration)"));
 
     /**
      * 超限窗口长度（tick），对应 JSON {@code max_overcharged_duration}；可选，
@@ -76,11 +85,13 @@ public interface ChargeableActivation extends Activation {
      * 取 0 意味着窗口根本不存在（此时该字段毫无意义，而且会把最高档的落点压在 DS
      * 完成判定的那一帧上，满档数字与提示音永远不会出现），因此在解析期直接拦下；
      * 想要"没有超限窗口"应当不开启 {@code can_charge_exceed_cast_time}。
+     * <p>
+     * 与 {@link #CAST_TIME_CODEC} 同理，判据是"折算成整数刻之后 ≥ 1"而不是"浮点值 &gt; 0"。
      */
     Codec<LevelBasedValue> MAX_OVERCHARGED_DURATION_CODEC = LevelBasedValue.CODEC.validate(value ->
-            value.calculate(DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) > 0
+            value.calculate(DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) >= 1.0F
                     ? DataResult.success(value)
-                    : DataResult.error(() -> "Chargeable activation requires a positive [max_overcharged_duration] (it is how long you may keep charging past [cast_time])"));
+                    : DataResult.error(() -> "Chargeable activation requires [max_overcharged_duration] to be at least 1 tick at the lowest level (it is how long you may keep charging past [cast_time])"));
 
     /**
      * 跨字段校验：超限窗口建立在"允许按过 {@code cast_time} 仍不释放"这个前提之上，
@@ -163,6 +174,12 @@ public interface ChargeableActivation extends Activation {
      * <p>
      * 若 {@code charged_duration_per_level} 在该档位超过蓄力时长上限 {@link #chargeCapTicks(int)}，
      * 则封顶为该上限 —— 这就是"最高等级所需蓄力时长不得超过 {@code cast_time}"的落地点。
+     * <p>
+     * <b>下限保持 0，即"该档位无需蓄力"是合法的</b>：{@code charged_duration_per_level} 算出 0
+     * 时 {@link #getMinimumChargeTicks()} 也是 0，语义为"轻点即可以档位 1 释放"。
+     * 这与 {@link #CAST_TIME_CODEC} 的"至少 1 刻"不冲突 —— 那条管的是<b>蓄力总上限</b>
+     * （为 0 会让整个蓄力过程退化），而本方法管的是<b>档位阈值</b>，两者的合法下界本就不同。
+     * 因此这里刻意不跟着夹到 1：那会改变"无最低蓄力"这一现有配置的语义。
      *
      * @param level 档位，从 1（{@link DragonAbilityInstance#MIN_LEVEL_FOR_CALCULATIONS}）起算
      * @return 该档位所需的蓄力游戏刻数
@@ -174,7 +191,10 @@ public interface ChargeableActivation extends Activation {
 
     @Override
     default int getCastTime(final int level) {
-        return (int) castTime().calculate(level);
+        // 至少 1 刻：与 CAST_TIME_CODEC 的解析期判据同一条契约（整数刻 ≥ 1）。
+        // 覆盖两种越界：解析期只校验最低等级，高等级仍可能算出非正数（例如 linear 配负增量）；
+        // 以及第三方 Java 直接构造时绕过了 Codec —— 那种情况下"最短读条"远好于"第 0 刻完成"
+        return Math.max(1, (int) castTime().calculate(level));
     }
 
     /**
@@ -195,12 +215,17 @@ public interface ChargeableActivation extends Activation {
 
     /**
      * 超限窗口长度（tick）：按满 {@code cast_time} 之后还允许继续按住的时长。
+     * <p>
+     * 与 {@link #getCastTime(int)} 同一条契约：<b>配置过就至少 1 刻</b>。
+     * 解析期只校验最低等级（见 {@link #MAX_OVERCHARGED_DURATION_CODEC}），
+     * 高等级仍可能被 {@code LevelBasedValue} 算成 {@code 0.5} 这类值；
+     * 若就地截断成 0，窗口会静默消失 —— 而那正是"配置了却没效果"最难看的一种。
      *
      * @param level 求值等级
-     * @return 未配置 {@link #maxOverchargedDuration()} 时为 {@code 0}
+     * @return 未配置 {@link #maxOverchargedDuration()} 时为 {@code 0}；配置过则至少 {@code 1}
      */
     default int getOverchargeTicks(final int level) {
-        return maxOverchargedDuration().map(value -> Math.max(0, (int) value.calculate(level))).orElse(0);
+        return maxOverchargedDuration().map(value -> Math.max(1, (int) value.calculate(level))).orElse(0);
     }
 
     /**

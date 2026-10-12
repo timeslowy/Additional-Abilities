@@ -33,8 +33,6 @@ public class AdditionalAbilities {
         AAAttachments.register(modEventBus);
         // 注册物品数据组件（DataComponentType：临时附魔标记）
         AAComponents.register(modEventBus);
-        // 注册自定义伤害类型
-        AADamageTypes.register(modEventBus);
         // 注册自定义属性
         AAAttributes.register(modEventBus);
         // 注册龙之技能自定义实体效果类型（DragonSurvival ability_entity_effect 注册表）

@@ -6,6 +6,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +30,17 @@ public record ScreenVisionClearPayload() implements CustomPacketPayload {
     @Override
     public @NotNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
+    }
+
+    /**
+     * 给目标玩家发送一次清空通知。
+     * <p>
+     * 包类型本身被定为<b>内部协议</b>（见 {@code api} 包的说明），但"通知某个玩家清空画面"
+     * 是对外承诺的行为，因此把发包动作收敛成这一个方法，让
+     * {@code api.Visuals#clearScreenVision} 与调试指令共用同一条路径。
+     */
+    public static void sendTo(final @NotNull ServerPlayer player) {
+        PacketDistributor.sendToPlayer(player, new ScreenVisionClearPayload());
     }
 
     /**

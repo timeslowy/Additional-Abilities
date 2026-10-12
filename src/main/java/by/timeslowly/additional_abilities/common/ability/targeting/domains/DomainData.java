@@ -3,6 +3,7 @@ package by.timeslowly.additional_abilities.common.ability.targeting.domains;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -128,6 +129,23 @@ public class DomainData {
 
     public void add(final DomainInstance domain) {
         domains.add(domain);
+    }
+
+    /**
+     * 本维度当前存活领域的<b>不可变快照</b>。
+     * <p>
+     * 与 {@link #size()} / {@link #count(UUID, ResourceKey)} 只回答"有几个"不同，本方法交出领域对象本身，
+     * 供只读查询使用（例如第三方想列出某个施法者的领域）。用 {@link List#copyOf} 而不是
+     * {@code Collections.unmodifiableList(domains)}：后者仍是<b>活视图</b>，
+     * 调用方遍历途中只要有领域到期（{@code DomainData#tick} 每刻都在跑）就会抛
+     * {@code ConcurrentModificationException}；快照则把"拿到手的那一刻"固定下来。
+     * <p>
+     * 读取路径返回快照属于对外契约的一部分（见 {@code api} 包的说明），
+     * 而内部的 {@code tick} / {@code clearByCasters} 仍各自就地建快照，不走这里
+     * —— 它们需要的是"当下最省的一次拷贝"，与对外语义无关。
+     */
+    public @NotNull List<DomainInstance> snapshot() {
+        return List.copyOf(domains);
     }
 
     /**

@@ -9,6 +9,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.attachments.MagicData;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
+import by.timeslowly.additional_abilities.api.ChargedCastResult;
 import by.timeslowly.additional_abilities.common.network.charged.ChargedReleasePayload;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import net.minecraft.resources.ResourceKey;
@@ -117,6 +118,11 @@ import java.util.UUID;
  * "延迟型效果"（例如生成实体后由该实体在后续游戏刻才去读 {@code ability.level()}）会读到
  * 玩家自身的升级等级而非档位。对本窗口内立即结算的效果（伤害、弹射物生成、方块效果、概率判定）
  * 无影响。
+ *
+ * <h2>正式入口</h2>
+ * 第三方应当经 {@link by.timeslowly.additional_abilities.api.ChargedCasting} 调用本类，
+ * 而不是直接依赖这里的签名 —— 本类的取值器与结算方法随时可能随内部结构调整，
+ * {@link ChargedCastResult} 才是被承诺稳定的结果契约。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class ChargedCasts {
@@ -167,13 +173,14 @@ public final class ChargedCasts {
      *                     实际采用值还要与服务端自己的刻计数和 {@code cast_time} 取最小
      * @param requestedLevel 客户端请求的释放档位：{@link ChargedReleasePayload#AUTO}（采用已达档位）、
      *                     {@link ChargedReleasePayload#CANCEL}（取消）、或 {@code >= 1} 的指定档位
-     * @return 是否已接管本次松手；{@code false} 表示这次请求根本不该由本模组结算
+     * @return 本次终结的结算结果；{@link ChargedCastResult#handled()} 为 {@code false}
+     *         （即 {@code REJECTED}）表示这次请求根本不该由本模组结算
      *         （不是蓄力类型 / 不是此刻正在施法的实例 / 技能未解锁），调用方应什么都不做
      */
-    public static boolean fire(final @NotNull ServerPlayer player, final @NotNull DragonAbilityInstance instance,
-                               final int payloadTicks, final int requestedLevel) {
+    public static @NotNull ChargedCastResult fire(final @NotNull ServerPlayer player, final @NotNull DragonAbilityInstance instance,
+                                                  final int payloadTicks, final int requestedLevel) {
         if (!(instance.value().activation() instanceof ChargeableActivation chargeable)) {
-            return false;
+            return ChargedCastResult.rejected(ChargedCastResult.Reason.NOT_CHARGEABLE);
         }
 
         MagicData magic = MagicData.getData(player);
@@ -182,7 +189,7 @@ public final class ChargedCasts {
         // 主动技能的 isCasting / getCurrentlyCasting 只在 beginCasting 时建立、stopCasting 时清除，
         // 所以已经蓄满并被 DS 原生释放过的技能会在这里被拦下，避免重复结算
         if (magic.getCurrentlyCasting() != instance) {
-            return false;
+            return ChargedCastResult.rejected(ChargedCastResult.Reason.NOT_CURRENTLY_CASTING);
         }
 
         // 等级 0 表示技能未解锁（DS 也会在 checkCast 阶段拦下），
@@ -190,16 +197,14 @@ public final class ChargedCasts {
         int playerLevel = instance.level();
 
         if (playerLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
-            return false;
+            return ChargedCastResult.rejected(ChargedCastResult.Reason.ABILITY_NOT_UNLOCKED);
         }
 
         int achievedLevel = chargeable.getChargedLevel(
                 authoritativeChargeTicks(instance, chargeable, playerLevel, payloadTicks), playerLevel);
 
-        settle(player, instance, chargeable, magic, achievedLevel, requestedLevel,
+        return settle(player, instance, chargeable, magic, achievedLevel, requestedLevel,
                 clientPredictedLevel(chargeable, payloadTicks, playerLevel, requestedLevel));
-
-        return true;
     }
 
     /**
@@ -213,18 +218,22 @@ public final class ChargedCasts {
      *
      * @param player   施法者（服务端玩家）
      * @param instance 已按满超限窗口的技能实例
-     * @return 是否已接管本次自动完成；{@code false} 表示调用方应放行 DS 原生流程
+     * @return 本次终结的结算结果；{@link ChargedCastResult#handled()} 为 {@code false}
+     *         表示调用方应放行 DS 原生流程
      */
-    public static boolean settleOvercharged(final @NotNull ServerPlayer player, final @NotNull DragonAbilityInstance instance) {
-        if (!(instance.value().activation() instanceof ChargeableActivation chargeable)
-                || !chargeable.canChargeExceedCastTime()) {
-            return false;
+    public static @NotNull ChargedCastResult settleOvercharged(final @NotNull ServerPlayer player, final @NotNull DragonAbilityInstance instance) {
+        if (!(instance.value().activation() instanceof ChargeableActivation chargeable)) {
+            return ChargedCastResult.rejected(ChargedCastResult.Reason.NOT_CHARGEABLE);
+        }
+
+        if (!chargeable.canChargeExceedCastTime()) {
+            return ChargedCastResult.rejected(ChargedCastResult.Reason.OVERCHARGE_NOT_ENABLED);
         }
 
         MagicData magic = MagicData.getData(player);
 
         if (magic.getCurrentlyCasting() != instance) {
-            return false;
+            return ChargedCastResult.rejected(ChargedCastResult.Reason.NOT_CURRENTLY_CASTING);
         }
 
         // 到点即满档：每档所需时长都被 chargeCapTicks(<= cast_time) 封顶，
@@ -233,13 +242,11 @@ public final class ChargedCasts {
         int playerLevel = instance.level();
 
         if (playerLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
-            return false;
+            return ChargedCastResult.rejected(ChargedCastResult.Reason.ABILITY_NOT_UNLOCKED);
         }
 
         // 本地预测与最终结果同为最高档，故不会产生纠正包
-        settle(player, instance, chargeable, magic, playerLevel, ChargedReleasePayload.AUTO, playerLevel);
-
-        return true;
+        return settle(player, instance, chargeable, magic, playerLevel, ChargedReleasePayload.AUTO, playerLevel);
     }
 
     /**
@@ -248,16 +255,18 @@ public final class ChargedCasts {
      * @param achievedLevel  服务端权威的"已达成档位"（{@link ChargeableActivation#NO_CHARGED_LEVEL} 表示不足）
      * @param requestedLevel 请求档位；{@link ChargedReleasePayload#AUTO} 表示采用 {@code achievedLevel}
      * @param predictedLevel 客户端本地已经按哪一档做了预测；{@code 0} 表示它预测为"取消、未释放"
+     * @return 本次终结的结算结果（必为 {@code RELEASED} 或 {@code CANCELLED} —— 走到这里就已经接管了）
      */
-    private static void settle(final @NotNull ServerPlayer player, final @NotNull DragonAbilityInstance instance,
-                               final @NotNull ChargeableActivation chargeable, final @NotNull MagicData magic,
-                               final int achievedLevel, final int requestedLevel, final int predictedLevel) {
-        int releasedLevel = ChargeableActivation.NO_CHARGED_LEVEL;
+    private static @NotNull ChargedCastResult settle(final @NotNull ServerPlayer player, final @NotNull DragonAbilityInstance instance,
+                                                     final @NotNull ChargeableActivation chargeable, final @NotNull MagicData magic,
+                                                     final int achievedLevel, final int requestedLevel, final int predictedLevel) {
+        ChargedCastResult result;
 
         if (achievedLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
             // 服务端按真实时间复算后不足最低档。客户端可能已经按"释放"做了本地预测，
             // 但服务端必须照常收尾 —— 客户端那边早已停手，放着不管会留下永远按住的施法状态
             cancel(player, instance);
+            result = ChargedCastResult.cancelled(ChargedCastResult.Reason.INSUFFICIENT_CHARGE);
         } else {
             // AUTO 表示"用已达成档位"；其余（含 0 = 取消、>=1 = 指定）直接采用。
             // 越档请求（改包，或客户端与服务端时序错位）一律钳制到已达成档位，而不是拒绝：
@@ -269,13 +278,14 @@ public final class ChargedCasts {
 
             if (finalLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
                 cancel(player, instance);
+                result = ChargedCastResult.cancelled(ChargedCastResult.Reason.CANCELLED_BY_REQUEST);
             } else {
                 release(player, instance, chargeable, magic, finalLevel);
-                releasedLevel = finalLevel;
+                result = ChargedCastResult.released(finalLevel);
             }
         }
 
-        if (predictedLevel != releasedLevel) {
+        if (predictedLevel != result.releasedLevel()) {
             syncSettlement(player, instance, magic);
         }
 
@@ -283,6 +293,7 @@ public final class ChargedCasts {
         // 两条记录统一由 onCastingStopped 在所有终结路径的共同漏斗上处理（见该方法的注释）。
         // 本方法体内必定会调用 release / cancel，两者都经由 MagicData#stopCasting，
         // 因此清理与记账都会在本次调用返回前完成
+        return result;
     }
 
     /**

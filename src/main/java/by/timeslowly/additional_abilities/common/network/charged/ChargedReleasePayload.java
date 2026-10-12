@@ -91,7 +91,7 @@ public record ChargedReleasePayload(ResourceKey<DragonAbility> ability, int char
                 return;
             }
 
-            // 返回值刻意不处理：false 表示"这次请求不该由本模组结算"
+            // 返回值刻意不处理：未接管（{@code handled() == false}）表示"这次请求不该由本模组结算"
             // （类型不匹配 / 已经蓄满被原生释放过 / 技能未解锁），
             // 此时什么都不做才是正确的 —— 服务端既不该释放也不该额外收尾，
             // 客户端的停机由它自己的本地收尾完成。
