@@ -173,6 +173,16 @@ public final class ClientBlockGlowState {
 
         // 推进前先确认世界没变：换维度后旧条目不该继续倒计时（它们已经不该存在于这个表里）
         ensureCurrentLevel();
+
+        // 单人暂停（ESC）时不倒计时：服务端时钟停走，而 ClientTickEvent.Post 照常触发
+        // （Minecraft#tick 末尾无条件调用它，暂停只挡住世界模拟），继续走表会让一次性效果
+        // 在暂停中耗尽，恢复后就比服务端时钟提前消失。
+        // 世界身份检查必须留在本判断**之前**：暂停中换维度 / 退回主菜单同样要立即作废旧坐标。
+        // 多人 / 局域网打开菜单不算暂停，无需在此另行判断（判据见 Minecraft#runTick）。
+        if (Minecraft.getInstance().isPaused()) {
+            return;
+        }
+
         ENTRIES.values().removeIf(glowEntry -> --glowEntry.remainingTicks <= 0);
     }
 

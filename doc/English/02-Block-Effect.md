@@ -232,6 +232,12 @@ is glowing", **not** as X-ray.
 - **Overlapping works**: different colours / display types are separate entries on the server and are drawn
   separately on the client, so different casts and different players stack naturally instead of overriding each
   other. (Same colour and same type merge into one entry — visually indistinguishable anyway.)
+- **What merges is the display, not the duration**: casters that share one entry each keep **their own expiry
+  tick**, and the entry as a whole lives until the latest of them. Therefore:
+  - if A contributes 1200 ticks and B contributes 20, B's share is dropped after 20 ticks and does not drag the
+    entry along with it;
+  - when `/additional-abilities block-glow clear` removes A and B has already expired, the **entry is genuinely
+    removed**, so the count the command reports matches what actually disappeared.
 - **The lifetime is self-managed**: the block effect interface has no `remove` (block effects are instantaneous),
   so this effect keeps its own clock — the server re-sends every live entry once every 20 ticks to "keep it
   alive", and the client counts down locally from the remaining duration carried in the packet. A repeatedly

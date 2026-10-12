@@ -232,6 +232,16 @@ Dragon Survival's and to leave room for a future upgrade.
 - There is **server-side throttling**: for the same player and the same vision type, nothing is sent
   within 5 ticks unless **nothing about the parameters changed** (strength, size and colour all identical).
   Any parameter change goes through.
+- **Throttling never swallows a renewal**: the server remembers how long it has already promised the client, and
+  must re-send as soon as the client **cannot stay covered until the next moment sending is allowed**. So in
+  "send 1 tick, then immediately send 100 ticks with identical parameters" the 100-tick send goes through, and a
+  short duration refreshed every tick no longer flickers. Conversely, a long effect refreshed continuously is
+  still collapsed to one packet every 5 ticks, so bandwidth use is unchanged.
+- **Single-player pause freezes the visual timers**: while paused (ESC) the client still receives game ticks
+  (vanilla behaviour) but the server clock has stopped. Screen visions, glows and quakes therefore **do not
+  advance** while paused, and their remaining time is the same as before once you resume instead of draining
+  away. Opening a menu on a multiplayer server or a published LAN world **is not a pause**, and everything keeps
+  running.
 - Presentation details: 5-tick fade-in, 10-tick fade-out, so nothing snaps on or off; the shake phase is
   driven by the local tick count, so it is **frame-rate independent**.
 - **To clear it immediately** (debugging): `/additional-abilities simple-screen-vision clear <targets>`, see

@@ -117,9 +117,9 @@ public final class BlockGlows {
         Entry existing = data.entries().get(key);
 
         if (existing != null) {
-            // 重复触发（area 目标每刻判定）只续命，不新增条目、不重做剔除
-            existing.extendTo(now + durationTicks);
-            existing.addCaster(caster);
+            // 重复触发（area 目标每刻判定）只续命，不新增条目、不重做剔除。
+            // 续的是**该施法者自己那笔**贡献：别人的时长不受影响，到期后各自退场
+            existing.extendTo(caster, now + durationTicks);
             return;
         }
 
@@ -267,7 +267,7 @@ public final class BlockGlows {
             }
 
             // 剩余时长下限为 1：避免整刻对齐误差把「刚好到期」的条目按 0 发出去
-            int remaining = (int) Math.max(1L, entry.expireTick - now);
+            int remaining = (int) Math.max(1L, entry.expireTick() - now);
             grouped.computeIfAbsent(new Batch(entry.colorARGB, entry.displayType), ignored -> new ArrayList<>())
                     .add(new Pending(entry.position.asLong(), remaining));
             entry.lastSentTick = now;

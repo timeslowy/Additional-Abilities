@@ -192,6 +192,15 @@ public final class ClientBlockQuakeState {
         // 推进前先确认世界没变：换维度后旧假身已随旧世界消失，不该再被 setPos / 倒计时
         adoptLevel(Minecraft.getInstance().level);
 
+        // 单人暂停（ESC）时不推进抛物线：服务端时钟停走，而 ClientTickEvent.Post 照常触发
+        // （Minecraft#tick 末尾无条件调用它，暂停只挡住世界模拟）。继续推进的话，假身会在暂停中
+        // 落回地面并销毁，恢复后与仍在暂停中的服务端时钟对不上。
+        // 世界归属检查必须留在本判断**之前**：暂停中换维度 / 退回主菜单要照常丢弃旧假身。
+        // 多人 / 局域网打开菜单不算暂停，无需在此另行判断（判据见 Minecraft#runTick）。
+        if (Minecraft.getInstance().isPaused()) {
+            return;
+        }
+
         Iterator<Map.Entry<Long, Instance>> iterator = ACTIVE.entrySet().iterator();
 
         while (iterator.hasNext()) {

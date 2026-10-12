@@ -1,6 +1,8 @@
 package by.timeslowly.additional_abilities.client.state;
 
+import by.timeslowly.additional_abilities.common.vision.ScreenVisionTiming;
 import by.timeslowly.additional_abilities.common.vision.ScreenVisionType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +45,14 @@ public final class ClientScreenVisionState {
      */
     private static final float MAX_EDGE_LIGHT_OPACITY = 1.0F;
 
-    /** 收尾淡出时长（刻）：剩余时间不足此值时按比例衰减，避免效果"硬切" */
-    private static final int FADE_OUT_TICKS = 10;
+    /**
+     * 收尾淡出时长（刻）：剩余时间不足此值时按比例衰减，避免效果"硬切"。
+     * <p>
+     * 与 {@link ScreenVisionTiming#FADE_OUT_TICKS} 是<b>同一个常量</b>：服务端要靠它判断
+     * "客户端余量还算不算够"，两边各写一份的话，改了一边就会让刷新时机落进淡出区，
+     * 表现为效果周期性忽明忽暗。契约与理由见 {@link ScreenVisionTiming}。
+     */
+    private static final int FADE_OUT_TICKS = ScreenVisionTiming.FADE_OUT_TICKS;
 
     /** 起始淡入时长（刻）：让效果平滑出现 */
     private static final int FADE_IN_TICKS = 5;
@@ -84,6 +92,15 @@ public final class ClientScreenVisionState {
 
     /** 每客户端 tick 递减各槽的剩余时长；归零后清空该槽 */
     public static void tick() {
+        // 单人暂停（ESC）时不倒计时：服务端时钟停走，而 ClientTickEvent.Post 照常触发
+        // （Minecraft#tick 末尾无条件调用它，暂停只挡住世界模拟）。继续递减会让一次性效果
+        // 在暂停中耗尽，恢复后比服务端时钟提前消失。
+        // 本类不持方块坐标，没有世界身份要维护，因此判断可以直接放在最前。
+        // 多人 / 局域网打开菜单不算暂停，无需在此另行判断（判据见 Minecraft#runTick）。
+        if (Minecraft.getInstance().isPaused()) {
+            return;
+        }
+
         for (Slot slot : SLOTS) {
             slot.tick();
         }
