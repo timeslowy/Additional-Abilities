@@ -81,7 +81,7 @@
                         },
                         {
                             "effect_type": "dragonsurvival:run_function",
-                            "function": "wing_kirin:dragon_ability/invincible_benevolence/beneficiary"
+                            "function": "wing_kirin:dragon_ability/invincible_benevolence/select/add_beneficiary"
                         }
                     ],
                     "targeting_mode": "allies_and_self",
@@ -105,7 +105,7 @@
                     "entity_effect": [
                         {
                             "effect_type": "dragonsurvival:run_function",
-                            "function": "wing_kirin:dragon_ability/invincible_benevolence/search_beneficiary"
+                            "function": "wing_kirin:dragon_ability/invincible_benevolence/main"
                         },
                         {
                             "effect_type": "dragonsurvival:particle",
