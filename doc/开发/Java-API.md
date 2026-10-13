@@ -44,6 +44,34 @@
 | 世界生命周期 | 与维度绑定的状态随 `ServerLevel` 实例生灭，不跨存档复用 |
 | 失败语义 | 会失败的入口返回可判定的结果，不靠日志或异常表达 |
 
+### 事件回调的线程归属（给订阅游戏事件的作者）
+
+平台**不保证**每个游戏事件的回调都在主线程上。已知的例外是本模组自己用到的两个：
+
+| 事件 | 为什么可能不在主线程 |
+|---|---|
+| `GetEnchantmentLevelEvent` | 由 `EventHooks.getEnchantmentLevelSpecific` / `getAllEnchantmentLevels` 在**调用点直接 post**，不做线程切换 |
+| `ItemTooltipEvent` | 由 `ItemStack#getTooltipLines` 直接 post，而该方法会被非主线程调用 |
+
+非主线程的实际来源是**原版自己**：`SessionSearchTrees` 用
+`CompletableFuture.supplyAsync(..., Util.backgroundExecutor())` 重建创造模式搜索索引，而
+`SearchTree.plainText` 为了建后缀数组会**立即**求值传入的 tooltip 函数 ——
+于是 `ItemStack#getTooltipLines` 就跑在 `Worker-Main-N` 上。触发时机包括打开 / 重建创造模式
+标签页、收到配方与标签包、切换语言。
+
+本模组对这类事件的契约是**「非主线程一律不结算」**：判定为不受支持的线程时静默返回空结果，
+既不遍历实体表也不读附件。**不会抛异常，也不会排队回主线程** —— 事件要求当场返回结果
+（`getEnchantmentLevelSpecific` 直接拿事件里改过的值当返回值），`enqueueWork` 保留不了查询语义。
+
+> 可以观察到的代价：创造模式物品搜索索引里**不会**收录本模组附加的**临时**附魔名
+> （物品自身的真附魔名照常入索引）。搜索索引只用于文本检索、不参与结算，因此这是有意的降级。
+
+判定实现见 `common.ability.entity_effects.enchantment_bonus.EnchantmentBonusThreads`
+（三态：服务端主线程 / 客户端游戏线程 / 不受支持）。**不要**用 `FMLEnvironment.dist`
+或 `EffectiveSide` 判这件事：前者是物理端（单人游戏里同时跑着两侧），后者在本版本看的是
+`SidedThreadGroup`，而 NeoForge 21.1.250 **从未用它创建过客户端的游戏线程**，
+结果是一律 fallback 成 CLIENT —— 连 `Worker-Main-*` 都会被算作客户端。
+
 ---
 
 ## 二、蓄力：`ChargedCasting`
