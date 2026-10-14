@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * {@code SidedThreadGroup}，而 NeoForge 21.1.250 里 {@code SidedThreadGroups.CLIENT}
  * <b>从未被用来创建任何线程</b>（客户端的游戏线程是 {@code Main} 里裸 {@code new Thread} 后
  * 改名为 "Render thread"），因此它只会走 fallback 一律返回 CLIENT ——
- * 连 {@code Worker-Main-*} 后台线程也会被算成客户端，正是 F25 要修的那个误判。
+ * 连 {@code Worker-Main-*} 后台线程也会被算成客户端，正是要避免的那个误判。
  *
  * <h2>为什么是"查"而不是"记"</h2>
  * {@code Minecraft} 的构造器里就 {@code this.gameThread = Thread.currentThread()}，

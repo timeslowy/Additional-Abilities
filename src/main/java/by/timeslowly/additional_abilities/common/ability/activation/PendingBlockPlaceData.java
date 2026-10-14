@@ -14,7 +14,7 @@ import java.util.UUID;
  * （{@code AAAttachments.PENDING_PLACE}），由 {@link PendingBlockPlaces} 挂在
  * {@code LevelTickEvent.Post} 上确认后分发。
  *
- * <h2>为什么需要"待确认"这一步（F21）</h2>
+ * <h2>为什么需要"待确认"这一步</h2>
  * {@code BlockEvent.EntityPlaceEvent} 是在 {@code EventBus#post(...)} <b>内部</b>逐监听器派发的。
  * 因此在本模组的监听器被调用时，<b>"最终会不会被取消"还不知道</b> —— 排在本模组之后的监听器
  * （同优先级或更低优先级）随时可能取消这次放置。若此刻就分发技能，就会出现
@@ -27,7 +27,7 @@ import java.util.UUID;
  * 下一个 LevelTickEvent.Post → 读最终取消状态 → 未取消才分发
  * </pre>
  * 代价是技能比放置晚 <b>最多 1 个服务端刻</b>（约 50ms）执行。对被动技能而言不可感知，
- * 且这正是「只响应最终未取消的放置」（C09 已确认）所必须付出的代价。
+ * 且这正是「只响应最终未取消的放置」所必须付出的代价。
  * <p>
  * <b>为什么不直接把监听器优先级改成 LOWEST</b>：那只保证晚于优先级更高的监听器，
  * <b>无法</b>保证晚于同优先级的其他模组 —— 同优先级之间没有顺序承诺，缺陷只是变窄、没有消失。

@@ -51,7 +51,7 @@ public class DamageReflections {
     /**
      * 返回当前<b>未过期</b>条目的只读快照，并顺带清理已过期条目（技能结束后附件内存不会残留）。
      * <p>
-     * <b>为什么返回快照而不是 {@code entries.values()}</b>（审查报告 F17）：后者是底层
+     * <b>为什么返回快照而不是 {@code entries.values()}</b>：后者是底层
      * {@link HashMap} 的<b>活视图</b>，调用方拿到的集合既可以被 {@code remove} 改写本附件的内部状态，
      * 也会在遍历途中因别处调用 {@link #set} / {@link #remove} 而抛
      * {@code ConcurrentModificationException}。虽然当前唯一调用方（伤害反弹事件）是单线程顺序访问，

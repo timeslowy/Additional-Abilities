@@ -12,21 +12,17 @@ import java.util.OptionalInt;
 /**
  * 蓄力档位族系激活类型的<b>正式入口</b>：触发一次结算，或读取档位记录。
  *
- * <h2>它挡在前面做什么</h2>
- * 真正的实现在 {@code common.ability.activation.ChargedCasts}，但它贴着实现细节：
- * 形参里的 {@code payloadTicks} 是<b>网络请求</b>的字段（客户端上报的"上限声明"），
- * {@code requestedLevel} 还允许取值 {@code AUTO}（{@code -1}）与 {@code CANCEL}（{@code 0}）
- * 这两个<b>协议哨兵</b>。第三方照那个签名调用，就等于把自己的代码绑在一条私有协议上 ——
- * 协议一改，调用方跟着编译失败（这正是审查报告 F15 与 §4.2 要修的东西）。
+ * <h2>为什么需要这一层</h2>
+ * 真正的实现在 {@code common.ability.activation.ChargedCasts}，但它的形参带着网络协议细节：
+ * {@code payloadTicks} 是客户端上报值，{@code requestedLevel} 还允许取 {@code AUTO}（-1）
+ * 与 {@code CANCEL}（0）两个协议哨兵。第三方照那个签名调用，就等于绑死在私有协议上。
  * <p>
- * 本类把这两个"协议味"的参数就地消化：
+ * 本类把这两个参数就地消化：
  * <ul>
- *     <li><b>时长</b>一律取服务端自己的 {@link DragonAbilityInstance#getCurrentTick()}。
- *         这是最严格的一档 —— 服务端复算时本就与它取最小（{@code effectiveTicks = min(请求值,
- *         服务端已蓄刻数, cast_time)}），直接传"服务端已蓄刻数"即等于声明"我不虚报"。
- *         因此本入口<b>天然免疫</b>报告 F02 那条"谎报满时长换高档"的路径；</li>
+ *     <li><b>时长</b>一律取服务端自己的 {@link DragonAbilityInstance#getCurrentTick()}，
+ *         这是最严格的一档，因此本入口不存在"调用方虚报蓄力时长"的路径；</li>
  *     <li><b>档位</b>由业务语义表达：{@link #release} 是"按已蓄到的档位"，
- *         {@link #releaseAt} 是"请求某一档"（仍会被服务端钳到已达成档位），
+ *         {@link #releaseAt} 是"请求某一档"（仍会被钳到已达成档位），
  *         {@link #cancel} 是"取消"。</li>
  * </ul>
  *
@@ -44,7 +40,14 @@ import java.util.OptionalInt;
  * 区别只在结果：取消不执行动作、不扣初始魔力、不进冷却。调用方若要区分，
  * 判断 {@link ChargedCastResult#isReleased()} 即可。
  *
- * <p>All entry points require the server main thread.
+ * <h2>线程与逻辑端</h2>
+ * 全部入口都要求<b>服务端主线程</b>，且只对服务端玩家有意义。
+ *
+ * <pre>{@code
+ * // All entry points are server-main-thread only.
+ * // Request sentinels (AUTO / CANCEL) never leak out: results carry business tiers.
+ * // A rejected result means this mod did nothing - do not treat it as a cancel.
+ * }</pre>
  */
 public final class ChargedCasting {
     private ChargedCasting() {
@@ -126,7 +129,7 @@ public final class ChargedCasting {
                                                     final @NotNull DragonAbilityInstance instance) {
         int resolved = ChargedCasts.resolveSelectedLevel(player, instance);
 
-        // AUTO（-1）是"未指定"的内部哨兵，映射为空；其余（含 0 = 选定取消）都是有效业务档位
+        // AUTO (-1) means "unspecified" -> empty; 0 means "player selected cancel" -> a real answer.
         return resolved < ChargedCastResult.NO_LEVEL ? OptionalInt.empty() : OptionalInt.of(resolved);
     }
 
@@ -136,7 +139,7 @@ public final class ChargedCasting {
      * 取消不写入最近释放记录（取消不是释放）。没有可报告的档位时（未在蓄力且无记录、
      * 或激活类型不属于本族系）返回 {@link ChargedCastResult#NO_LEVEL}。
      * <p>
-     * <b>「正在蓄力」优先于「最近释放」（复审 P2）</b>：只要实例仍在施法中，
+     * <b>「正在蓄力」优先于「最近释放」</b>：只要实例仍在施法中，
      * 返回值就是当前换算档位，<b>包括 0 = 尚未达最低档</b>；
      * 只有当前没有施法时才读最近一次释放记录。否则"刚按下、还没蓄到档"会答出上一轮的档位。
      * <p>
@@ -152,11 +155,10 @@ public final class ChargedCasting {
      * <p>
      * 这是本门面唯一的实际出口：{@code payloadTicks} 取
      * {@link DragonAbilityInstance#getCurrentTick()} 而非任何外部上报值。
-     * 服务端复算时对该值取 {@code min(它, 它, cast_time)}，结果恒为它本身按 {@code cast_time} 封顶，
-     * 因此"调用方说蓄了多久"这件事在正式入口上不存在。
+     * 服务端复算时对该值取 {@code min(它, 它, cast_time)}，结果恒为它本身按 {@code cast_time} 封顶。
      *
-     * <p>The client-reported duration is never forwarded: this facade passes the server's own
-     * tick counter, which is the strictest input the settlement service accepts.
+     * <p>The client-reported duration is never forwarded: this facade always passes the
+     * server's own tick counter, the strictest input the settlement service accepts.
      */
     private static @NotNull ChargedCastResult fireServerAuthoritative(final @NotNull ServerPlayer player,
                                                                      final @NotNull DragonAbilityInstance instance,

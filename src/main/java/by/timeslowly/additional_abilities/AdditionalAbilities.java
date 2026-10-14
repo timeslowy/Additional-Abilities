@@ -45,7 +45,7 @@ public class AdditionalAbilities {
         AAAbilityTargets.register(modEventBus);
         // 注册龙之技能自定义被动触发类型（DragonSurvival activation_trigger 注册表，trigger_type）
         AAAbilityTriggers.register(modEventBus);
-        // 接线：放置方块事件 → 本模组 additional_abilities:on_block_placed 触发器（两阶段，见 F21）
+        // 接线：放置方块事件 → 本模组 additional_abilities:on_block_placed 触发器（两阶段确认）
         // 第一阶段只登记候选；第二阶段在维度刻末尾确认"最终未被取消"后才真正分发
         NeoForge.EVENT_BUS.addListener(OnBlockPlaced::enqueue);
         NeoForge.EVENT_BUS.addListener(PendingBlockPlaces::confirm);

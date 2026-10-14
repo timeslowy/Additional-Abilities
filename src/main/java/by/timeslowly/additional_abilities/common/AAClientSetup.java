@@ -50,7 +50,7 @@ public final class AAClientSetup {
         // 蓄力档位数字提示图层：叠加在 DS 的魔力 HUD（含蓄力条）之上
         modEventBus.addListener(ChargedIndicatorLayer::registerLayers);
 
-        // 模糊后处理链的生命周期：资源重载时作废、游戏关闭时释放（F12）
+        // 模糊后处理链的生命周期：资源重载时作废、游戏关闭时释放
         modEventBus.addListener(ScreenBlurLifecycleHandler::registerReloadListener);
 
         // 配置界面扩展点：让模组列表里的「配置」按钮变为可点，

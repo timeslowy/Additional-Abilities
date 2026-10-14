@@ -35,7 +35,7 @@
  *         （见 {@link by.timeslowly.additional_abilities.api.Visuals} 的说明）；</li>
  *     <li><b>调试指令的返回值与输出格式</b>；</li>
  *     <li><b>数据包 JSON 契约</b> —— 那一侧另有文档（{@code doc/中文}、{@code doc/English}），
- *         且受"注册 ID 与字段名保持不变"的约束（用户已确认决策 C02）。</li>
+ *         且受"注册 ID 与字段名保持不变"的约束。</li>
  * </ul>
  *
  * <h2>通用契约</h2>
@@ -60,7 +60,8 @@
  *     <li><b>集合所有权</b>：返回的集合一律是<b>不可变快照</b>或只读视图，调用方不得假设其可变；
  *         传入的集合同样不会被本模组保存引用（需要保存时自行复制）；</li>
  *     <li><b>世界生命周期</b>：凡与维度绑定的状态都随 {@code ServerLevel} 实例生灭，
- *         不跨存档复用。跨存档残留曾是一个实际缺陷（审查报告 F06），不要用静态表重新引入；</li>
+ *         不跨存档复用。<b>不要用静态表重新引入</b>：按 {@code ResourceKey} 分区的静态表会跨存档存活，
+ *         使旧存档的到期时间污染新存档；</li>
  *     <li><b>失败语义</b>：会失败的入口都返回可判定的结果（布尔或
  *         {@link by.timeslowly.additional_abilities.api.ChargedCastResult}），不靠日志或异常表达。</li>
  * </ul>

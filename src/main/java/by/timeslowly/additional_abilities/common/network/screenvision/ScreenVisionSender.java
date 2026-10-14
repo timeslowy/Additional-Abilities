@@ -35,37 +35,34 @@ import java.util.concurrent.ConcurrentHashMap;
  * 若只按玩家存一份，同一次施法里先下发的强效果会把随后下发的弱效果吞掉
  * （间隔不足且参数没提升 → 跳过），表现为"并存的两种视觉只有一种生效"。
  *
- * <h2>为什么还要记「覆盖到什么时候」（F09）</h2>
- * 只比"参数变没变"是不够的：参数完全相同、但<b>时长更长</b>的那次下发同样必须放行。
- * 反例就是报告里的固定情景 —— 先发 1 刻，再在同一窗口内发 100 刻，
- * 后者因参数没变被丢弃，客户端只拿到 1 刻。
- * <p>
- * 因此每条槽额外记下 {@code coveredUntil}：服务端<b>已经承诺给客户端的时间</b>。
- * 判据从"参数没变就跳过"变成"参数没变<b>且客户端余量还够</b>才跳过"，
- * 于是延长租期必然放行、短时长的重复触发也不会把长租期缩短
- * （客户端对同一类型本就取较晚的到期时刻，这里不再有需要"抢"的东西）。
- * <p>
- * 注意这条判据的作用范围：它只在<b>节流窗口内</b>参与判断。
- * 超过窗口的发包照旧放行（此时本来就要刷新一次），因此长效果仍按
- * {@link ScreenVisionTiming#THROTTLE_TICKS} 刻的节拍复发，带宽开销与修复前一致。
- * <p>
- * <b>{@code coveredUntil} 是绝对游戏刻</b>，因此与 F06 同类风险：它必须在玩家登出时清掉，
- * 否则同一 JVM 换存档后残留的旧时刻会让新存档里的余量判断失真。
- * 槽位本来就是「玩家 UUID → 记录」，登出清理已覆盖这一点。
+ * <h2>不变量一：覆盖到期时间</h2>
+ * 只比"参数变没变"是不够的：参数完全相同、但<b>时长更长</b>的那次下发同样必须放行，
+ * 否则"先发 1 刻、再发 100 刻"会让后者被丢弃，客户端只拿到 1 刻。
+ * 因此每条槽记下 {@code coveredUntil} —— 服务端<b>已经承诺给客户端的时间</b>，
+ * 判据从"参数没变就跳过"变成"参数没变<b>且客户端余量还够</b>才跳过"。
+ * 该判据只在<b>节流窗口内</b>参与判断，超窗照旧放行，
+ * 因此长效果仍按 {@link ScreenVisionTiming#THROTTLE_TICKS} 刻的节拍复发。
  *
- * <h2>为什么每条槽还要记「属于哪个维度」（复审 P1）</h2>
- * 只清登出是不够的：{@code coveredUntil} 记的是<b>某个 ServerLevel 的</b>游戏刻，
- * 而玩家换维度时槽位并不重来。维度之间的 {@code getGameTime()} 相互独立，
+ * <h2>不变量二：时间轴按维度隔离</h2>
+ * {@code coveredUntil} 是<b>绝对游戏刻</b>，属于某个 {@code ServerLevel} 的时间轴。
+ * 玩家换维度时槽位并不重来，而各维度的 {@code getGameTime()} 相互独立 ——
  * 切到时间较小的维度后 {@code coveredUntil - now} 会异常偏大、
- * {@code now - last.tick()} 甚至可能为负 —— 两者都会让同参数的新视觉被长期节流掉，
- * 表现为「换维度后效果不显示」。因此每条槽额外记住自己的维度身份，
- * 与当前维度不一致时<b>整槽作废</b>（当作全新槽：参数不参与比较、覆盖终点归零），
- * 于是换维度后必然放行首包。
+ * {@code now - last.tick()} 甚至可能为负，两者都会让同参数的新视觉被长期节流掉，
+ * 表现为"换维度后效果不显示"。因此每条槽记住自己的维度身份，
+ * 与当前维度不一致时<b>整槽作废</b>（当作全新槽），换维度后必然放行首包。
+ * <p>
+ * 同理 {@code coveredUntil} 必须在玩家登出时清掉，
+ * 否则同一 JVM 换存档后残留的旧时刻会让新存档里的余量判断失真。
  * <p>
  * 判据取 {@code ResourceKey<Level>} 而不是 {@code ServerLevel} 实例：
- * 同一维度退出再进入会得到新的 {@code ServerLevel}，但那种情况下
- * 刻数本来也可能倒退（世界时间由存档决定），仍应作废 ——
- * 而「维度键不同必然作废」这条已经覆盖了它，故无需持有实例引用（也不会阻止 GC）。
+ * 同一维度退出再进入会得到新的 {@code ServerLevel}，而刻数本来也可能倒退，
+ * 仍应作废 —— 「维度键不同必然作废」已覆盖这一情形，
+ * 故无需持有实例引用（也不会阻止 GC）。
+ *
+ * <pre>{@code
+ * // A skip requires all of: same dimension, unchanged params, client coverage still sufficient.
+ * // coveredUntil is an absolute game tick on that dimension's own timeline.
+ * }</pre>
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class ScreenVisionSender {
@@ -171,11 +168,10 @@ public final class ScreenVisionSender {
      * （{@code 0 - now} 不可能达到安全余量），因此 {@code coveredLongEnough} 恒为 {@code false}
      * —— 这一条与参数变没变无关，是首包的充分保证。
      * <p>
-     * <b>不能把"强度 &gt; 0 所以参数必然变了"当作理由</b>：容差是
-     * {@code PARAM_EPSILON = 1.0E-4}，而初始强度正是 {@code 0.0F}，
-     * 因此 {@code amplitude ≤ 1.0E-4} 的极弱效果满足"参数没变"。
-     * 结论仍然成立（由上一条保证），但推理链里只有覆盖终点那一条是无条件成立的
-     * —— 审查报告 §6.2 要求的正是把这类断言改写成与实现一致的口径。
+     * <b>首包放行的唯一依据是覆盖终点，不是强度比较</b>：容差为
+     * {@code PARAM_EPSILON = 1.0E-4}，而初始强度是 {@code 0.0F}，
+     * 因此 {@code amplitude ≤ 1.0E-4} 的极弱效果其实满足"参数没变"，
+     * 不能靠"强度 &gt; 0 所以参数必然变了"来推断首包会放行。
      */
     private static @NotNull LastSend @NotNull [] createSlots() {
         LastSend[] slots = new LastSend[ScreenVisionType.values().length];

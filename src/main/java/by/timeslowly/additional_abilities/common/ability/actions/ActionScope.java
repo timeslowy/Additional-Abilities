@@ -10,43 +10,40 @@ import java.util.UUID;
 /**
  * 当前正在派发的<b>施法动作身份</b>（服务端作用域）。
  *
- * <h2>为什么需要它（复审 P1）</h2>
- * 方块震动的发声分组原先只按「形状 + 施法者 + 技能键」区分。那个键无法表达
- * 「<b>同一玩家、同一技能、两次独立动作</b>」—— 例如同一技能里两个领域同时结算，
- * 或者 {@code max_domains > 1} 下两个独立的领域流。这类情况下两批方块会被并成一组，
- * 声源取合并后的几何中心；若两批方块相距较远，中心落在两者之间，
- * 而音量固定 1.0（可听半径约 16 格），结果<b>两边都听不到</b>（与 F13 同一失效模式）。
- *
- * <h2>身份取什么</h2>
- * 取的是「<b>施法起点世界刻</b>」（{@code castStartTick}）—— 与
- * {@code DomainTarget} / {@code DomainInstance} 判定"同一次施法"用的是同一个量：
+ * <h2>职责</h2>
+ * 为"这一次施法"提供一个可比较的身份，供方块震动按动作分离声源。
+ * 身份取<b>施法起点世界刻</b>（{@code castStartTick}），与 {@code DomainTarget} /
+ * {@code DomainInstance} 判定"同一次施法"用的是同一个量：
  * <pre>
  * castStartTick = now - (currentTick - 1)
  * </pre>
- * 它在同一次施法内恒定、不同次施法必然不同，因此天然就是"动作身份"，
+ * 它在同一次施法内恒定、不同次施法必然不同，因此天然就是动作身份，
  * 不需要 DS 提供施法 ID（DS 也没有）。
  *
- * <h2>为什么用作用域而不是把参数一路传下去</h2>
- * 效果的形参由 DS 的 {@code AbilityBlockEffect#apply(dragon, ability, position, direction)}
- * 固定，本模组无法加参数；而实现该接口的效果（包括 DS 内置的 33 种）都只能从形参取信息。
+ * <h2>为什么用作用域而不是传参</h2>
+ * 方块效果的形参由 DS 的 {@code AbilityBlockEffect#apply(dragon, ability, position, direction)}
+ * 固定，无法加参数；实现该接口的效果（含 DS 内置的 33 种）都只能从形参取信息。
  * 在<b>派发点</b>设置作用域、在<b>效果内</b>读取，是唯一不改变接口的做法。
  *
- * <h2>为什么是 ThreadLocal</h2>
- * —— 这里靠的是"服务端只有一个逻辑主线程"这一前提（本模组所有方块扫描与效果派发
- * 都发生在服务端主线程上，与 {@code api} 包的线程契约一致）。
- * {@link ThreadLocal} 使作用域天然按线程隔离：万一将来有别的线程意外读到，
- * 拿到的是 {@code null} 而不是别人的身份，退化为旧的保守分组，不会串味。
- *
- * <h2>拿不到身份时怎么办</h2>
- * {@link #current()} 返回 {@code null}，调用方（{@code BlockQuakes.trigger}）
- * 退化为"没有动作身份"：此时同一玩家同一技能的全部震动仍会并成一组发声 ——
- * 即<b>旧行为</b>。这样未接线的调用点（例如第三方直接调 {@code BlockQuakes.trigger}）
- * 不会因为缺少身份而抛异常或产生更差的结果，只是拿不到本次的改善。
+ * <h2>线程模型</h2>
+ * 依赖"服务端只有一个逻辑主线程"这一前提，与 {@code api} 包的线程契约一致。
+ * 用 {@link ThreadLocal} 使作用域按线程隔离：万一有别的线程意外读到，
+ * 拿到的是 {@code null} 而不是别人的身份，退化为保守分组，不会串味。
  *
  * <h2>必须成对使用</h2>
- * 一律用 {@link #run} 或 {@link #supply}，它们在 {@code finally} 里恢复上一层，
+ * 一律用 {@link #run}，它在 {@code finally} 里恢复上一层，
  * 因此嵌套派发（领域回调里再触发别的技能）也能正确还原。
  * 手工 {@code set} / {@code clear} 会在效果抛异常时把身份泄漏到后续派发上。
+ *
+ * <h2>拿不到身份时</h2>
+ * {@link #current()} 返回 {@code null}，调用方（{@code BlockQuakes.trigger}）退化为
+ * "没有动作身份"：同一玩家同一技能的全部震动仍会并成一组发声（即保守行为）。
+ * 未接线的调用点不会因此抛异常或产生更差的结果，只是拿不到分离效果。
+ *
+ * <pre>{@code
+ * // null identity degrades to the conservative grouping - never an exception.
+ * // Always pair set/restore through run(); a thrown effect must not leak identity.
+ * }</pre>
  */
 public final class ActionScope {
     /**
@@ -120,11 +117,11 @@ public final class ActionScope {
      * 只用 {@code record} 自带的相等语义：三段全等才算"同一次动作"。
      * 特别是 {@code castStartTick} 为 {@code null}（身份未知）时，
      * 只有同样是"未知"的项才会并到一起 —— 未接线调用方的震动<b>不会</b>
-     * 被并入某一次真实动作，从而避免"声源被拖到两者之间"这个本次要修的失效模式。
+     * 被并入某一次真实动作，从而避免"声源被拖到两片区域中间、两边都听不到"。
      *
      * @param caster        施法者 UUID
      * @param ability       技能键
-     * @param castStartTick 施法起点世界刻；{@code null} 表示"身份未知"，退化为旧行为
+     * @param castStartTick 施法起点世界刻；{@code null} 表示"身份未知"，退化为保守分组
      */
     public record ActionKey(@NotNull UUID caster, @NotNull ResourceKey<?> ability,
                             @Nullable Long castStartTick) {

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * 该文件对 {@code damage} 零命中），因此它只能由
  * {@code data/<命名空间>/damage_type/<名称>.json} 定义。
  * <p>
- * 这带来一个此前被忽略的后果（审查报告 F18）：<b>{@code DeferredRegister} 对它是无效的</b>。
+ * 由此产生一个非显然的后果：<b>{@code DeferredRegister} 对它是无效的</b>。
  * {@code DeferredRegister} 的绑定逻辑只在 {@code RegisterEvent} 里按
  * {@code BuiltInRegistries.REGISTRY} 的注册表名单逐个派发；名单里没有 {@code damage_type}，
  * 那个事件就永远不发，{@code DeferredHolder} 永远 {@code isBound() == false}。
@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <h2>JSON 定义仍在</h2>
  * {@code data/additional_abilities/damage_type/counter_shock.json} 保持不变
- * （用户已确认决策 C02：存档标记与注册 ID 不变）。
+ * （存档标记与注册 ID 保持不变）。
  */
 public final class AADamageTypes {
     /** 注册 id：{@code additional_abilities:counter_shock}。反伤默认使用的伤害类型。 */

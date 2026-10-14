@@ -174,7 +174,7 @@ public final class BlockGlows {
      * <p>
      * <b>为什么用 {@code LevelTickEvent.Post} 而不是 {@code ServerTickEvent.Post}</b>：状态挂在
      * {@code ServerLevel} 上，按维度触发天然与数据布局对齐，直接拿到本维度实例，
-     * 不需要再 {@code server.getLevel(dimension)} 反查 —— 旧实现正是在反查失败时留下脏数据。
+     * 不需要再 {@code server.getLevel(dimension)} 反查 —— 反查失败正是脏数据的来源。
      * 时机上它仍然晚于本维度的玩家 tick（{@code PlayerTickEvent.Post} 在 {@code ServerLevel#tick}
      * 内部触发），因此当刻登记的发光当刻就能参与刷新。
      */

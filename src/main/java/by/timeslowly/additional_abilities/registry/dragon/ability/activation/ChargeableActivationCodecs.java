@@ -22,7 +22,7 @@ import java.util.Optional;
  * <b>不建立十参数的泛型构造器框架。</b>本类只共享「逐字段的片段」，
  * 两个 record 的 {@code instance.group(...)} 与构造签名仍然完整写在各自文件里 ——
  * 这样从任一文件都能一眼读出它接受的完整字段表，而共享的只是那些重复的常量。
- * （审查报告 §5.1 明确要求"保留两个 record 和注册 ID，不建立复杂十参数泛型框架"。）
+ * （刻意保留两个 record 与既有注册 ID，不建立复杂十参数泛型框架。）
  *
  * <h2>唯一的真实差异</h2>
  * {@code can_charge_exceed_cast_time} 的默认值：{@code charged} 为 {@code false}、

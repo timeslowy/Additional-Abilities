@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 // 注册 NeoForge Data Attachment（附加数据）
 // 实体附件：damage_reflection（伤害反震参数载体）
 // 维度附件：domain（领域数据）、block_glow（方块发光条目）、block_quake（震动冷却与待发缓冲）、
-//   pending_block_place（待确认的方块放置，F21）
+//   pending_block_place（待确认的方块放置）
 //   —— 维度状态一律挂 Level，绝不用静态 Map 按维度 ResourceKey 分区（那会跨存档串味）
 // ⚠️ 另有一个例外：enchantment_bonuses 注册在 DS 自己的注册表里（见该字段的注释，那里说明了原因）
 public class AAAttachments {
@@ -78,11 +78,11 @@ public class AAAttachments {
 
     /**
      * 待确认的方块放置队列：由 {@code OnBlockPlaced#enqueue} 登记、{@code PendingBlockPlaces#confirm}
-     * 在下一个维度刻确认后分发（F21）。
+     * 在下一个维度刻确认后分发。
      * <p>
      * <b>为什么需要它</b>：{@code EntityPlaceEvent} 在 {@code EventBus#post(...)} <b>内部</b>逐监听器派发，
      * 本模组的监听器被调用时"最终会不会被取消"还未知 —— 排在其后的同优先级 / 低优先级监听器
-     * 随时可能取消这次放置。把放置登记下来、等派发结束后再确认，才能做到只响应最终未取消的放置（C09）。
+     * 随时可能取消这次放置。把放置登记下来、等派发结束后再确认，才能做到只响应最终未取消的放置。
      * <p>
      * 与 {@link #BLOCK_GLOW} / {@link #BLOCK_QUAKE} / {@link #DOMAIN} 同因挂在 {@code Level} 上：
      * 这是"按维度"的服务端状态，静态 {@code Map<ResourceKey<Level>, …>} 会在换存档后串味。

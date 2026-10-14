@@ -6,7 +6,7 @@ import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 「这次附魔查询发生在哪条线程上」—— {@code enchantment_bonus} 消费端的<b>线程契约</b>（T12 / F25）。
+ * 「这次附魔查询发生在哪条线程上」—— {@code enchantment_bonus} 消费端的<b>线程契约</b>。
  *
  * <h2>要解决的问题</h2>
  * 本效果的结算入口是 NeoForge 的 {@code GetEnchantmentLevelEvent}，而该事件由

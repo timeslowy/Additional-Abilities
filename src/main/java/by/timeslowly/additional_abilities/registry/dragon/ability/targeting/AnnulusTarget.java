@@ -73,7 +73,7 @@ import org.jetbrains.annotations.NotNull;
  * <ul>
  *     <li>方块分支传入的 {@code direction} 为 {@code null}——与 DS {@code area} / {@code disc} 一致
  *         （只有 {@code looking_at} 会传真实的命中面朝向）。依赖朝向的方块效果需自行兜底。</li>
- *     <li>方块分支会<b>跳过未加载区块</b>（F20）：条件上下文要读 {@code getBlockState}，
+ *     <li>方块分支会<b>跳过未加载区块</b>：条件上下文要读 {@code getBlockState}，
  *         而它会同步加载 / 生成区块。外半径给大值时这一点尤其重要。</li>
  *     <li>本类只负责"选谁"。谁能被打由 {@code applied_effects.targeting_mode} 决定，
  *         与目标类型无关（与 DS 其它目标类型同理）。</li>
@@ -118,7 +118,7 @@ public record AnnulusTarget(Either<AbilityTargeting.BlockTargeting, AbilityTarge
                 return;
             }
 
-            // 未加载区块门控（F20）：blockTarget.matches 内部会建 Condition#blockContext，
+            // 未加载区块门控：blockTarget.matches 内部会建 Condition#blockContext，
             // 而它读 getBlockState —— 那会同步加载 / 生成区块。必须挡在 matches 之前。
             // 顺序上刻意放在环形判定之后：环形判定是纯浮点，先跑它能把环外的位置（含内圈）全部刷掉。
             if (!level.isLoaded(position)) {

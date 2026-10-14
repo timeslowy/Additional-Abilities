@@ -90,7 +90,7 @@ public record DurabilityChange(List<HeldItemSlots.SlotSelector> slots, Optional<
                                Operation operation, LevelBasedValue amount, Unit unit,
                                Optional<PercentBase> percentBase, boolean breakItem) {
     /**
-     * <b>参数所有权：构造期防御性复制</b>（审查报告 §4.1"列表和数组的可变所有权不明确"）。
+     * <b>参数所有权：构造期防御性复制</b> —— 调用方保留所有权，本类型不持有可变引用。
      * <p>
      * record 的紧凑构造器不会自动复制集合，所以直接写 {@code new DurabilityChange(mutableList, ...)}
      * 会让"这条规则"与调用方共享同一个列表 —— 调用方此后往列表里加一项，

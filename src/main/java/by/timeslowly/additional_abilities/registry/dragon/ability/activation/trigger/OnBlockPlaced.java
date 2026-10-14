@@ -49,7 +49,7 @@ import java.util.Optional;
  * {@link BlockEvent.EntityMultiPlaceEvent} 是它的子类、且 {@code CommonHooks} 用 if/else 二选一，
  * 因此监听父类即可同时覆盖「单方块」与「一次放置产生多方块」（床 / 门 / 高植被），且不会重复触发。
  * <p>
- * <b>只响应最终未被取消的放置（C09）</b>：本触发器是<b>两阶段</b>的 ——
+ * <b>只响应最终未被取消的放置</b>：本触发器是<b>两阶段</b>的 ——
  * {@link #enqueue} 只登记候选，{@code PendingBlockPlaces} 在下一个维度刻读到事件的最终取消状态后，
  * 才由 {@link #dispatch} 执行技能。因此被别的模组（如领地保护）拒绝的放置<b>不会</b>触发技能。
  * 代价是技能比放置晚最多 1 个服务端刻执行，完整推理见 {@code PendingBlockPlaceData}。
@@ -83,7 +83,7 @@ public record OnBlockPlaced(Optional<LootItemCondition> condition) implements Ac
      * 事件分发：接线见主类 {@code AdditionalAbilities} 构造函数
      * （{@code NeoForge.EVENT_BUS.addListener(OnBlockPlaced::enqueue)}，游戏中事件总线）。
      * <p>
-     * <b>本方法只登记，不执行技能</b>（F21）：事件正在派发、最终取消状态未知，
+     * <b>本方法只登记，不执行技能</b>：事件正在派发、最终取消状态未知，
      * 此刻执行会让"被别的模组拒绝的放置"也触发技能。真正的分发在
      * {@link #dispatch(ServerPlayer, net.minecraft.core.BlockPos, BlockState)}，
      * 由 {@code PendingBlockPlaces} 在下一个维度刻、读到最终取消状态之后调用。

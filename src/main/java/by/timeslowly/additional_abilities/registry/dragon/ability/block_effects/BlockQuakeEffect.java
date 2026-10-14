@@ -120,7 +120,7 @@ public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probab
             return;
         }
 
-        // 本次动作身份 = 施法起点世界刻（复审 P1 的发声分组用）。
+        // 本次动作身份 = 施法起点世界刻（供发声分组使用）。
         // 这里是"一次性派发"路径：DS 内置选择器（area / disc / looking_at / self / dragon_breath）
         // 直接调本方法，ability.getCurrentTick() 就是本次施法的刻，算式与 DomainTarget 一致。
         //

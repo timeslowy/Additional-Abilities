@@ -54,7 +54,7 @@ import java.util.Map;
  * 但也不能用 {@code FMLEnvironment.dist} —— 那是<b>物理端</b>，而单人游戏里物理客户端同时跑着
  * 逻辑客户端与逻辑服务端：按物理端一刀切会取错候选集（甚至让渲染线程摸到服务端实体）。
  * <p>
- * 判定收在 {@link EnchantmentBonusThreads}（T12 / F25），这里只消费它的结论：
+ * 判定收在 {@link EnchantmentBonusThreads}，这里只消费它的结论：
  * <ul>
  *     <li>{@code SERVER} → 服务端候选集；</li>
  *     <li>{@code CLIENT} → 客户端候选集（客户端游戏线程）；</li>

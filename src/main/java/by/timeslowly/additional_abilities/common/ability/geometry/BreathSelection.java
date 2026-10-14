@@ -56,7 +56,7 @@ public final class BreathSelection {
      * 以及<b>未加载区块门控</b>（见下）。
      * {@code direction} 与 DS 完全一致（{@code Direction.getNearest(眼睛世界坐标)}），未做任何修正。
      *
-     * <h2>未加载区块门控（F20）</h2>
+     * <h2>未加载区块门控</h2>
      * {@code blockTarget.matches()} 内部会建 {@code Condition#blockContext}，而它读
      * {@code getBlockState} —— <b>那会同步加载 / 生成区块</b>。收束光束的包围盒在斜视时很大
      * （见 {@link BreathBeam} 类注释），因此必须逐格挡下未加载位置。

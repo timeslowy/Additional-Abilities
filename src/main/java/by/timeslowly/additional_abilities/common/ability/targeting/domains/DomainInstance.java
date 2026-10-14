@@ -293,7 +293,7 @@ public class DomainInstance {
      * 松手 / 断魔 / 到 {@code max_duration} 之后领域再按 {@code duration} 自然消散"。
      *
      * @param effects 本次 action 的效果集
-     * @return {@code true} 表示这是<b>新加入</b>的一组（调用方应对它立即执行首轮，见 F14）；
+     * @return {@code true} 表示这是<b>新加入</b>的一组（调用方应对它立即执行首轮）；
      *         {@code false} 表示这组已存在（{@code equals}），即 {@code channeled} 的续帧 ——
      *         此时<b>不</b>执行，否则续帧会变成高频重复结算
      */
@@ -358,9 +358,10 @@ public class DomainInstance {
     /**
      * 按<b>快照</b>遍历效果集并对每组执行一次 {@code action}。
      * <p>
-     * 快照是 T04 重入保护的核心：效果回调可以执行任意技能效果（含 {@code run_function}），
+     * <b>必须遍历快照</b>：效果回调可以执行任意技能效果（含 {@code run_function}），
      * 完全可能反过来触发新施法、经 {@link #join} 往 {@code effectSets} 里追加。
      * 直接 {@code for-each} 活列表会抛 {@code ConcurrentModificationException}。
+     * 快照只挡并发修改异常，<b>不保证结算顺序</b>。
      * <p>
      * 抽成独立方法是为了让 {@link #applyNow} 与 {@link #end} 共用同一份遍历语义 ——
      * 两条路径都必须防重入，散在两处容易漏改一处；同时它也是一个可直接断言的接缝
@@ -398,7 +399,7 @@ public class DomainInstance {
     }
 
     /**
-     * 只对<b>新加入的那一组</b>立即执行一次首轮（F14）。
+     * 只对<b>新加入的那一组</b>立即执行一次首轮。
      * <p>
      * <b>为什么需要它</b>：技能 {@code actions[]} 里的后续 action 通过 {@link #join} 并入同一个领域，
      * 而它们原本要等到下一个 {@code apply_interval} 才第一次生效。当

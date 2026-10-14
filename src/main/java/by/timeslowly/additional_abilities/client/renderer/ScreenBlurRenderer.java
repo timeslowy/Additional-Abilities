@@ -26,7 +26,7 @@ import org.slf4j.Logger;
  * <p>
  * 链按需构建（构建时会编译 GLSL），随后常驻复用；只在主渲染目标实例被替换时重建。
  *
- * <h2>生命周期为什么要外接（F12）</h2>
+ * <h2>生命周期为什么要外接</h2>
  * 早先本类<b>从不释放</b>链，理由是"与原版对 {@code GameRenderer#blurEffect} 的处理一致"——
  * <b>这条理由是错的</b>：原版 {@code GameRenderer#close()} 与 {@code #loadBlurEffect} 都会
  * {@code close()} 自己的 blurEffect（已从 {@code neoforge-21.1.250-sources.jar} 核实）。
@@ -65,14 +65,14 @@ public final class ScreenBlurRenderer {
      * 构建或编译失败后不再重试，避免每帧刷日志。
      * <p>
      * <b>它不是永久的</b>：{@link #invalidate()} 会把它一并复位 ——
-     * 否则"资源重载后修好了 shader"这条恢复路径就是死的（F12）。
+     * 否则"资源重载后修好了 shader"这条恢复路径就是死的。
      */
     private static boolean unavailable = false;
 
     private ScreenBlurRenderer() {}
 
     /**
-     * 作废当前链，使下一次渲染按需重建（客户端资源重载时调用，F12）。
+     * 作废当前链，使下一次渲染按需重建（客户端资源重载时调用）。
      * <p>
      * <b>为什么连 {@code unavailable} 一起复位</b>：那个标志的语义是"本次加载的资源构建不出链"，
      * 而资源重载恰恰会换掉这批判资源。不复位的话，一次坏资源就会把本次游戏内的 blur 永久判死，
@@ -84,7 +84,7 @@ public final class ScreenBlurRenderer {
     }
 
     /**
-     * 释放当前链（游戏关闭时调用，F12）。
+     * 释放当前链（游戏关闭时调用）。
      * <p>
      * <b>必须在 GL 上下文仍有效时调用</b>：{@code PostChain#close()} 会销毁临时渲染目标并
      * 释放 GL 程序对象，这些调用内部都有 {@code RenderSystem.assertOnRenderThread()}。

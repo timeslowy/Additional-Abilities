@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * 模糊后处理链的生命周期接线（<b>仅客户端加载</b>，F12）。
+ * 模糊后处理链的生命周期接线（<b>仅客户端加载</b>）。
  * <p>
  * {@link ScreenBlurRenderer} 自己只是个静态持有者，既不知道资源何时被换掉、也不知道游戏何时关闭。
  * 本类把那两条生命周期接回来：
