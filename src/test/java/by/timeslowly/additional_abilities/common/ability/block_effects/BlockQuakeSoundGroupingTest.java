@@ -1,6 +1,7 @@
 package by.timeslowly.additional_abilities.common.ability.block_effects;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
+import by.timeslowly.additional_abilities.common.ability.actions.ActionScope.ActionKey;
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockQuakes.Batches;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -54,6 +55,14 @@ class BlockQuakeSoundGroupingTest {
     /** 旧实现的两处声源相距 100 格时，合并中心到任一端的距离都远超可听半径 */
     private static final int FAR_APART = 100;
 
+    /** 默认动作身份（施法起点刻）；同一次动作内的全部触发共用它 */
+    private static final long CAST_START = 1_000L;
+
+    /** 默认动作身份键：施法者 A + 技能一 + {@link #CAST_START} */
+    private static ActionKey action() {
+        return new ActionKey(CASTER_A, ABILITY_ONE, CAST_START);
+    }
+
     private static ResourceKey<DragonAbility> abilityKey(final String path) {
         return ResourceKey.create(DragonAbility.REGISTRY,
                 ResourceLocation.fromNamespaceAndPath("additional_abilities_test", path));
@@ -66,7 +75,15 @@ class BlockQuakeSoundGroupingTest {
     /** 登记一次震动；{@code now} 固定为 0，冷却不参与本类用例（位置两两不同） */
     private static void enqueue(final BlockQuakeData data, final BlockPos position, final UUID caster,
                                 final ResourceKey<DragonAbility> ability, final Optional<SoundEvent> sound) {
-        boolean accepted = data.enqueue(position, 0L, HEIGHT, DURATION, sound, caster, ability);
+        enqueue(data, position, caster, ability, sound, CAST_START);
+    }
+
+    /** 指定动作身份的登记 */
+    private static void enqueue(final BlockQuakeData data, final BlockPos position, final UUID caster,
+                                final ResourceKey<DragonAbility> ability, final Optional<SoundEvent> sound,
+                                final Long castStartTick) {
+        ActionKey action = new ActionKey(caster, ability, castStartTick);
+        boolean accepted = data.enqueue(position, 0L, HEIGHT, DURATION, sound, action);
         assertTrue(accepted, "位置两两不同，登记不应被冷却丢弃：" + position);
     }
 
@@ -168,10 +185,11 @@ class BlockQuakeSoundGroupingTest {
     void differentShapesStayInSeparateVisualBatches() {
         BlockQuakeData data = data();
 
-        data.enqueue(new BlockPos(0, 64, 0), 0L, 1.0F, 10, Optional.of(SOUND), CASTER_A, ABILITY_ONE);
-        data.enqueue(new BlockPos(1, 64, 0), 0L, 2.0F, 10, Optional.of(SOUND), CASTER_A, ABILITY_ONE);
-        data.enqueue(new BlockPos(2, 64, 0), 0L, 1.0F, 20, Optional.of(SOUND), CASTER_A, ABILITY_ONE);
-        data.enqueue(new BlockPos(3, 64, 0), 0L, 1.0F, 10, Optional.empty(), CASTER_A, ABILITY_ONE);
+        // 四个位置，各差一项参与分组键的参数；位置两两不同，冷却不会干扰
+        data.enqueue(new BlockPos(0, 64, 0), 0L, 1.0F, 10, Optional.of(SOUND), action());
+        data.enqueue(new BlockPos(1, 64, 0), 0L, 2.0F, 10, Optional.of(SOUND), action());
+        data.enqueue(new BlockPos(2, 64, 0), 0L, 1.0F, 20, Optional.of(SOUND), action());
+        data.enqueue(new BlockPos(3, 64, 0), 0L, 1.0F, 10, Optional.empty(), action());
 
         Batches batches = BlockQuakes.group(data);
 
@@ -195,8 +213,8 @@ class BlockQuakeSoundGroupingTest {
 
         // 反过来：同一动作、参数不同 → 视觉 2 组、声音 2 组（视觉拆分不会把声音并回去）
         BlockQuakeData other = data();
-        other.enqueue(new BlockPos(0, 64, 0), 0L, 1.0F, 10, Optional.of(SOUND), CASTER_A, ABILITY_ONE);
-        other.enqueue(new BlockPos(1, 64, 0), 0L, 2.0F, 10, Optional.of(SOUND), CASTER_A, ABILITY_ONE);
+        other.enqueue(new BlockPos(0, 64, 0), 0L, 1.0F, 10, Optional.of(SOUND), action());
+        other.enqueue(new BlockPos(1, 64, 0), 0L, 2.0F, 10, Optional.of(SOUND), action());
 
         Batches split = BlockQuakes.group(other);
 
@@ -211,5 +229,104 @@ class BlockQuakeSoundGroupingTest {
 
         assertTrue(batches.visual().isEmpty());
         assertTrue(batches.sound().isEmpty());
+    }
+
+    // ================================================================ 复审 P1：独立动作必须分开发声
+
+    /**
+     * 复审点名的固定情景：<b>同一玩家、同一技能、同一刻的两个独立动作</b>
+     * （同一技能的两个领域，或 {@code max_domains > 1} 下的两条领域流）。
+     * <p>
+     * 仅按「施法者 + 技能」分组的旧口径会把它们并成一声，声源落在两片方块区域之间 ——
+     * 与 F13 完全同一种失效模式，只是触发条件从"跨施法者"换成了"同施法者的两次动作"。
+     */
+    @Test
+    @DisplayName("P1：同一玩家同一技能的两个独立动作 —— 视觉合并，声音必须分成两组")
+    void sameCasterSameAbilityIndependentActionsSoundSeparately() {
+        BlockQuakeData data = data();
+
+        long firstAction = 1_000L;
+        long secondAction = 5_000L;
+
+        // 第一次动作在本地的三个方块
+        enqueue(data, new BlockPos(0, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), firstAction);
+        enqueue(data, new BlockPos(1, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), firstAction);
+        // 第二次动作在 100 格外的三个方块（同玩家、同技能）
+        enqueue(data, new BlockPos(FAR_APART, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), secondAction);
+        enqueue(data, new BlockPos(FAR_APART + 1, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), secondAction);
+
+        Batches batches = BlockQuakes.group(data);
+
+        assertEquals(1, batches.visual().size(),
+                "视觉仍可跨动作合并：同参数的方块在画面上无法区分");
+
+        assertEquals(2, batches.sound().size(),
+                "同一玩家的两个独立动作必须各响一声 —— 合并会把声源放到两片区域中间，两边都听不到");
+
+        // 逐组核对归属：每一组只含该动作自己的方块
+        List<List<Long>> groups = List.copyOf(batches.sound().values());
+        assertEquals(List.of((long) new BlockPos(0, 64, 0).asLong(),
+                        (long) new BlockPos(1, 64, 0).asLong()),
+                groups.get(0), "第一次动作那一组只能含它自己的方块");
+        assertEquals(List.of((long) new BlockPos(FAR_APART, 64, 0).asLong(),
+                        (long) new BlockPos(FAR_APART + 1, 64, 0).asLong()),
+                groups.get(1), "第二次动作那一组只能含它自己的方块");
+    }
+
+    @Test
+    @DisplayName("P1：同一次动作跨多个位置（含多刻重复触发）仍只响一声")
+    void sameActionAcrossManyPositionsStillSoundsOnce() {
+        BlockQuakeData data = data();
+
+        // 同一次动作内的 64 个方块：身份完全相同（真实的 trigger_rate 重复触发也是这样）
+        for (int x = 0; x < 8; x++) {
+            for (int z = 0; z < 8; z++) {
+                enqueue(data, new BlockPos(x, 64, z), CASTER_A, ABILITY_ONE, Optional.of(SOUND), CAST_START);
+            }
+        }
+
+        Batches batches = BlockQuakes.group(data);
+
+        assertEquals(1, batches.sound().size(),
+                "动作身份相同就必须并成一声，否则一次范围震动变成几十个音源叠加");
+        assertEquals(64, batches.sound().values().iterator().next().size());
+    }
+
+    /**
+     * 身份未知（{@code castStartTick == null}）的震动<b>不会</b>与任何已知动作并组。
+     * <p>
+     * 这条是安全底线：未接线的调用方（例如第三方直接调 {@code BlockQuakes.trigger}）
+     * 若被并入某一次真实动作，就会把那个动作的声源拖到两者之间 ——
+     * 正好制造出本次要修的失效模式。让它自成一类更安全。
+     */
+    @Test
+    @DisplayName("P1：身份未知的震动自成一类，绝不被并入已知动作")
+    void unknownActionNeverMergesIntoAKnownAction() {
+        BlockQuakeData data = data();
+
+        // 同玩家、同技能、同形状：唯一差别是身份未知
+        enqueue(data, new BlockPos(0, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), CAST_START);
+        enqueue(data, new BlockPos(FAR_APART, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), null);
+
+        Batches batches = BlockQuakes.group(data);
+
+        assertEquals(1, batches.visual().size(), "视觉不受身份影响，仍合并");
+        assertEquals(2, batches.sound().size(),
+                "身份未知者必须自成一类：并入已知动作会把声源拖到两者之间");
+    }
+
+    @Test
+    @DisplayName("P1：同一个「身份未知」组内部仍可合并（不是每个未知项各响一声）")
+    void unknownActionsOfTheSameCasterStillMergeTogether() {
+        BlockQuakeData data = data();
+
+        enqueue(data, new BlockPos(0, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), null);
+        enqueue(data, new BlockPos(1, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), null);
+        enqueue(data, new BlockPos(2, 64, 0), CASTER_A, ABILITY_ONE, Optional.of(SOUND), null);
+
+        Batches batches = BlockQuakes.group(data);
+
+        assertEquals(1, batches.sound().size(), "都是未知身份 → 同一组，仍只响一声");
+        assertEquals(3, batches.sound().values().iterator().next().size());
     }
 }

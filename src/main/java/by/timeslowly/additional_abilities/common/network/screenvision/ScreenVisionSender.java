@@ -3,7 +3,9 @@ package by.timeslowly.additional_abilities.common.network.screenvision;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.vision.ScreenVisionTiming;
 import by.timeslowly.additional_abilities.common.vision.ScreenVisionType;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -12,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,6 +52,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * <b>{@code coveredUntil} 是绝对游戏刻</b>，因此与 F06 同类风险：它必须在玩家登出时清掉，
  * 否则同一 JVM 换存档后残留的旧时刻会让新存档里的余量判断失真。
  * 槽位本来就是「玩家 UUID → 记录」，登出清理已覆盖这一点。
+ *
+ * <h2>为什么每条槽还要记「属于哪个维度」（复审 P1）</h2>
+ * 只清登出是不够的：{@code coveredUntil} 记的是<b>某个 ServerLevel 的</b>游戏刻，
+ * 而玩家换维度时槽位并不重来。维度之间的 {@code getGameTime()} 相互独立，
+ * 切到时间较小的维度后 {@code coveredUntil - now} 会异常偏大、
+ * {@code now - last.tick()} 甚至可能为负 —— 两者都会让同参数的新视觉被长期节流掉，
+ * 表现为「换维度后效果不显示」。因此每条槽额外记住自己的维度身份，
+ * 与当前维度不一致时<b>整槽作废</b>（当作全新槽：参数不参与比较、覆盖终点归零），
+ * 于是换维度后必然放行首包。
+ * <p>
+ * 判据取 {@code ResourceKey<Level>} 而不是 {@code ServerLevel} 实例：
+ * 同一维度退出再进入会得到新的 {@code ServerLevel}，但那种情况下
+ * 刻数本来也可能倒退（世界时间由存档决定），仍应作废 ——
+ * 而「维度键不同必然作废」这条已经覆盖了它，故无需持有实例引用（也不会阻止 GC）。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID)
 public final class ScreenVisionSender {
@@ -61,6 +78,7 @@ public final class ScreenVisionSender {
     /**
      * 一条槽的发包记录。
      *
+     * @param level        上次发包时玩家所在维度的键；与本次不一致时整槽作废（见类注释）
      * @param tick         上次发包时的游戏刻
      * @param amplitude    上次下发的强度
      * @param size         上次下发的尺寸
@@ -68,7 +86,7 @@ public final class ScreenVisionSender {
      * @param coveredUntil 客户端<b>已知</b>会持续到哪一刻（= 上次发包刻 + 那次下发的时长）。
      *                     这是服务端对客户端的承诺范围，用来判断能否安全跳过本次发包
      */
-    record LastSend(long tick, float amplitude, float size, int rgb, long coveredUntil) {}
+    record LastSend(ResourceKey<Level> level, long tick, float amplitude, float size, int rgb, long coveredUntil) {}
 
     private ScreenVisionSender() {}
 
@@ -80,7 +98,8 @@ public final class ScreenVisionSender {
 
         LastSend[] slots = LAST_SEND.computeIfAbsent(player.getUUID(), uuid -> createSlots());
         int index = visionType.ordinal();
-        LastSend next = evaluate(slots[index], player.level().getGameTime(),
+        ResourceKey<Level> dimension = player.level().dimension();
+        LastSend next = evaluate(slots[index], dimension, player.level().getGameTime(),
                 amplitude, size, rgb, durationTicks);
 
         if (next == null) {
@@ -99,28 +118,43 @@ public final class ScreenVisionSender {
      * 把"该不该发、发了以后记什么"这段决策与发包动作分开后，
      * 判据就能用普通单元测试逐条钉住（见 {@code ScreenVisionThrottleTest}）。
      *
+     * @param dimension 玩家<b>本次</b>所在的维度键；与 {@code last} 记录的不一致时整槽作废
      * @return 该写入槽位的新记录；{@code null} 表示本次不下发
      */
-    static @Nullable LastSend evaluate(final @NotNull LastSend last, final long now,
-                                       final float amplitude, final float size, final int rgb,
-                                       final int durationTicks) {
+    static @Nullable LastSend evaluate(final @NotNull LastSend last, final @NotNull ResourceKey<Level> dimension,
+                                       final long now, final float amplitude, final float size,
+                                       final int rgb, final int durationTicks) {
+        // 维度变了：槽里的刻数属于另一个 ServerLevel 的时间轴，任何比较都无意义
+        // （coveredUntil 可能远在将来、now - last.tick() 甚至为负），
+        // 因此整槽作废 —— 参数不参与比较、覆盖终点归零，本次必然放行。
+        // 初始槽的 level 为 null（"还没发过"），因此用 Objects.equals 而非 dimension.equals(last.level())
+        boolean sameDimension = Objects.equals(dimension, last.level());
+
         // 依次回答两个问题：参数是否变化？客户端余量是否还够？
-        boolean unchanged = Math.abs(amplitude - last.amplitude()) <= PARAM_EPSILON
+        boolean unchanged = sameDimension
+                && Math.abs(amplitude - last.amplitude()) <= PARAM_EPSILON
                 && Math.abs(size - last.size()) <= PARAM_EPSILON
                 && rgb == last.rgb();
 
-        // 余量按"距离覆盖终点还剩多少刻"算；已过期时为负值，必然放行
-        long remaining = last.coveredUntil() - now;
+        // 余量按"距离覆盖终点还剩多少刻"算；已过期时为负值，必然放行。
+        // 跨维度时直接用"没有承诺"表示：不能拿别的维度的时间轴来算余量
+        long remaining = sameDimension ? last.coveredUntil() - now : Long.MIN_VALUE;
         boolean coveredLongEnough = remaining >= ScreenVisionTiming.COVERAGE_SAFETY_TICKS;
 
         // 窗口内 + 参数没变 + 余量够 → 这一次下发没有带来任何新信息，跳过。
         // 窗口外一律放行：那是常规刷新，与本次修复无关。
-        if (now - last.tick() < ScreenVisionTiming.THROTTLE_TICKS && unchanged && coveredLongEnough) {
+        // 跨维度时 now - last.tick() 无意义（可能为负），一律不进入跳过分支。
+        if (sameDimension
+                && now - last.tick() < ScreenVisionTiming.THROTTLE_TICKS
+                && unchanged && coveredLongEnough) {
             return null;
         }
 
-        // 覆盖终点取「新承诺」与「已承诺」的较大值：本次时长较短时不能把已有的长租期缩短
-        return new LastSend(now, amplitude, size, rgb, Math.max(now + durationTicks, last.coveredUntil()));
+        // 覆盖终点取「新承诺」与「已承诺」的较大值：本次时长较短时不能把已有的长租期缩短。
+        // 跨维度时已承诺值不再适用（它属于旧时间轴），故只取本次承诺
+        long previousCoverage = sameDimension ? last.coveredUntil() : 0L;
+
+        return new LastSend(dimension, now, amplitude, size, rgb, Math.max(now + durationTicks, previousCoverage));
     }
 
     @SubscribeEvent
@@ -129,7 +163,8 @@ public final class ScreenVisionSender {
     }
 
     /**
-     * 各类型的初始记录：tick = 0、强度 = 0、尺寸 = 0、颜色 = 0、覆盖终点 = 0。
+     * 各类型的初始记录：维度为 {@code null}（"还没发过，不属于任何维度"）、tick = 0、
+     * 强度 = 0、尺寸 = 0、颜色 = 0、覆盖终点 = 0。
      * <p>
      * <b>"首次下发一定放行"靠的是覆盖终点，不是强度比较</b>：{@code coveredUntil = 0} 使
      * 余量判据 {@code remaining >= COVERAGE_SAFETY_TICKS} 对任何非负的游戏刻都不成立
@@ -146,7 +181,7 @@ public final class ScreenVisionSender {
         LastSend[] slots = new LastSend[ScreenVisionType.values().length];
 
         for (int i = 0; i < slots.length; i++) {
-            slots[i] = new LastSend(0L, 0.0F, 0.0F, 0, 0L);
+            slots[i] = new LastSend(null, 0L, 0.0F, 0.0F, 0, 0L);
         }
 
         return slots;

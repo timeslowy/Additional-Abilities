@@ -2,6 +2,8 @@ package by.timeslowly.additional_abilities.common.ability.block_effects;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
+import by.timeslowly.additional_abilities.common.ability.actions.ActionScope;
+import by.timeslowly.additional_abilities.common.ability.actions.ActionScope.ActionKey;
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockQuakeData.Entry;
 import by.timeslowly.additional_abilities.common.network.BlockQuakePayload;
 import by.timeslowly.additional_abilities.registry.AAAttachments;
@@ -68,13 +70,14 @@ public final class BlockQuakes {
     record QuakeShape(float height, int durationTicks, Optional<SoundEvent> sound) {}
 
     /**
-     * <b>发声</b>分组键：形状 + 施法者 + 技能。
+     * <b>发声</b>分组键：形状 + <b>动作身份</b>。
      * <p>
-     * 比 {@link QuakeShape} 多了动作身份，理由见 {@link #group}。
-     * {@code ability} 取的是 {@link ResourceKey} 而非技能实例：同一次动作在 {@code trigger_rate}
-     * 内会重复触发很多次，它们必须落在同一个声源上（"一次范围动作只响一次"）。
+     * 比 {@link QuakeShape} 多了 {@link ActionKey}（施法者 + 技能 + 施法起点刻），
+     * 理由见 {@link #group}。取"施法起点刻"而不是技能实例：
+     * 同一次动作在 {@code trigger_rate} 内会重复触发很多次，它们必须落在同一个声源上
+     * （"一次范围动作只响一次"）；而两次独立动作即使同技能同刻也必须分开。
      */
-    record QuakeSource(QuakeShape shape, UUID caster, ResourceKey<DragonAbility> ability) {}
+    record QuakeSource(QuakeShape shape, ActionKey action) {}
 
     /**
      * 一次冲刷的两套分组：{@code visual} 用于发包，{@code sound} 用于发声。
@@ -90,8 +93,8 @@ public final class BlockQuakes {
      * @param height        跃起高度（方块），已钳制
      * @param durationTicks 一次完整升落的时长
      * @param sound         跃起时播放的音效，空则无声
-     * @param caster        施法者 uuid；与 {@code ability} 一起标识本次动作，仅用于声音分组
-     * @param ability       施法者正在使用的技能键，同上
+     * @param caster        施法者 uuid
+     * @param ability       施法者正在使用的技能键
      */
     public static void trigger(final @NotNull ServerLevel level, final @NotNull BlockPos position,
                                final float height, final int durationTicks, final @NotNull Optional<SoundEvent> sound,
@@ -100,8 +103,13 @@ public final class BlockQuakes {
             return;
         }
 
+        // 动作身份从当前派发作用域取（见 ActionScope）：同一次施法内恒定、不同次必然不同。
+        // 取不到（未接线的调用点）时记 null —— 那类震动会自成一类声源，绝不与真实动作并组，
+        // 否则会把声源拖到两者之间（正是复审 P1 的失效模式）
+        ActionKey action = new ActionKey(caster, ability, ActionScope.current());
+
         level.getData(AAAttachments.BLOCK_QUAKE)
-                .enqueue(position, level.getGameTime(), height, durationTicks, sound, caster, ability);
+                .enqueue(position, level.getGameTime(), height, durationTicks, sound, action);
     }
 
     /**
@@ -147,6 +155,12 @@ public final class BlockQuakes {
      * 两名玩家相距 100 格、同刻触发同参数震动时，合并后的中心落在两人之间，
      * <b>两边都听不到</b>。因此声音必须按"原施法动作"各自保留本地声源。
      * <p>
+     * <b>动作身份取「施法起点世界刻」（复审 P1）</b>：仅按"施法者 + 技能"分组的旧口径
+     * 无法区分<b>同一玩家、同一技能的两个独立动作</b>（同技能的两个领域、
+     * {@code max_domains > 1} 的领域流），它们同样会被并成一声、声源同样落在两片区域中间。
+     * 起点刻由 {@link ActionScope} 在派发点设置，与 {@code DomainTarget} 建立领域时
+     * 用的是同一条算式，因此领域与一次性效果对"同一次施法"的看法一致。
+     * <p>
      * 视觉分组仍用 {@link QuakeShape}（不含施法者），所以这次修复<b>不改变任何网络字节</b>：
      * 协议未变、包数量未变，只是多响了几声该响的声。
      * <p>
@@ -164,10 +178,10 @@ public final class BlockQuakes {
             // 视觉：跨施法者合并（同参数同刻的两批方块并成一个包）
             visual.computeIfAbsent(shape, ignored -> new ArrayList<>()).add(entry.position().asLong());
 
-            // 声音：同一施法者的同一次动作（同技能）仍合并为一声，跨施法者 / 跨技能各自成组。
+            // 声音：同一次动作（施法者 + 技能 + 施法起点刻 全等）才合并为一声。
             // 音效为空的项不必建立发声分组
             if (shape.sound().isPresent()) {
-                sound.computeIfAbsent(new QuakeSource(shape, entry.caster(), entry.ability()),
+                sound.computeIfAbsent(new QuakeSource(shape, entry.action()),
                                 ignored -> new ArrayList<>())
                         .add(entry.position().asLong());
             }

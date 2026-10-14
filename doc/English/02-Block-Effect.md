@@ -78,9 +78,10 @@ clamped to **6 – 24 ticks**, so there is nothing to tune by hand.
   - **It fires once per ability action**, with the sound source placed at the **geometric centre** of the
     batch — a large quake lifts dozens of blocks at once, and playing per block would stack dozens of
     sources into an audible blast rather than a single "slam";
-  - **A "batch" is delimited by the ability action**: every block one player lifts with one ability in a
-    single tick shares one sound source. Different players, or the same player using two different
-    abilities in the same tick, **each get their own sound**, positioned over their own blocks.
+  - **A "batch" is delimited by the ability action**: every block lifted by one cast shares one sound
+    source. Different players, different abilities, and **two independent casts of the same ability by
+    the same player** (e.g. two overlapping domains) each get their own sound, positioned over their
+    own blocks.
     (The visual side still merges across casters, and the two are independent — two distant quakes are
     never given a sound source halfway between them, where neither would be audible.)
   - Volume and pitch are the Vanilla defaults of `1.0` (audible radius roughly 16 blocks) and

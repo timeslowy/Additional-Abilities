@@ -146,7 +146,9 @@ Everything else is identical to the original.
 
 1. Put the pack directory under `src/main/resources/`, e.g.
    `src/main/resources/data/<modid>/datapacks/<pack name>/`;
-2. The directory root **must** contain `pack.mcmeta` (with `pack.pack_format`) and `pack.png`;
+2. The directory root **must** contain `pack.mcmeta` (with `pack.pack_format`); `pack.png` is an
+   **optional** display icon — when absent, vanilla `PackSelectionScreen#loadPackIcon` falls back to the
+   default icon and the pack still loads normally;
 3. Add one call in `addPackFinders` inside `registry/PackFinders.java` — the path argument **must** match
    the real directory exactly;
 4. Add the display-name language keys to `lang/en_us.json` and `lang/zh_cn.json`

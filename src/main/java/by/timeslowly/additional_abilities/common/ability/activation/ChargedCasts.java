@@ -594,26 +594,74 @@ public final class ChargedCasts {
 
     /**
      * 查询指令用的档位解析：
-     * 正在蓄力 → 返回当前蓄力所对应的档位；否则 → 返回最近一次实际释放所用的档位。
+     * <b>正在蓄力</b> → 返回<b>当前</b>蓄力所对应的档位（可能为 0 = 尚未达最低档）；
+     * <b>没有正在蓄力</b> → 返回最近一次实际释放所用的档位。
      * <p>
      * 技能的激活类型不是蓄力档位族系时一律返回 {@link ChargeableActivation#NO_CHARGED_LEVEL}，
      * 避免把别的技能的档位错报过来。
+     *
+     * <h2>为什么"正在蓄力"必须早于回退（复审 P2）</h2>
+     * 旧实现把"当前换算值 &gt; 0"当作回退条件，于是<b>施法刚开始、尚未达最低档</b>时
+     * （换算值为 0）会掉进回退分支，报出<b>上一次</b>释放的档位。
+     * 玩家上一轮放过 3 档、这一轮刚按下还没蓄到档，查询却答 3，
+     * 与指令文档承诺的"正在蓄力时返回当前蓄力所对应的档位"直接矛盾。
+     * <p>
+     * 判据改为"<b>实例是否处于施法中</b>"（{@code currentTick > 0}）：
+     * <ul>
+     *     <li>施法中 ⇒ 只报当前换算值，<b>含 0</b>。
+     *         0 在这里是有意义的答案（还没蓄到最低档），把它换成旧值就是撒谎；</li>
+     *     <li>未施法（{@code currentTick == 0}，见 {@code setActive(false)} / {@code release}
+     *         都会把它归零）⇒ 才是"读最近一次释放记录"的场合。</li>
+     * </ul>
+     * <b>等级 &lt; 1 时仍然回退</b>：{@code LevelBasedValue} 不接受 0 级
+     * （{@code Lookup#calculate(0)} 会越界），DS 自己也用
+     * {@link DragonAbilityInstance#MIN_LEVEL_FOR_CALCULATIONS} 规避，
+     * 因此这种情况下取不到任何"当前档位"，只能沿用最近一次真实释放的记录。
      */
     public static int resolveQueryLevel(final @NotNull Player player, final @NotNull DragonAbilityInstance instance) {
         if (!(instance.value().activation() instanceof ChargeableActivation chargeable)) {
             return ChargeableActivation.NO_CHARGED_LEVEL;
         }
 
-        if (instance.getCurrentTick() > 0 && instance.level() >= DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
-            int live = chargeable.getChargedLevel(instance.getCurrentTick(), instance.level());
+        int currentTick = instance.getCurrentTick();
+        int level = instance.level();
 
-            if (live > ChargeableActivation.NO_CHARGED_LEVEL) {
-                return live;
-            }
+        // 三态判据（见 resolveQueryLevelPure）：可求值 / 未施法 / 等级过低无法求值。
+        // 这里只负责取"当前换算值"与"最近一次记录"两个事实，决策本身在纯函数里
+        boolean evaluating = currentTick > 0 && level >= DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS;
+
+        return resolveQueryLevelPure(evaluating,
+                evaluating ? chargeable.getChargedLevel(currentTick, level) : ChargeableActivation.NO_CHARGED_LEVEL,
+                LAST_CHARGED_LEVELS.getOrDefault(
+                        new PlayerAbility(player.getUUID(), instance.key()), ChargeableActivation.NO_CHARGED_LEVEL));
+    }
+
+    /**
+     * {@link #resolveQueryLevel} 的<b>决策部分</b>（纯函数，不触世界对象）。
+     * <p>
+     * 单独抽出来只为<b>可测性</b>：真正的入口需要 {@code Player} 与 {@code DragonAbilityInstance}
+     * 两个重型对象，而本机无外网、造不出来。决策只依赖调用方已经取好的事实。
+     * <p>
+     * <b>刻意不收 {@code currentTick}</b>：决策只看「能否求值」这一个布尔，
+     * 与"已经蓄了几刻"无关。把刻数传进来会让人误以为判据与它有关，
+     * 也会让"换个刻数答案就该变"这类错误直觉有可乘之机。
+     *
+     * @param evaluating {@code currentTick > 0} <b>且</b>等级足以求值（{@code LevelBasedValue}
+     *                   不接受 0 级），此时 {@code liveLevel} 才是有效答案
+     * @param liveLevel  当前蓄力换算出的档位（{@code evaluating} 为 false 时无意义）
+     * @param lastLevel  最近一次实际释放记录；无记录时传
+     *                   {@link ChargeableActivation#NO_CHARGED_LEVEL}
+     * @return 当前档位（{@code evaluating} 时，<b>含 0</b>）；否则为最近一次释放记录
+     */
+    static int resolveQueryLevelPure(final boolean evaluating, final int liveLevel, final int lastLevel) {
+        // 正在施法：只报当前值（含 0 = 尚未达最低档），绝不回退到上一轮的记录。
+        // 旧实现把"当前值 > 0"当回退条件，于是刚按下、还没蓄到档时会答出上一轮的档位（复审 P2）
+        if (evaluating) {
+            return liveLevel;
         }
 
-        return LAST_CHARGED_LEVELS.getOrDefault(
-                new PlayerAbility(player.getUUID(), instance.key()), ChargeableActivation.NO_CHARGED_LEVEL);
+        // 未在施法（或等级过低无法求值）：最近一次实际释放的档位；没有记录则无档位
+        return lastLevel;
     }
 
     @SubscribeEvent

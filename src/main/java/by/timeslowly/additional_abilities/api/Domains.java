@@ -9,6 +9,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,7 +75,7 @@ public final class Domains {
     }
 
     /** 某个施法者在<b>该维度</b>留下的存活领域快照。 */
-    public static @NotNull List<DomainInfo> of(final @NotNull ServerLevel level, final @NotNull UUID caster) {
+    public static @NotNull @Unmodifiable List<DomainInfo> of(final @NotNull ServerLevel level, final @NotNull UUID caster) {
         List<DomainInfo> all = of(level);
         List<DomainInfo> result = new ArrayList<>(all.size());
 
@@ -93,8 +94,8 @@ public final class Domains {
      * 领域按「施法者 + 技能」去重成"流"，因此这个组合下通常只有一条
      * （{@code max_domains > 1} 时才可能有几条）。
      */
-    public static @NotNull List<DomainInfo> of(final @NotNull ServerLevel level, final @NotNull UUID caster,
-                                               final @NotNull ResourceKey<DragonAbility> ability) {
+    public static @NotNull @Unmodifiable List<DomainInfo> of(final @NotNull ServerLevel level, final @NotNull UUID caster,
+                                                             final @NotNull ResourceKey<DragonAbility> ability) {
         String key = ability.location().toString();
         List<DomainInfo> result = new ArrayList<>();
 

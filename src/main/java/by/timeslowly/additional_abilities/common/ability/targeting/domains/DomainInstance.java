@@ -3,6 +3,7 @@ package by.timeslowly.additional_abilities.common.ability.targeting.domains;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilityInstance;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.targeting.AbilityTargeting;
+import by.timeslowly.additional_abilities.common.ability.actions.ActionScope;
 import com.mojang.datafixers.util.Either;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -521,8 +522,14 @@ public class DomainInstance {
             }
 
             if (blockTarget.matches(caster, position)) {
-                // direction 传 null：领域锚点没有"命中面"概念，与 DS area / disc / annulus 一致
-                blockTarget.effects().forEach(effect -> effect.apply(caster, ability, position, null));
+                // 领域结算时 ability.getCurrentTick() 早已不是施法刻（领域比施法活得久），
+                // 因此这里显式用本领域记录的 castStartTick 设置动作身份 ——
+                // 它是"同一次施法"的权威判据（见类注释）。
+                // 效果内部可能再算一次身份，但 ActionScope.run 会恢复上一层，
+                // 所以这里设置的值在整个派发期间优先。
+                ActionScope.run(castStartTick, () -> blockTarget.effects().forEach(
+                        // direction 传 null：领域锚点没有"命中面"概念，与 DS area / disc / annulus 一致
+                        effect -> effect.apply(caster, ability, position, null)));
             }
         })).ifRight(entityTarget -> level.getEntities(EntityTypeTest.forClass(Entity.class), area,
                 entity -> isInside(origin, entity)
