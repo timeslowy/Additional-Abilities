@@ -1,6 +1,6 @@
 # Block Effects (`block_effect`)
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71`
 > Location: `actions[].target_selection.applied_effects.block_effect[]`
 
 A block effect lives inside the `applied_effects.block_effect[]` array. Each element selects its type with
@@ -78,6 +78,12 @@ clamped to **6 – 24 ticks**, so there is nothing to tune by hand.
   - **It fires once per ability action**, with the sound source placed at the **geometric centre** of the
     batch — a large quake lifts dozens of blocks at once, and playing per block would stack dozens of
     sources into an audible blast rather than a single "slam";
+  - **A "batch" is delimited by the ability action**: every block lifted by one cast shares one sound
+    source. Different players, different abilities, and **two independent casts of the same ability by
+    the same player** (e.g. two overlapping domains) each get their own sound, positioned over their
+    own blocks.
+    (The visual side still merges across casters, and the two are independent — two distant quakes are
+    never given a sound source halfway between them, where neither would be audible.)
   - Volume and pitch are the Vanilla defaults of `1.0` (audible radius roughly 16 blocks) and
     **do not scale with `amplifier`**;
   - It is broadcast server-side, so **the caster hears it too**.
@@ -85,6 +91,12 @@ clamped to **6 – 24 ticks**, so there is nothing to tune by hand.
   - **Position cooldown**: the same coordinate only quakes once every 10 ticks;
   - Triggers within the same tick are merged into as few network packets as possible and only sent to
     nearby players.
+  - The cooldown records and the pending buffer live on **each dimension's own data** and are reclaimed with
+    the world instance — so a save change cannot leave the cooldown test using the previous world's timestamps
+    (which would otherwise keep rejecting quakes at the same coordinates for a long time).
+- **Changing dimension clears the fake blocks immediately**: as soon as the client sees a different world
+  instance (dimension change, return to the main menu) every fake block is dropped, **without waiting for a
+  packet from the new dimension** — so they never keep bouncing in the old world.
 - This effect only moves the **shape** of the blocks and **deals no damage**. Add a `dragonsurvival:damage`
   style entity effect for that, and remember to use a **separate action** — entity effects and block
   effects cannot live in the same `applied_effects`.
@@ -226,11 +238,26 @@ is glowing", **not** as X-ray.
 - **Overlapping works**: different colours / display types are separate entries on the server and are drawn
   separately on the client, so different casts and different players stack naturally instead of overriding each
   other. (Same colour and same type merge into one entry — visually indistinguishable anyway.)
+- **What merges is the display, not the duration**: casters that share one entry each keep **their own expiry
+  tick**, and the entry as a whole lives until the latest of them. Therefore:
+  - if A contributes 1200 ticks and B contributes 20, B's share is dropped after 20 ticks and does not drag the
+    entry along with it;
+  - when `/additional-abilities block-glow clear` removes A and B has already expired, the **entry is genuinely
+    removed**, so the count the command reports matches what actually disappeared.
 - **The lifetime is self-managed**: the block effect interface has no `remove` (block effects are instantaneous),
   so this effect keeps its own clock — the server re-sends every live entry once every 20 ticks to "keep it
   alive", and the client counts down locally from the remaining duration carried in the packet. A repeatedly
   triggered ability stays lit; once it stops, the glow expires on its own. The trade-off: **if the ability is
   interrupted early, the glow lingers until `duration` runs out.**
+- **State belongs strictly to the current world**: the server keeps live entries on **each dimension's own
+  data**, and the client keeps entries only for the **current world instance** —
+  - **No bleed between saves**: entries are created and reclaimed together with the world instance, so
+    "enter save A with a large game time, quit, then enter save B with a smaller one" cannot let A's leftover
+    timestamps affect B (which would otherwise stop new glows at the same coordinates from showing for a long
+    time);
+  - **Changing dimension clears immediately**: as soon as the client sees a different world instance
+    (dimension change, return to the main menu) the whole table is dropped, **without waiting for a packet from
+    the new dimension** — so old coordinates are neither drawn nor counted down any further.
 - **The occlusion filter serves `simple_shader` only**: it asks whether **all six** neighbouring blocks are
   solid-rendered — a strict definition of "completely occluded", so visible blocks are never dropped by mistake.
   `outline` skips this filter: its cost is independent of visibility, and with the depth test on the GPU hides

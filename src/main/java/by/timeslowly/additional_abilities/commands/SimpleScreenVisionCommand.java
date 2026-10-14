@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.commands;
 
-import by.timeslowly.additional_abilities.common.network.screenvision.ScreenVisionClearPayload;
+import by.timeslowly.additional_abilities.api.Visuals;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.LiteralCommandNode;
@@ -9,7 +9,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -52,11 +51,8 @@ public final class SimpleScreenVisionCommand {
     private static int clear(final @NotNull CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Collection<ServerPlayer> targets = EntityArgument.getPlayers(context, AACommands.TARGETS);
 
-        for (ServerPlayer target : targets) {
-            PacketDistributor.sendToPlayer(target, new ScreenVisionClearPayload());
-        }
-
-        int count = targets.size();
+        // 走正式入口而不是自己发包：指令层不直接依赖 payload 类型（见 api 包的说明）
+        int count = Visuals.clearScreenVision(targets);
         context.getSource().sendSuccess(() -> Component.translatable(CLEAR_SUCCESS, count), false);
 
         return count;

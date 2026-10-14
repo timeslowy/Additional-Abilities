@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.commands;
 
-import by.timeslowly.additional_abilities.registry.AAAttachments;
+import by.timeslowly.additional_abilities.api.Domains;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.LiteralCommandNode;
@@ -8,15 +8,10 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * 调试子指令：{@code /additional-abilities domain clear <targets>}。
@@ -65,19 +60,13 @@ public final class DomainCommand {
 
     private static int clear(final @NotNull CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Collection<ServerPlayer> targets = EntityArgument.getPlayers(context, AACommands.TARGETS);
-        Set<UUID> casters = targets.stream().map(ServerPlayer::getUUID).collect(Collectors.toSet());
 
-        MinecraftServer server = context.getSource().getServer();
-        int removed = 0;
+        // 走正式入口而不是自己遍历维度 / 读附件表：指令层不依赖内部存储（见 api 包的说明）
+        int removed = Domains.clearByCasters(targets);
 
-        for (ServerLevel level : server.getAllLevels()) {
-            removed += level.getData(AAAttachments.DOMAIN).clearByCasters(level, casters);
-        }
-
-        int cleared = removed;
         context.getSource().sendSuccess(
-                () -> Component.translatable(CLEAR_SUCCESS, targets.size(), cleared), false);
+                () -> Component.translatable(CLEAR_SUCCESS, targets.size(), removed), false);
 
-        return cleared;
+        return removed;
     }
 }

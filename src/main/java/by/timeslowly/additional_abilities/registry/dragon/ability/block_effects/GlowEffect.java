@@ -144,10 +144,14 @@ public record GlowEffect(TextColor color, float alpha, GlowDisplayType displayTy
         float probability = Math.max(0.0F, this.probability.calculate(abilityLevel));
         float clampedAlpha = Math.clamp(this.alpha, 0.0F, 1.0F);
 
+        // 一律用 Component#withColor(int) 而不是 DSColors.withColor：后者对非 MutableComponent 入参会走
+        // I18n.exists（客户端专属类），而本类登记在公共源码集、专用服务端也会加载它。
+        // 本效果这几个值都是自己造的 Component，没有「把值当翻译键」的需求，直接染色既等价又无跨端风险。
+
         // 色值直接渲染成它自己的写法（颜色名或 #RRGGBB），并染上该颜色本身，一眼能看出效果长什么样
-        MutableComponent colorText = colored(Component.literal(this.color.serialize()), this.color.getValue());
-        MutableComponent secondsText = colored(
-                Component.literal(String.format(Locale.ROOT, "%.1f", durationFor(abilityLevel) / 20.0F)), DSColors.BLUE);
+        MutableComponent colorText = Component.literal(this.color.serialize()).withColor(this.color.getValue());
+        MutableComponent secondsText = Component.literal(String.format(Locale.ROOT, "%.1f", durationFor(abilityLevel) / 20.0F))
+                .withColor(DSColors.BLUE);
         MutableComponent suffix = Component.empty();
 
         // 方块谓词只在非「全匹配」时才说明，避免每一条描述都拖着「任意方块」（复用 DS 2.0.64 起的渲染工具）
@@ -158,28 +162,17 @@ public record GlowEffect(TextColor color, float alpha, GlowDisplayType displayTy
 
         if (clampedAlpha < 1.0F) {
             suffix = suffix.append(Component.translatable("additional_abilities.ability.glow.alpha",
-                    colored(Component.literal(Math.round(clampedAlpha * 100.0F) + "%"), DSColors.BLUE)));
+                    Component.literal(Math.round(clampedAlpha * 100.0F) + "%").withColor(DSColors.BLUE)));
         }
 
         // 概率不足 100% 时才追加说明（与 block_quake / extinguish / DS 内置 potion 效果同写法）
         if (probability < 1.0F) {
             suffix = suffix.append(Component.translatable("additional_abilities.ability.glow.chance",
-                    colored(Component.literal(Math.round(probability * 100.0F) + "%"), DSColors.BLUE)));
+                    Component.literal(Math.round(probability * 100.0F) + "%").withColor(DSColors.BLUE)));
         }
 
         return List.of(Component.translatable("additional_abilities.ability.glow.description",
                 colorText, secondsText, suffix));
-    }
-
-    /**
-     * 给组件染色。
-     * <p>
-     * <b>不使用 {@code DSColors.withColor}</b>：那个方法内部会走 {@code I18n.exists}（客户端专属类），
-     * 而本类登记在公共源码集、专用服务端也会加载它 —— 虽然方法体引用是惰性解析，
-     * 但本效果没有任何「把值当翻译键」的需求，直接 {@code withColor} 既等价又少一条客户端类引用。
-     */
-    private static @NotNull MutableComponent colored(final @NotNull MutableComponent text, final int color) {
-        return text.withColor(color);
     }
 
     @Override

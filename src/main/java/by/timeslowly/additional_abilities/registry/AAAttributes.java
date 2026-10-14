@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * 本模组的自定义属性（{@code Registries.ATTRIBUTE}）。
  *
  * <h2>{@code dragon_breath_restriction}（龙息范围收束）</h2>
- * 百分比属性，范围 {@code [0, 0.8]}`，默认 0。语义为「截面收窄比例」：
+ * 百分比属性，范围 {@code [0, 0.9]}，默认 0。语义为「截面收窄比例」：
  * 数值 {@code r} 越大，龙息目标选择箱的截面按 {@code w = 1 - r} 收窄，
  * 同时沿视线方向按 {@code k = 1 / w} 拉长 —— 形状由「宽而短的锥形」变为
  * 「细而长的光束」（霰弹枪收束器的效果，见

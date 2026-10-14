@@ -4,6 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilit
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.block_effects.AbilityBlockEffect;
 import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
 import by.dragonsurvivalteam.dragonsurvival.util.Functions;
+import by.timeslowly.additional_abilities.common.ability.actions.ActionScope;
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockQuakes;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -119,7 +120,21 @@ public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probab
             return;
         }
 
-        BlockQuakes.trigger(level, position, height, durationFor(height), sound);
+        // 本次动作身份 = 施法起点世界刻（供发声分组使用）。
+        // 这里是"一次性派发"路径：DS 内置选择器（area / disc / looking_at / self / dragon_breath）
+        // 直接调本方法，ability.getCurrentTick() 就是本次施法的刻，算式与 DomainTarget 一致。
+        //
+        // 外层若已有身份（领域结算：DomainInstance 用自己存的 castStartTick 设置，
+        // 因为领域比施法活得久、getCurrentTick() 早已不是施法刻），则**不覆盖** ——
+        // 那个值才是权威。这里的算式只在"没有任何外层标记"时使用。
+        if (ActionScope.current() == null) {
+            ActionScope.run(ActionScope.castStartTickOf(level, ability.getCurrentTick()),
+                    () -> BlockQuakes.trigger(level, position, height,
+                            durationFor(height), sound, dragon.getUUID(), ability.key()));
+            return;
+        }
+
+        BlockQuakes.trigger(level, position, height, durationFor(height), sound, dragon.getUUID(), ability.key());
     }
 
     /** 施法一次可用的跃起高度（方块），已钳制到上限 */

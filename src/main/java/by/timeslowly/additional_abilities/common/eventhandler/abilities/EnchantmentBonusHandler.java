@@ -4,15 +4,15 @@ import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonus;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonusHolders;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonuses;
+import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonusThreads;
+import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonusThreads.Support;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.HeldItemSlots;
 import by.timeslowly.additional_abilities.registry.AAAttachments;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -20,7 +20,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.enchanting.GetEnchantmentLevelEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -55,9 +54,16 @@ import java.util.Map;
  * 但也不能用 {@code FMLEnvironment.dist} —— 那是<b>物理端</b>，而单人游戏里物理客户端同时跑着
  * 逻辑客户端与逻辑服务端：按物理端一刀切会取错候选集（甚至让渲染线程摸到服务端实体）。
  * <p>
- * 这里用「<b>当前线程是不是该服务器的服务器线程</b>」判定（{@code BlockableEventLoop#isSameThread}）：
- * 是 → 取服务端候选集；否则（纯客户端、渲染线程）→ 取客户端候选集。
- * {@code getCurrentServer()} 在纯客户端为 {@code null}，那是同一条分支的另一个自然入口。
+ * 判定收在 {@link EnchantmentBonusThreads}，这里只消费它的结论：
+ * <ul>
+ *     <li>{@code SERVER} → 服务端候选集；</li>
+ *     <li>{@code CLIENT} → 客户端候选集（客户端游戏线程）；</li>
+ *     <li>{@code UNSUPPORTED} → <b>直接返回"无加成"</b>，不碰候选集、实体与附件。</li>
+ * </ul>
+ * 第三态是这条修复的要点：该事件由调用点直接 post，<b>不保证在主线程</b> ——
+ * 原版重建创造模式搜索索引时就会在 {@code Worker-Main-*} 上问到它
+ * （见 {@code EnchantmentBonusThreads} 的类注释）。把这种线程当成"客户端"
+ * 会在客户端游戏线程正增删候选集的同时迭代它。
  *
  * <h2>三、提示行（{@link ItemTooltipEvent}）</h2>
  * 本效果<b>不动</b> {@code DataComponents.ENCHANTMENTS}，所以原版不会把虚拟附魔画进提示里
@@ -75,11 +81,25 @@ public final class EnchantmentBonusHandler {
 
     @SubscribeEvent
     public static void onGetEnchantmentLevel(final @NotNull GetEnchantmentLevelEvent event) {
-        boolean clientSide = isClientSide();
         ItemStack stack = event.getStack();
 
-        // 早退：全服此刻没有任何活动实例（绝大多数查询走这条），或查询的不是一只具体物品
-        if (stack.isEmpty() || EnchantmentBonusHolders.isEmpty(clientSide)) {
+        // 早退：查询的不是一只具体物品（最便宜的一条，放在线程判定之前）
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        // 本事件不保证在主线程上被 post（见类注释第二节）。不受支持的线程一律不结算 ——
+        // 既不迭代候选集，也不读实体与附件
+        Support support = EnchantmentBonusThreads.current();
+
+        if (support == Support.UNSUPPORTED) {
+            return;
+        }
+
+        boolean clientSide = support == Support.CLIENT;
+
+        // 早退：该侧此刻没有任何活动实例（绝大多数查询走这条）
+        if (EnchantmentBonusHolders.isEmpty(clientSide)) {
             return;
         }
 
@@ -90,21 +110,31 @@ public final class EnchantmentBonusHandler {
                     continue;
                 }
 
-                Holder.Reference<Enchantment> enchantment = event.getHolder(applied.enchantment()).orElse(null);
+                event.getHolder(applied.enchantment()).ifPresent(enchantment -> event.getEnchantments().upgrade(enchantment, applied.level()));
 
-                if (enchantment != null) {
-                    event.getEnchantments().upgrade(enchantment, applied.level());
-                }
             }
         });
     }
 
     @SubscribeEvent
     public static void onItemTooltip(final @NotNull ItemTooltipEvent event) {
-        boolean clientSide = isClientSide();
         ItemStack stack = event.getItemStack();
 
-        if (stack.isEmpty() || EnchantmentBonusHolders.isEmpty(clientSide)) {
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        // 与结算入口同一条门控：提示行同样只在受支持线程上补行（理由见类注释第二节）。
+        // 语言切换 / 创造模式搜索索引重建都会在工作线程上走到这里
+        Support support = EnchantmentBonusThreads.current();
+
+        if (support == Support.UNSUPPORTED) {
+            return;
+        }
+
+        boolean clientSide = support == Support.CLIENT;
+
+        if (EnchantmentBonusHolders.isEmpty(clientSide)) {
             return;
         }
 
@@ -137,11 +167,8 @@ public final class EnchantmentBonusHandler {
         tooltip.add(Component.translatable(TOOLTIP_HEADER).withStyle(ChatFormatting.GRAY));
 
         for (Map.Entry<ResourceKey<Enchantment>, Integer> entry : levels.entrySet()) {
-            Holder.Reference<Enchantment> enchantment = lookup.get(entry.getKey()).orElse(null);
+            lookup.get(entry.getKey()).ifPresent(enchantment -> tooltip.add(Enchantment.getFullname(enchantment, entry.getValue())));
 
-            if (enchantment != null) {
-                tooltip.add(Enchantment.getFullname(enchantment, entry.getValue()));
-            }
         }
     }
 
@@ -175,13 +202,5 @@ public final class EnchantmentBonusHandler {
         }
 
         return applied == null ? List.of() : applied;
-    }
-
-    /** 当前调用是否发生在客户端一侧（决定取哪一套候选实体），理由见类注释第二节 */
-    private static boolean isClientSide() {
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-
-        // 纯客户端（getCurrentServer 为 null）或客户端的画面线程：都不是"服务器线程"
-        return server == null || !server.isSameThread();
     }
 }

@@ -1,6 +1,6 @@
 # Activation Types (`activation_type`)
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71`
 > Location: `activation.activation_type`
 > See also: [08-Trigger-Type.md](08-Trigger-Type.md) — passive abilities
 > (`activation_type: dragonsurvival:passive`) carry a further `trigger.trigger_type` that decides
@@ -88,8 +88,8 @@ interaction on top.
 > `currentTick == cast_time`, leaving no time to pick. The field can still be written as `false`
 > explicitly, but then picking only works within `[0, cast_time - 1]`.
 >
-> **Setting `max_overcharged_duration` truncates the picking window**: when the window runs out the native
-> flow fires, using the **player's own highest tier** — so a lower picked tier (or even "picked `0` =
+> **Setting `max_overcharged_duration` truncates the picking window**: when the window runs out it fires
+> automatically at the **player's own highest tier** — so a lower picked tier (or even "picked `0` =
 > cancel") no longer applies. To guarantee the player can always release at their own pick, leave the field
 > unset (unset = hold indefinitely, release only by letting go).
 
@@ -167,9 +167,10 @@ inside the window: the tier no longer climbs (the cap is still `cast_time`) —
                    or may pick a tier with the wheel
 ```
 
-- When the window runs out the native "casting complete" flow fires it, at **the player's own highest tier**:
-  actions run once, the initial mana is spent, the cooldown applies — identical to firing at the cap, with no
-  extra handling in this mod.
+- When the window runs out the **shared settlement service** of this mod fires it, at **the player's own
+  highest tier**: actions run once, the initial mana is spent, the cooldown applies — identical to a manual
+  release (including the `trigger_rate` modulus base, `on_ability_cast` chaining, and the looping sound /
+  animation wrap-up observers see).
 - The field **only bounds how long you may hold**; it does not raise the **charge cap** (the tier threshold
   ceiling is still `cast_time`).
 - Two **load-time checks**: it **must be positive** (`0` means there is no window at all, and it would also park
@@ -179,17 +180,52 @@ inside the window: the tier no longer climbs (the cap is still `cast_time`) —
 
 ---
 
+## Server authority: charge time follows the server's own clock
+
+On release the client reports how many ticks it charged, but the server treats that **only as a claimed upper
+bound**. The real ceiling is decided server-side:
+
+```
+effective ticks = min( reported ticks , ticks the server actually charged , cast_time )
+```
+
+That counter is maintained by Dragon Survival's own player tick loop and cannot be touched by the client.
+**Claiming a full charge in a modified packet therefore buys nothing** — reporting `cast_time` right after a
+legitimate cast start still only yields whatever tier the server actually reached.
+
+> Clamping to `cast_time` alone would not be enough: a single inflated report would jump straight to your top tier.
+
+**The trade-off is zero network tolerance.** When the client's and server's tick counts differ by one, the
+server may resolve **one tier lower** at the boundary, or even **below the first tier**:
+
+- One tier lower → it fires at the tier the server actually reached (mana, cooldown and actions all use it);
+- Below the first tier → the server **still wraps the cast up as a cancel** (no cooldown, no mana, no actions).
+  It will not leave the cast running just because the client claimed otherwise — the client has already let go,
+  so the server would be stuck in a permanently held cast.
+
+The client had already predicted locally with its own tick count (spending mana, applying a cooldown), so when
+the results differ the server **sends back authoritative mana and cooldown**. An occasional "that was one tier
+lower than I expected" at the boundary is therefore expected behaviour.
+
+---
+
 ## Behaviour at a glance
 
 | Situation | Result |
 |---|---|
 | Released before tier 1's required charge time | **Cast cancelled**: no cooldown, no effect, no mana spent (matches Dragon Survival's native "released early" path) |
-| Released at or beyond tier 1 | Fires once at the current tier: spend initial mana → run the actions → resolve cooldown / ending sound / ending animation against that tier |
+| Released at or beyond tier 1 | Fires once at the tier the server resolved: spend initial mana → run the actions → resolve cooldown / ending sound / ending animation against that tier |
 | Charged all the way to `cast_time` | Dragon Survival's native "casting complete" releases it automatically, at the player's own upgrade level (max tier) |
 | `can_charge_exceed_cast_time` enabled | You may hold past the cap indefinitely; the tier parks at your own maximum and **only releasing fires it — nothing is automatic** |
-| ... enabled **and** `max_overcharged_duration` set | You may hold past the cap for at most that long, then it **fires automatically at the player's highest tier** (identical to "hold until it fires") |
+| ... enabled **and** `max_overcharged_duration` set | You may hold past the cap for at most that long, then it **fires automatically at the player's highest tier** (the same settlement a manual release uses, so the result is identical) |
 | `optional_charged`: released with a picked tier | Fires at the **picked tier** (this cell is always "the reached tier" for `charged`) |
 | `optional_charged`: released with tier `0` picked | **Cast cancelled**: no actions run, no initial mana spent, **no cooldown**, looping sound and animation cleared |
+| Server resolves below the first tier on release | The server **wraps it up as a cancel** and sends back authoritative mana / cooldown to correct the client's prediction (see the section above) |
+
+> Every release path (manual release, automatic release at the overcharge limit) goes through the same
+> settlement entry point, so the actions, the mana cost, the cooldown, the `on_ability_cast` chaining and the
+> looping sound / animation wrap-up observers see each happen **exactly once**, and the `trigger_rate` modulus
+> base is always `cast_time`.
 
 ---
 

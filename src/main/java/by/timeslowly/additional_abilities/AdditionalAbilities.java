@@ -1,6 +1,7 @@
 package by.timeslowly.additional_abilities;
 
 import by.timeslowly.additional_abilities.common.AAClientSetup;
+import by.timeslowly.additional_abilities.common.ability.activation.PendingBlockPlaces;
 import by.timeslowly.additional_abilities.common.config.AAClientConfig;
 import by.timeslowly.additional_abilities.common.eventhandler.abilities.DomainTickHandler;
 import by.timeslowly.additional_abilities.common.network.AANetwork;
@@ -32,8 +33,6 @@ public class AdditionalAbilities {
         AAAttachments.register(modEventBus);
         // 注册物品数据组件（DataComponentType：临时附魔标记）
         AAComponents.register(modEventBus);
-        // 注册自定义伤害类型
-        AADamageTypes.register(modEventBus);
         // 注册自定义属性
         AAAttributes.register(modEventBus);
         // 注册龙之技能自定义实体效果类型（DragonSurvival ability_entity_effect 注册表）
@@ -46,13 +45,15 @@ public class AdditionalAbilities {
         AAAbilityTargets.register(modEventBus);
         // 注册龙之技能自定义被动触发类型（DragonSurvival activation_trigger 注册表，trigger_type）
         AAAbilityTriggers.register(modEventBus);
-        // 接线：放置方块事件 → 本模组 additional_abilities:on_block_placed 触发器分发
-        NeoForge.EVENT_BUS.addListener(OnBlockPlaced::trigger);
+        // 接线：放置方块事件 → 本模组 additional_abilities:on_block_placed 触发器（两阶段确认）
+        // 第一阶段只登记候选；第二阶段在维度刻末尾确认"最终未被取消"后才真正分发
+        NeoForge.EVENT_BUS.addListener(OnBlockPlaced::enqueue);
+        NeoForge.EVENT_BUS.addListener(PendingBlockPlaces::confirm);
         // 接线：使用物品完成事件 → 本模组 additional_abilities:on_item_consumed 触发器分发
         NeoForge.EVENT_BUS.addListener(OnItemConsumed::trigger);
         // 接线：维度 tick 末尾 → 推进本模组 additional_abilities:domain 建立的领域（按维度分区）
         NeoForge.EVENT_BUS.addListener(DomainTickHandler::onLevelTick);
-        // 注册网络通道（屏幕视觉 / 方块震动 的服务端 → 客户端同步）
+        // 注册本模组网络 payload（注册清单与协议版本见 AANetwork）
         modEventBus.addListener(AANetwork::register);
         // 注册客户端专属内容（蓄力档位 HUD 图层 + 配置界面扩展点；
         AAClientSetup.register(modEventBus, modContainer);

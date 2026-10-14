@@ -1,6 +1,6 @@
 package by.timeslowly.additional_abilities.commands;
 
-import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlows;
+import by.timeslowly.additional_abilities.api.Visuals;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.LiteralCommandNode;
@@ -12,9 +12,6 @@ import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * 调试子指令：{@code /additional-abilities block-glow clear <targets>}。
@@ -62,9 +59,9 @@ public final class BlockGlowCommand {
 
     private static int clear(final @NotNull CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Collection<ServerPlayer> targets = EntityArgument.getPlayers(context, AACommands.TARGETS);
-        Set<UUID> casters = targets.stream().map(ServerPlayer::getUUID).collect(Collectors.toSet());
 
-        int removed = BlockGlows.clearByCasters(context.getSource().getServer(), casters);
+        // 走正式入口而不是直接读附件表：指令层不依赖内部存储（见 api 包的说明）
+        int removed = Visuals.clearGlowByCasters(targets);
 
         context.getSource().sendSuccess(
                 () -> Component.translatable(CLEAR_SUCCESS, targets.size(), removed), false);

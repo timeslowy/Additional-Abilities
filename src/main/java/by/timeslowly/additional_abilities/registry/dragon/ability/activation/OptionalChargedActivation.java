@@ -46,8 +46,8 @@ import java.util.Optional;
  * 需要选档能力时请保持其为默认值 {@code true}。
  * <p>
  * 同理，{@code max_overcharged_duration} 会把"选档窗口"截断在 {@code cast_time + 该值} 那一刻：
- * 窗口到点由 DS 原生流程自动释放，且用的是<b>玩家自身的最高档</b> ——
- * 此时滚轮选定的低档（乃至"选定 0 = 取消"）都不再生效。
+ * 窗口到点会以<b>玩家自身的最高档</b>自动释放（走 {@code ChargedCasts#settleOvercharged}，
+ * 与手动松手同一套结算）—— 此时滚轮选定的低档（乃至"选定 0 = 取消"）都不再生效。
  * 若希望玩家始终有机会按自己的选定释放，就不要配置该字段（不配置 = 无限按住，只有松手才释放）。
  *
  * <h2>与其他类型的一致性</h2>
@@ -110,24 +110,27 @@ public record OptionalChargedActivation(
     /**
      * 基础 codec + 跨字段校验（{@code max_overcharged_duration} 以 {@code can_charge_exceed_cast_time} 为前提）。
      * <p>
+     * 字段片段来自 {@link ChargeableActivationCodecs}，与 {@link ChargedActivation} 共用。
+     * <p>
+     * 唯一的不同是 {@code can_charge_exceed_cast_time} 的默认值（本类型 {@code true}
+     * —— 否则满档那一帧会被 DS 原生路径自动释放，玩家来不及选档），因此它单独写在这里。
+     * <p>
      * 刻意先落一个局部变量再调 {@code validate}，而不是直接在链式调用末尾追加：
      * 接收者本身是个泛型方法调用（{@code RecordCodecBuilder.mapCodec(...)}）时，
      * javac 无法把外层的目标类型传进去，会把接收者推断成 {@code MapCodec<Object>} 而编译失败。
      */
     private static MapCodec<OptionalChargedActivation> createCodec() {
         MapCodec<OptionalChargedActivation> base = RecordCodecBuilder.mapCodec(instance -> instance.group(
-                LevelBasedValue.CODEC.fieldOf("charged_duration_per_level").forGetter(OptionalChargedActivation::chargedDurationPerLevel),
-                ChargeableActivation.CAST_TIME_CODEC.fieldOf("cast_time").forGetter(OptionalChargedActivation::castTime),
-                // 与 charged 的唯一差异：默认 true —— 否则满档那一帧会被 DS 原生路径自动释放，玩家来不及选档
+                ChargeableActivationCodecs.CHARGED_DURATION_PER_LEVEL.forGetter(OptionalChargedActivation::chargedDurationPerLevel),
+                ChargeableActivationCodecs.CAST_TIME.forGetter(OptionalChargedActivation::castTime),
                 Codec.BOOL.optionalFieldOf("can_charge_exceed_cast_time", true).forGetter(OptionalChargedActivation::canChargeExceedCastTime),
-                // 缺省 = 无限按住（选档窗口不受截断）
-                ChargeableActivation.MAX_OVERCHARGED_DURATION_CODEC.optionalFieldOf("max_overcharged_duration").forGetter(OptionalChargedActivation::maxOverchargedDuration),
-                LevelBasedValue.CODEC.optionalFieldOf("cooldown").forGetter(OptionalChargedActivation::cooldown),
-                LevelBasedValue.CODEC.optionalFieldOf("initial_mana_cost").forGetter(OptionalChargedActivation::initialManaCost),
-                Notification.CODEC.optionalFieldOf("notification", Notification.DEFAULT).forGetter(OptionalChargedActivation::notification),
-                Codec.BOOL.optionalFieldOf("can_move_while_casting", true).forGetter(OptionalChargedActivation::canMoveWhileCasting),
-                ChargeableActivation.SOUND_CODEC.optionalFieldOf("sound").forGetter(OptionalChargedActivation::sound),
-                ChargeableActivation.ANIMATIONS_CODEC.optionalFieldOf("animations").forGetter(OptionalChargedActivation::animations)
+                ChargeableActivationCodecs.MAX_OVERCHARGED_DURATION.forGetter(OptionalChargedActivation::maxOverchargedDuration),
+                ChargeableActivationCodecs.COOLDOWN.forGetter(OptionalChargedActivation::cooldown),
+                ChargeableActivationCodecs.INITIAL_MANA_COST.forGetter(OptionalChargedActivation::initialManaCost),
+                ChargeableActivationCodecs.NOTIFICATION.forGetter(OptionalChargedActivation::notification),
+                ChargeableActivationCodecs.CAN_MOVE_WHILE_CASTING.forGetter(OptionalChargedActivation::canMoveWhileCasting),
+                ChargeableActivationCodecs.SOUND.forGetter(OptionalChargedActivation::sound),
+                ChargeableActivationCodecs.ANIMATIONS.forGetter(OptionalChargedActivation::animations)
         ).apply(instance, OptionalChargedActivation::new));
 
         return base.validate(ChargeableActivation::validateOverchargeSupport);

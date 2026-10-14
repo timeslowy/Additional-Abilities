@@ -115,16 +115,16 @@ public final class OptionalChargedSelection {
 
     /**
      * 供 HUD 使用的"当前将要释放的档位"。
+     * <p>
+     * 与 {@link #resolveReleaseLevel(int)} 是<b>同一个换算</b>，保留两个名字只为让调用点的意图自明
+     * —— 结算路径读"要释放几档"、渲染路径读"要显示几档"，两者必须永远一致，
+     * 因此这里直接委托而不是各写一份（曾经各写一份，属可漂移的确切重复）。
      *
      * @param achieved 当前已达成档位
      * @return 自动跟随时等于 {@code achieved}；{@code 0} 表示已选定为取消
      */
     public static int displayLevel(final int achieved) {
-        if (achieved < 1) {
-            return 0;
-        }
-
-        return manual ? Math.min(selectedLevel, achieved) : achieved;
+        return resolveReleaseLevel(achieved);
     }
 
     /**

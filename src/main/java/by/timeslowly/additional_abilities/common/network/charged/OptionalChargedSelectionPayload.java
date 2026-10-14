@@ -21,8 +21,16 @@ import org.jetbrains.annotations.NotNull;
  * 本包存在的唯一理由是让服务端侧具备"当前选档"的可见性，
  * 以支撑 {@code /dragon-ability query … current_selected_level} 这条调试子命令。
  * <p>
- * 因此它<b>只在玩家滚轮调整档位时发送</b>（一次施法内至多几次），不做逐刻同步；
- * 服务端在 {@link ChargedCasts#fire} 收尾时清掉记录，避免残留到下一次施法。
+ * 因此它<b>只在玩家滚轮调整档位时发送</b>（一次施法内至多几次），不做逐刻同步。
+ *
+ * <h2>服务端会校验，不是照单全收</h2>
+ * 本包的调用方不可信。{@link ChargedCasts#onSelectionChanged} 会先确认
+ * "此刻正在施放的就是这个技能"、且该技能允许选档，再把档位钳到 {@code [0, 已达档位]}；
+ * 任一条不成立就直接忽略。因此持续用任意技能键发包<b>不会</b>让服务端记录增长。
+ * <p>
+ * 记录的清除发生在<b>所有</b>施法终结路径的共同收尾漏斗上
+ * （{@link ChargedCasts#onCastingStopped}），包括不经过本模组结算服务的
+ * DS 原生读条完成，因此不会残留到下一次施法。
  *
  * @param ability       技能注册键
  * @param selectedLevel 选定档位；{@link ChargedReleasePayload#AUTO}（{@code -1}）表示"自动跟随已达档位"

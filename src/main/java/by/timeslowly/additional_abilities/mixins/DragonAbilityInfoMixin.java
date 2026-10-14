@@ -30,8 +30,10 @@ import java.util.List;
  * 因此在这里补一行即可同时覆盖技能界面与背包内的技能悬浮提示。
  *
  * <h2>注入点为什么选尾端 RETURN</h2>
- * {@code getInfo} 内部只有一个 {@code return info;}（尾端 {@code areturn}，
- * 已对 DS 2.0.70 的 class 文件核实），且 {@code info} 是方法内新建的 {@link java.util.ArrayList}。
+ * {@code getInfo} 内部只有一个 {@code return info;}（尾端 {@code areturn}），且
+ * {@code info} 是方法内新建的 {@link java.util.ArrayList}。
+ * 该结构已对 DS 2.0.70 的 class 文件核实，2.0.71 亦已用 {@code javap -p -s} 独立复核
+ * （签名为 {@code getInfo(Player, DragonAbilityInstance) → List}，只有一个 {@code return info}）。
  * 因此 {@link At @At("RETURN")} 只触发一次，且可以直接<b>就地修改返回值</b>：
  * 插到索引 0 即为首行 —— 与龙生给被动技能放「触发条件」行的位置语义一致
  * （都是"这个技能是什么性质"的元信息，排在时长与费用之前）。

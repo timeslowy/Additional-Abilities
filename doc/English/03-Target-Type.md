@@ -1,6 +1,6 @@
 # Target Types (`target_type`)
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71`
 > Location: `actions[].target_selection.target_type`
 
 A target type decides **who the ability selects**. It is written inside `actions[].target_selection`, with
@@ -88,6 +88,9 @@ stays on the body's side.
 - **The block branch's facing argument is unchanged from Dragon Survival's breath**: the `direction` handed
   to block effects is "the nearest axis from the eye's world position" and has nothing to do with where you
   are looking. Keep that in mind if your block effect depends on it.
+- **The block branch skips unloaded chunks** (same as `annulus` / `domain`): the condition context reads
+  block states, and reading a block **loads the chunk synchronously**. Unloaded positions are skipped
+  outright — never read, never generated. See "About unloaded chunks" below.
 - **Who can be hit is decided by `applied_effects.targeting_mode`**, not by the target type itself.
   Use `non_allies` or `enemies` to hit only hostiles, or `allies_and_self` to buff your own side.
 - The sidebar description is already localised in this mod:
@@ -179,6 +182,8 @@ The config above selects a band from radius 5 to 6, three blocks thick starting 
 - **The block branch passes `direction` as `null`** — consistent with Dragon Survival's `area` / `disc`
   (only `looking_at` passes a real hit-face orientation). Block effects that depend on it need their own
   fallback.
+- **The block branch skips unloaded chunks** (see "About unloaded chunks" below). That matters especially
+  when the outer radius is large.
 - **F3+B draws two boxes**: cyan for the outer bound, dark cyan for the inner (hollowed) bound.
   This mod renders that pair itself — Dragon Survival's `ClientDragonRenderer#renderAbilityHitbox` is a
   hard-coded branch chain with no extension point.
@@ -260,11 +265,20 @@ the frame the cast finishes (currentTick == cast_time)
  ├─ the domain is created: anchor = dragon.position() at that moment; radius / shape / interval /
  │  duration / effect sets are all frozen
  ├─ it settles once immediately — effects land right away, without waiting for the first apply_interval
+ ├─ later actions in the same frame join in: every newly added effect set runs its first pass at once (below)
  └─ with simple, stopCasting then fires at once and the caster is free to move
 afterwards it settles once every apply_interval ticks
 when duration runs out the domain vanishes (calling remove on the entities inside first, if
 remove_effects_on_end: true)
 ```
+
+> **Several actions in the same frame share one domain**: `applied_effects` is an Either (entity and block
+> are mutually exclusive), so "affects both entities and blocks" has to be written as two `target_selection`
+> entries both pointing at this target type. They **join the same domain** (one anchor, one set of timers)
+> instead of replacing each other. Each set runs its **first pass the moment it joins**, rather than waiting
+> for the next `apply_interval` — otherwise, when `duration < apply_interval`, the later sets would **never
+> run at all** because the domain expires first. Re-joining the same set during a channelled cast does **not**
+> run it again (sets are de-duplicated by content), so it never turns into a high-frequency replay.
 
 ### Example 1 — `simple`, the primary use case
 
@@ -356,8 +370,14 @@ each other.
   running. Nothing breaks, and there is no hidden "the domain resumes once the caster returns" pause.
 - **`should_remove_automatically` measures something else**: Dragon Survival's flag on duration-based
   effects compares the target's distance to the **caster** against `getDistance()`, while this target type
-  normally anchors at the casting spot. Use `remove_effects_on_end: true` when you want "leaving the
-  domain ends the effect".
+  normally anchors at the casting spot.
+- ⚠️ **`remove_effects_on_end` does *not* mean "leaving the domain ends the effect"**: it calls `remove`
+  once, **when the domain ends** (`duration` expires, it is evicted by `max_domains`, or a command clears
+  it), and only on the targets that are **still inside at that moment**. A target that walks out mid-way
+  is neither reverted nor removed at the moment it leaves — the flag governs the *ending*, not the
+  *leaving*. Use `should_remove_automatically` (distance to the caster — a good fit for domains with
+  `anchor: caster`) or a plain duration-based effect in `applied_effects` when you want
+  "out of the area ⇒ effect gone".
 - **Block-branch iteration count**: the `cube` / `sphere` box holds `(2r+1)³` positions, and the spherical
   refinement leaves roughly half of them. When `radius` grows, raise `apply_interval` too (the default of
   20 is already conservative; going below 10 is not advised). The entity branch is unaffected (a single
@@ -379,3 +399,34 @@ each other.
 > allies and yourself plus dragon breath particles, the block side sprinkles end-rod particles — it is
 > also a live example of the multi-action merge). That test ability is not attached to any species —
 > grant it with `/dragon-ability add`.
+
+---
+
+## About unloaded chunks (shared by all three block target types)
+
+The **block branch** of every target type added by this mod (`annulus` / `anti_dragon_breath` / `domain`,
+plus the restricted breath's block filter) **skips unloaded chunks**: it does not read the block there,
+does not build the condition context, and does not run effects.
+
+**Why this is necessary**: reading a block state (`getBlockState`) on the server **loads the chunk
+synchronously** and can even **trigger generation**. As soon as an area ability reaches into unloaded
+territory (easy with a large outer radius), a single cast drags every chunk along the way into memory —
+a player can stall the server with one ability. After skipping, unloaded areas simply "did not take
+effect this time", with no side effects.
+
+**What this means for writing abilities**:
+
+- `target_conditions` that **depend on a specific block** (`location_check` / `block_state_property`, …)
+  cannot see a block in unloaded territory, so those positions are **skipped outright** (not evaluated as
+  false — they never enter condition evaluation at all). Note `minecraft:location_check` reads the
+  **live** block at `origin`, so it is subject to the same rule.
+- **The entity branch is unaffected**: an entity query only walks already-loaded entities and never loads
+  a chunk for the sake of a query.
+- Unloaded chunks are **never** loaded or generated by this mod, and the existing scan caps (the
+  `annulus` iteration count, the breath's `MAX_SCANNED_BLOCKS`) are unchanged — the two are separate
+  layers of protection.
+
+> This trade-off covers **this mod's own** target types only. Dragon Survival's built-in `area` / `disc` /
+> `dragon_breath` have **no** such gate: combining them with this mod's block effects (`glow` /
+> `block_quake` / `extinguish`) still loads chunks when the effect reads a block. That is upstream
+> behaviour and this mod does not change Dragon Survival's built-in types.

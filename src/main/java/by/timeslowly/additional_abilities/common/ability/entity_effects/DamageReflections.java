@@ -5,8 +5,8 @@ import by.timeslowly.additional_abilities.registry.dragon.ability.entity_effects
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,12 +49,23 @@ public class DamageReflections {
     }
 
     /**
-     * 返回当前未过期的条目，并顺带清理已过期条目（技能结束后附件内存不会残留）。
+     * 返回当前<b>未过期</b>条目的只读快照，并顺带清理已过期条目（技能结束后附件内存不会残留）。
+     * <p>
+     * <b>为什么返回快照而不是 {@code entries.values()}</b>：后者是底层
+     * {@link HashMap} 的<b>活视图</b>，调用方拿到的集合既可以被 {@code remove} 改写本附件的内部状态，
+     * 也会在遍历途中因别处调用 {@link #set} / {@link #remove} 而抛
+     * {@code ConcurrentModificationException}。虽然当前唯一调用方（伤害反弹事件）是单线程顺序访问，
+     * 但那是<b>实现的巧合</b>而非契约 —— 对外查询必须给出一份"当刻定格、不可修改"的结果。
+     * <p>
+     * 代价是每次调用多一次 {@link List#copyOf}：本方法只在"实体确实受了伤害且附件非空"时才被调用，
+     * 且条目数等于该实体身上的反伤技能数（通常 1~2），不在逐帧路径上。
      *
      * @param nowTick 当前游戏刻（{@code level().getGameTime()})
      */
-    public @NotNull Collection<Entry> active(final long nowTick) {
+    public @NotNull List<Entry> active(final long nowTick) {
         entries.entrySet().removeIf(entry -> nowTick - entry.getValue().appliedTick() > REFLECTION_TTL_TICKS);
-        return entries.values();
+
+        // 空表是最常见的情形（没有反伤技能时根本不会走到这里，但被动刷新间隙会），单独短路省一次分配
+        return entries.isEmpty() ? List.of() : List.copyOf(entries.values());
     }
 }

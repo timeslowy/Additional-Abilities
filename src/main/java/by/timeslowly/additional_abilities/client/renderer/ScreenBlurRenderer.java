@@ -25,7 +25,26 @@ import org.slf4j.Logger;
  * 与别的链共用名字属于不必要的耦合）。
  * <p>
  * 链按需构建（构建时会编译 GLSL），随后常驻复用；只在主渲染目标实例被替换时重建。
- * 它不主动释放：与原版对 {@code GameRenderer#blurEffect} 的处理一致，进程退出时随 GL 上下文一起消失。
+ *
+ * <h2>生命周期为什么要外接</h2>
+ * 早先本类<b>从不释放</b>链，理由是"与原版对 {@code GameRenderer#blurEffect} 的处理一致"——
+ * <b>这条理由是错的</b>：原版 {@code GameRenderer#close()} 与 {@code #loadBlurEffect} 都会
+ * {@code close()} 自己的 blurEffect（已从 {@code neoforge-21.1.250-sources.jar} 核实）。
+ * 原版之所以看起来"不管"，是因为它的链由 {@code GameRenderer} 那个<b>资源重载监听器</b>
+ * （{@code createReloadListener}，{@code getName()} 为 {@code "Shader Loader"}）负责重建。
+ * <p>
+ * 本类早先两头都缺，于是有两个后果：
+ * <ul>
+ *     <li><b>F3+T / 换资源包后旧链继续用</b>：链持有的是旧 {@code ResourceProvider} 上编出来的
+ *         GL 程序，且 {@code unavailable} 这个"失败即永久放弃"的标志再没有任何东西能重置 ——
+ *         修好坏的 shader 资源后，本次游戏内 blur 也永远不会恢复；</li>
+ *     <li><b>关闭时资源不释放</b>：进程退出前 GL 上下文仍然有效，
+ *         {@code PostChain#close()} 该做的事（释放临时渲染目标、程序对象）就没人做。</li>
+ * </ul>
+ * 修法是把两个生命周期接回来：{@link #invalidate()} 挂在<b>客户端资源重载</b>上
+ * （下一次渲染按需重建，并顺带把 {@code unavailable} 一并复位），
+ * {@link #shutdown()} 挂在<b>游戏关闭</b>上（GL 上下文仍有效时释放）。接线见
+ * {@code client.eventhandler.ScreenBlurLifecycleHandler}。
  */
 public final class ScreenBlurRenderer {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -42,10 +61,39 @@ public final class ScreenBlurRenderer {
     private static RenderTarget boundTarget = null;
     private static int chainWidth = -1;
     private static int chainHeight = -1;
-    /** 构建或编译失败后不再重试，避免每帧刷日志 */
+    /**
+     * 构建或编译失败后不再重试，避免每帧刷日志。
+     * <p>
+     * <b>它不是永久的</b>：{@link #invalidate()} 会把它一并复位 ——
+     * 否则"资源重载后修好了 shader"这条恢复路径就是死的。
+     */
     private static boolean unavailable = false;
 
     private ScreenBlurRenderer() {}
+
+    /**
+     * 作废当前链，使下一次渲染按需重建（客户端资源重载时调用）。
+     * <p>
+     * <b>为什么连 {@code unavailable} 一起复位</b>：那个标志的语义是"本次加载的资源构建不出链"，
+     * 而资源重载恰恰会换掉这批判资源。不复位的话，一次坏资源就会把本次游戏内的 blur 永久判死，
+     * 修好文件再 F3+T 也救不回来。
+     */
+    public static void invalidate() {
+        discard();
+        unavailable = false;
+    }
+
+    /**
+     * 释放当前链（游戏关闭时调用）。
+     * <p>
+     * <b>必须在 GL 上下文仍有效时调用</b>：{@code PostChain#close()} 会销毁临时渲染目标并
+     * 释放 GL 程序对象，这些调用内部都有 {@code RenderSystem.assertOnRenderThread()}。
+     * NeoForge 的 {@code GameShuttingDownEvent} 正是为此提供的位置 ——
+     * 它在客户端 GL 上下文仍有效时触发（见该事件自身的 javadoc）。
+     */
+    public static void shutdown() {
+        discard();
+    }
 
     /**
      * 按当前模糊强度渲染一帧。

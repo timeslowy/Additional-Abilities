@@ -1,6 +1,6 @@
 # Bundled Datapacks
 
-> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.68` · Wing Kirin `≥ 3.3.0`
+> Applies to: Additional Abilities for DS `2.0.0` · Dragon Survival `≥ 2.0.71` · Wing Kirin `≥ 3.3.0`
 
 This mod ships **optional** datapacks — off by default, the player has to enable them manually.
 Their purpose is to rework abilities that already exist in another mod (currently Wing Kirin) using
@@ -146,7 +146,9 @@ Everything else is identical to the original.
 
 1. Put the pack directory under `src/main/resources/`, e.g.
    `src/main/resources/data/<modid>/datapacks/<pack name>/`;
-2. The directory root **must** contain `pack.mcmeta` (with `pack.pack_format`) and `pack.png`;
+2. The directory root **must** contain `pack.mcmeta` (with `pack.pack_format`); `pack.png` is an
+   **optional** display icon — when absent, vanilla `PackSelectionScreen#loadPackIcon` falls back to the
+   default icon and the pack still loads normally;
 3. Add one call in `addPackFinders` inside `registry/PackFinders.java` — the path argument **must** match
    the real directory exactly;
 4. Add the display-name language keys to `lang/en_us.json` and `lang/zh_cn.json`

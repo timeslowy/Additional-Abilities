@@ -121,29 +121,45 @@ public class BlockGlowRenderHandler {
 
         GlowOutlineRenderer.beginBatch();
 
-        for (GlowEntry entry : entries) {
-            if (!isVisible(entry, frustum, camera)) {
-                continue;
-            }
+        // 收批必须走 finally：一旦某一条目在渲染中抛异常，不恢复 GL 状态与 pose 栈会让后续所有
+        // GUI / 世界绘制带着"线框管线状态 + 错位矩阵"继续跑（画面崩坏且极难定位）。
+        // 代价只是常规路径上多一层 try 块，无分配。
+        try {
+            for (GlowEntry entry : entries) {
+                if (!isVisible(entry, frustum, camera)) {
+                    continue;
+                }
 
-            if (entry.displayType().isShader()) {
-                SHADER_QUEUE.add(entry);
-                continue;
-            }
+                if (entry.displayType().isShader()) {
+                    SHADER_QUEUE.add(entry);
+                    continue;
+                }
 
-            pose.pushPose();
-            pose.translate(entry.position().getX(), entry.position().getY(), entry.position().getZ());
-            GlowOutlineRenderer.render(pose, entry.colorARGB());
-            pose.popPose();
+                pose.pushPose();
+
+                try {
+                    pose.translate(entry.position().getX(), entry.position().getY(), entry.position().getZ());
+                    GlowOutlineRenderer.render(pose, entry.colorARGB());
+                } finally {
+                    pose.popPose();
+                }
+            }
+        } finally {
+            // 两层 finally：endBatch 自身也可能抛（GL 调用），此时 pose 栈仍必须弹回
+            try {
+                GlowOutlineRenderer.endBatch();
+            } finally {
+                pose.popPose();
+            }
         }
-
-        GlowOutlineRenderer.endBatch();
-        pose.popPose();
 
         trimShaderQueue(camera);
     }
 
-    /** 距离 + 视锥剔除。包围盒在收包时已构造好并缓存在条目里，这里不产生任何分配 */
+    /**
+     * 距离 + 视锥剔除。包围盒与包围盒中心都在收包时构造好并缓存在条目里，
+     * 这里只做取值与比较，不产生任何分配。
+     */
     private static boolean isVisible(final @NotNull GlowEntry entry, final @NotNull Frustum frustum,
                                      final @NotNull Vec3 camera) {
         // 逐帧读配置：ModConfigSpec 的取值自带缓存，改配置即时生效，这里不需要另做缓存
@@ -151,14 +167,15 @@ public class BlockGlowRenderHandler {
                 ? AAClientConfig.glowShaderDistance()
                 : AAClientConfig.glowOutlineDistance();
 
-        return entry.bounds().getCenter().distanceToSqr(camera) <= maxDistance * maxDistance
+        return entry.center().distanceToSqr(camera) <= maxDistance * maxDistance
                 && frustum.isVisible(entry.bounds());
     }
 
     /**
      * 超限时只保留最近的若干块。
      * <p>
-     * 排序比较器按<b>固定的相机位置</b>现算距离，因此不需要额外的平行距离数组；
+     * 排序比较器按<b>固定的相机位置</b>现算距离，且中心已在条目上缓存，
+     * 因此不需要额外的平行距离数组、比较期间也不分配；
      * 只有确实超限时才排序，常规情况（同屏方块数在上限内）完全跳过。
      */
     private static void trimShaderQueue(final @NotNull Vec3 camera) {
@@ -166,7 +183,7 @@ public class BlockGlowRenderHandler {
             return;
         }
 
-        SHADER_QUEUE.sort(Comparator.comparingDouble(entry -> entry.bounds().getCenter().distanceToSqr(camera)));
+        SHADER_QUEUE.sort(Comparator.comparingDouble(entry -> entry.center().distanceToSqr(camera)));
         SHADER_QUEUE.subList(MAX_SHADER_BLOCKS, SHADER_QUEUE.size()).clear();
     }
 

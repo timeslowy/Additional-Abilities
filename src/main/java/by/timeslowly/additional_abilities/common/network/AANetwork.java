@@ -10,10 +10,25 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 本模组的网络通道注册。
+ * 本模组的网络 payload 注册。
  * <p>
- * 通道由 {@link ScreenVisionPayload#TYPE} 的 ResourceLocation 决定
- * （{@code additional_abilities:screen_vision}），与 DS 的通道互不干扰。
+ * NeoForge 1.21.1 没有"通道"这一层：每个 payload 自带
+ * {@code ResourceLocation}（如 {@code additional_abilities:screen_vision}），
+ * 注册时统一带上 {@link #PROTOCOL_VERSION}，两端版本不一致会在协商阶段被拒绝连接。
+ * 本模组当前共注册 <b>6 个</b> payload，命名空间均为 {@code additional_abilities}，
+ * 与 DS 的 payload 互不干扰：
+ * <table border="1">
+ *     <caption>注册清单</caption>
+ *     <tr><th>方向</th><th>payload</th><th>用途</th></tr>
+ *     <tr><td rowspan="4">S → C</td><td>{@link ScreenVisionPayload}</td><td>屏幕视觉（模糊 / 边光 / 抖动）</td></tr>
+ *     <tr><td>{@link ScreenVisionClearPayload}</td><td>屏幕视觉的立即清空</td></tr>
+ *     <tr><td>{@link BlockQuakePayload}</td><td>方块震动（假身起跳）</td></tr>
+ *     <tr><td>{@link BlockGlowPayload}</td><td>方块发光（线框 / 着色器染色）</td></tr>
+ *     <tr><td rowspan="2">C → S</td><td>{@link ChargedReleasePayload}</td><td>蓄力松手 / 取消的结算请求</td></tr>
+ *     <tr><td>{@link OptionalChargedSelectionPayload}</td><td>滚轮选档同步（仅供查询指令展示）</td></tr>
+ * </table>
+ * 增删 payload、改动字段结构、或改动随包传输的枚举<b>序列名</b>取值时，
+ * 必须同步递增 {@link #PROTOCOL_VERSION}（历史见该常量的注释）。
  */
 public class AANetwork {
     /**

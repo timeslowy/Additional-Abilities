@@ -1,26 +1,23 @@
 package by.timeslowly.additional_abilities.common.ability.block_effects;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
+import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlowData.Entry;
+import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlowData.GlowKey;
 import by.timeslowly.additional_abilities.common.network.BlockGlowPayload;
+import by.timeslowly.additional_abilities.registry.AAAttachments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +36,16 @@ import java.util.UUID;
  *     <li><b>按刻聚合</b>：每服务端刻把「到期的」条目按「颜色 + 显示类型」分组，聚合成尽可能少的包；</li>
  *     <li><b>就近广播</b>：按本批方块包围盒半径只发给附近玩家（技能目标是方块，影响对象是"看得到的人"）。</li>
  * </ol>
- * <b>生命周期</b>：{@code AbilityBlockEffect} 接口没有 {@code remove}（方块效果一律瞬时），
+ *
+ * <h2>状态放在哪里（本次修复的核心）</h2>
+ * 全部条目挂在 {@code ServerLevel} 的数据附件上（{@code AAAttachments.BLOCK_GLOW}，见
+ * {@link BlockGlowData}），<b>不再</b>用静态 {@code Map<ResourceKey<Level>, …>}。
+ * 原先那种写法以维度 ResourceKey 为键，表在世界切换后依然存活，而里面却是上一个存档的
+ * {@code getGameTime()} 数值：进入时间较小的存档后，{@code now - lastSentTick} 可能为负数，
+ * 新效果长时间不发包，旧到期时间也会污染新存档。挂到 Level 附件后状态随实例生灭，结构上不可能串味。
+ *
+ * <h2>生命周期</h2>
+ * {@code AbilityBlockEffect} 接口没有 {@code remove}（方块效果一律瞬时），
  * 所以时长完全由本类自管 —— 条目带过期刻，服务端每 {@link #REFRESH_INTERVAL_TICKS} 刻重发一次续命；
  * 技能停止触发后条目自然过期，客户端按包内剩余时长本地倒计时，因此<b>不需要额外的移除包</b>。
  * 代价是技能被提前打断时发光会残留到时长结束（已在实现规划中确认接受）。
@@ -73,93 +79,13 @@ public final class BlockGlows {
     private static final Direction[] DIRECTIONS = Direction.values();
 
     /** 尚未发送过的哨兵值：放在 {@link Entry#lastSentTick} 上使新条目下一服务端刻即发出 */
-    private static final long NEVER_SENT = -1L;
-
-    /** 维度 → 条目表 */
-    private static final Map<ResourceKey<Level>, Storage> STORAGE = new HashMap<>();
-
-    /** 条目键：位置 + 颜色 + 显示类型（不含施法者，理由见类注释） */
-    public record GlowKey(long packedPos, int colorARGB, GlowDisplayType displayType) {}
+    static final long NEVER_SENT = -1L;
 
     /** 同一批发包与分组用的参数：颜色 + 显示类型 */
     private record Batch(int colorARGB, GlowDisplayType displayType) {}
 
     /** 本刻待发送的一项：位置 + 剩余时长（剩余时长逐项不同，故随项携带而不是整批一个） */
     private record Pending(long packedPos, int remainingTicks) {}
-
-    /** 一条发光记录（可变：过期时刻与上次发送时刻都随触发/广播推进） */
-    static final class Entry {
-        final BlockPos position;
-        final int colorARGB;
-        final GlowDisplayType displayType;
-
-        /**
-         * 贡献过这条发光的施法者。条目按「位置 + 颜色 + 显示类型」合并，所以同色同类型的两名玩家会挂在
-         * 同一条上 —— 这里因此可能不止一个。它<b>只服务于调试清空</b>（见 {@link #clearByCasters}），
-         * 不参与渲染判定，也不进网络包（协议里没有施法者概念）。
-         */
-        final Set<UUID> casters = new HashSet<>(1);
-
-        long expireTick;
-        long lastSentTick = NEVER_SENT;
-
-        private Entry(final @NotNull BlockPos position, final int colorARGB,
-                      final @NotNull GlowDisplayType displayType, final long expireTick,
-                      final @NotNull UUID caster) {
-            this.position = position;
-            this.colorARGB = colorARGB;
-            this.displayType = displayType;
-            this.expireTick = expireTick;
-            this.casters.add(caster);
-        }
-
-        /** 追加贡献者（先查再写：绝大多数条目只有一名施法者，避免 HashSet 无谓地扩容） */
-        void addCaster(final @NotNull UUID caster) {
-            casters.add(caster);
-        }
-
-        /**
-         * 移除给定施法者的贡献。
-         *
-         * @return {@code true} 表示这条条目已经<b>没有任何</b>贡献者、调用方应整条丢弃；
-         *         仍有别人撑着时返回 {@code false}，条目原样保留
-         */
-        boolean dropCasters(final @NotNull Set<UUID> candidates) {
-            return casters.removeAll(candidates) && casters.isEmpty();
-        }
-    }
-
-    private static final class Storage {
-        private final Map<GlowKey, Entry> entries = new HashMap<>();
-
-        /**
-         * 移除给定施法者的贡献，返回被<b>整条</b>移除的条目（仍有人贡献的不算，因此不会误伤其他玩家）。
-         * <p>
-         * 返回值口径与 {@code domain clear} 一致 —— 是"被移除的条目数"，便于 {@code /execute store result} 观察。
-         */
-        private @NotNull List<Entry> dropCasters(final @NotNull Set<UUID> casters) {
-            List<Entry> dropped = null;
-            Iterator<Entry> iterator = entries.values().iterator();
-
-            while (iterator.hasNext()) {
-                Entry entry = iterator.next();
-
-                if (!entry.dropCasters(casters)) {
-                    continue;
-                }
-
-                iterator.remove();
-
-                if (dropped == null) {
-                    dropped = new ArrayList<>();
-                }
-
-                dropped.add(entry);
-            }
-
-            return dropped == null ? List.of() : dropped;
-        }
-    }
 
     private BlockGlows() {}
 
@@ -184,15 +110,15 @@ public final class BlockGlows {
             return;
         }
 
+        BlockGlowData data = level.getData(AAAttachments.BLOCK_GLOW);
         long now = level.getGameTime();
         GlowKey key = new GlowKey(position.asLong(), colorARGB, displayType);
-        Storage storage = STORAGE.computeIfAbsent(level.dimension(), ignored -> new Storage());
-        Entry existing = storage.entries.get(key);
+        Entry existing = data.entries().get(key);
 
         if (existing != null) {
-            // 重复触发（area 目标每刻判定）只续命，不新增条目、不重做剔除
-            existing.expireTick = Math.max(existing.expireTick, now + durationTicks);
-            existing.addCaster(caster);
+            // 重复触发（area 目标每刻判定）只续命，不新增条目、不重做剔除。
+            // 续的是**该施法者自己那笔**贡献：别人的时长不受影响，到期后各自退场
+            existing.extendTo(caster, now + durationTicks);
             return;
         }
 
@@ -200,7 +126,7 @@ public final class BlockGlows {
             return;
         }
 
-        storage.entries.put(key,
+        data.entries().put(key,
                 new Entry(position.immutable(), colorARGB, displayType, now + durationTicks, caster));
     }
 
@@ -243,35 +169,32 @@ public final class BlockGlows {
         return !hideOccluded || !isFullyOccluded(level, position);
     }
 
+    /**
+     * 逐维度推进：丢弃过期条目，再把「到期的」发出去。
+     * <p>
+     * <b>为什么用 {@code LevelTickEvent.Post} 而不是 {@code ServerTickEvent.Post}</b>：状态挂在
+     * {@code ServerLevel} 上，按维度触发天然与数据布局对齐，直接拿到本维度实例，
+     * 不需要再 {@code server.getLevel(dimension)} 反查 —— 反查失败正是脏数据的来源。
+     * 时机上它仍然晚于本维度的玩家 tick（{@code PlayerTickEvent.Post} 在 {@code ServerLevel#tick}
+     * 内部触发），因此当刻登记的发光当刻就能参与刷新。
+     */
     @SubscribeEvent
-    public static void onServerTickPost(final @NotNull ServerTickEvent.Post event) {
-        if (STORAGE.isEmpty()) {
+    public static void onLevelTickPost(final @NotNull LevelTickEvent.Post event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
 
-        Iterator<Map.Entry<ResourceKey<Level>, Storage>> iterator = STORAGE.entrySet().iterator();
+        // 只读探测而不是 getData：本监听器对每个维度每刻都跑，getData 会顺手把默认值
+        // 建出来并永久挂在 Level 上 —— 从没施放过的维度不该因此长期带着一个空表
+        BlockGlowData data = level.getExistingDataOrNull(AAAttachments.BLOCK_GLOW);
 
-        while (iterator.hasNext()) {
-            Map.Entry<ResourceKey<Level>, Storage> slot = iterator.next();
-            ServerLevel level = event.getServer().getLevel(slot.getKey());
-
-            // 维度已卸载（存档关闭 / 服务器重启）：整张表丢弃
-            if (level == null) {
-                iterator.remove();
-                continue;
-            }
-
-            Storage storage = slot.getValue();
-
-            if (storage.entries.isEmpty()) {
-                iterator.remove();
-                continue;
-            }
-
-            long now = level.getGameTime();
-            storage.entries.values().removeIf(entry -> now > entry.expireTick);
-            flush(level, storage, now);
+        if (data == null || data.isEmpty()) {
+            return;
         }
+
+        long now = level.getGameTime();
+        data.dropExpired(now);
+        flush(level, data, now);
     }
 
     /**
@@ -279,7 +202,7 @@ public final class BlockGlows {
      * <p>
      * <b>跨维度扫描</b>：条目表按维度分区，而施法者一旦换了维度，旧维度里的条目不会自动消失
      * （只是不再被刷新，靠自然过期），因此必须遍历 {@code MinecraftServer#getAllLevels()} ——
-     * 与 {@code DomainCommand} 同处理。
+     * 与 {@code DomainCommand} 同处理。附件挂在 Level 上，因此已卸载的维度自然不在扫描范围内。
      * <p>
      * <b>只丢贡献、不丢整条</b>：某条发光还有别的玩家在贡献时原地保留 —— 这是「可以重叠」语义的必然结果，
      * 不会因为清了 A 就把 B 的效果一起抹掉。整条消失时给附近玩家补发 {@code remainingTicks = 0}
@@ -288,24 +211,20 @@ public final class BlockGlows {
      * @return 被<b>整条</b>移除的条目数
      */
     public static int clearByCasters(final @NotNull MinecraftServer server, final @NotNull Set<UUID> casters) {
-        if (casters.isEmpty() || STORAGE.isEmpty()) {
+        if (casters.isEmpty()) {
             return 0;
         }
 
         int removed = 0;
-        Iterator<Map.Entry<ResourceKey<Level>, Storage>> iterator = STORAGE.entrySet().iterator();
 
-        while (iterator.hasNext()) {
-            Map.Entry<ResourceKey<Level>, Storage> slot = iterator.next();
-            ServerLevel level = server.getLevel(slot.getKey());
+        for (ServerLevel level : server.getAllLevels()) {
+            BlockGlowData data = level.getExistingDataOrNull(AAAttachments.BLOCK_GLOW);
 
-            // 维度已卸载：条目本就失效，直接丢弃
-            if (level == null) {
-                iterator.remove();
+            if (data == null || data.isEmpty()) {
                 continue;
             }
 
-            List<Entry> dropped = slot.getValue().dropCasters(casters);
+            List<Entry> dropped = data.dropCasters(casters);
 
             if (dropped.isEmpty()) {
                 continue;
@@ -331,10 +250,10 @@ public final class BlockGlows {
     }
 
     /** 把「到期的」条目按「颜色 + 显示类型」分组后发出去，并推进其 {@code lastSentTick} */
-    private static void flush(final @NotNull ServerLevel level, final @NotNull Storage storage, final long now) {
+    private static void flush(final @NotNull ServerLevel level, final @NotNull BlockGlowData data, final long now) {
         Map<Batch, List<Pending>> grouped = null;
 
-        for (Entry entry : storage.entries.values()) {
+        for (Entry entry : data.entries().values()) {
             boolean due = entry.lastSentTick == NEVER_SENT
                     || now - entry.lastSentTick >= REFRESH_INTERVAL_TICKS;
 
@@ -347,7 +266,7 @@ public final class BlockGlows {
             }
 
             // 剩余时长下限为 1：避免整刻对齐误差把「刚好到期」的条目按 0 发出去
-            int remaining = (int) Math.max(1L, entry.expireTick - now);
+            int remaining = (int) Math.max(1L, entry.expireTick() - now);
             grouped.computeIfAbsent(new Batch(entry.colorARGB, entry.displayType), ignored -> new ArrayList<>())
                     .add(new Pending(entry.position.asLong(), remaining));
             entry.lastSentTick = now;
@@ -375,14 +294,8 @@ public final class BlockGlows {
                 remaining[index] = item.remainingTicks();
             }
 
-            double[] center = center(packed);
-            double maxDistanceSqr = 0.0;
-
-            for (long position : packed) {
-                maxDistanceSqr = Math.max(maxDistanceSqr, BlockPos.of(position).distToCenterSqr(center[0], center[1], center[2]));
-            }
-
-            double radiusSqr = Math.pow(Math.sqrt(maxDistanceSqr) + VIEW_MARGIN, 2.0);
+            double[] center = BlockBatchGeometry.center(packed);
+            double radiusSqr = BlockBatchGeometry.radiusSqr(packed, center, VIEW_MARGIN);
             BlockGlowPayload payload = new BlockGlowPayload(packed, remaining, batch.colorARGB(), batch.displayType());
 
             for (ServerPlayer player : level.players()) {
@@ -391,23 +304,5 @@ public final class BlockGlows {
                 }
             }
         }
-    }
-
-    /** 一批方块的几何中心（各取方块中心，即整数坐标 +0.5） */
-    @Contract("_ -> new")
-    private static double @NotNull [] center(final long @NotNull [] positions) {
-        double sumX = 0.0;
-        double sumY = 0.0;
-        double sumZ = 0.0;
-
-        for (long position : positions) {
-            BlockPos pos = BlockPos.of(position);
-            sumX += pos.getX() + 0.5;
-            sumY += pos.getY() + 0.5;
-            sumZ += pos.getZ() + 0.5;
-        }
-
-        int count = positions.length;
-        return new double[]{sumX / count, sumY / count, sumZ / count};
     }
 }

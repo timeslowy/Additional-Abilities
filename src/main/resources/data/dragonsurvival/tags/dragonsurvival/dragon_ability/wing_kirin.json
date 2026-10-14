@@ -1,8 +1,17 @@
 {
     "replace": false,
     "values": [
-        "wing_kirin:fire_ring",
-        "additional_abilities:entity_marker",
-        "additional_abilities:explosion_arrow"
+        {
+            "id": "wing_kirin:fire_ring",
+            "required": false
+        },
+        {
+            "id": "additional_abilities:entity_marker",
+            "required": false
+        },
+        {
+            "id": "additional_abilities:explosion_arrow",
+            "required": false
+        }
     ]
 }

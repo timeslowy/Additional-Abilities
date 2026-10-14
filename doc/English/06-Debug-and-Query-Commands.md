@@ -186,8 +186,19 @@ Works with `additional_abilities:optional_charged` (the optional charged-tier ty
 
 **The picked tier takes no part in any numeric resolution**: the tier that actually fires is reported by the
 release packet and re-validated / clamped on the server. This entry merely exposes the client's picking state
-so you can confirm "how many tiers will actually come out on release". The server clears the record at the end
-of every cast (release or cancel), so it never leaks into the next one.
+so you can confirm "how many tiers will actually come out on release".
+
+**The server guards the record's lifecycle on both ends:**
+
+- **Writes are validated**: a pick is only recorded while that exact ability is being cast *and* the ability
+  allows picking, and the tier is clamped to `[0, reached tier]`. So spamming packets with arbitrary ability
+  keys (including non-existent or non-charged ones) **cannot** grow the server-side record — it is not a table
+  an outside caller can inflate.
+- **Every cast ending clears it**: the server drops the record on **all** cast-ending paths — manual early
+  release, automatic release when the overcharge window runs out, a pick of `0` (cancel), and Dragon Survival's
+  native "casting complete" (which fires at `cast_time` when `can_charge_exceed_cast_time` is `false`). That last
+  one never enters this mod's settlement service, but the cleanup hangs on the wrap-up funnel both share, so it
+  is covered too. The next cast therefore never inherits the previous pick.
 
 > **Why auto-follow reports a tier number instead of `-1`**: `-1` only ever means "no tier to refer to".
 > When the player scrolls back to the top (or never scrolled at all) the client returns to auto-follow, and

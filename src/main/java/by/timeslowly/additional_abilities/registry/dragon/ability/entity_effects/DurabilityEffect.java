@@ -94,6 +94,17 @@ import java.util.List;
  * 纯瞬时效果通常在施法瞬间结算，撞上这 1 刻的概率极低。
  */
 public record DurabilityEffect(List<DurabilityChange> durabilityChanges) implements AbilityEntityEffect {
+    /**
+     * <b>参数所有权：构造期防御性复制</b> —— 调用方保留所有权，本类型不持有可变引用。
+     * <p>
+     * 同 {@link DurabilityChange} 的紧凑构造器：不复制的话，调用方在解码之后往原列表里加一条规则，
+     * 就会静默改变这个已加载技能的行为。{@link List#copyOf} 对不可变列表入参不重复复制，
+     * 而 {@code CODEC} 的 {@code listOf()} 产生的正是不可变列表，因此常规解码路径零额外开销。
+     */
+    public DurabilityEffect {
+        durabilityChanges = List.copyOf(durabilityChanges);
+    }
+
     public static final MapCodec<DurabilityEffect> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             DurabilityChange.CODEC.listOf()
                     .validate(list -> list.isEmpty()

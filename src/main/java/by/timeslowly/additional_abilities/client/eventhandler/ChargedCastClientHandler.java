@@ -54,11 +54,19 @@ import org.jetbrains.annotations.NotNull;
  *     <tr><td>释放</td><td>解析出的释放档位 &ge; 1</td>
  *         <td>发释放包 + 本地补齐"读条完成瞬间"的两端动作（起始音效 / 扣初始魔力），
  *             再走 DS 原生收尾</td></tr>
- *     <tr><td>取消</td><td>释放档位 == 0（仅 {@code optional_charged} 可到达）</td>
+ *     <tr><td>取消</td><td>解析出的释放档位 == 0（仅 {@code optional_charged} 可到达）</td>
  *         <td>发取消包 + 本地 {@code stopCasting(…, false)}：不进冷却、不扣魔力、不播结束音效</td></tr>
  * </table>
  * 取消分支为什么不能交给 DS，见 {@code common.ability.ChargedCasts} 的类注释
  * （{@code isApplyingEffects()} 在按过 {@code cast_time} 后提前为 true，DS 原生路径会据此误判）。
+ *
+ * <h2>上线的"请求值"与本地预测的"业务档位"是两回事</h2>
+ * 普通 {@code charged} 发给服务端的是哨兵 {@link ChargedReleasePayload#AUTO}（{@code -1}），
+ * 含义是"用服务端复算出的已达成档位"；而本地要预测的却是<b>具体档位</b>（即已达成档位）。
+ * 两者绝不能混用：哨兵是个负数，拿它去和"最低档"比较必然判成"取消"，
+ * 于是普通蓄力提前松手会变成"服务端正常释放、客户端当作取消"——
+ * 施法者听不到起始 / 结束音效，本地法力与冷却也不会被扣。
+ * 因此这里始终分成两个变量：{@code requestLevel} 只用于封包，{@code resolvedLevel} 只用于本地判断。
  *
  * <h2>为什么还要在这里扣一次法力</h2>
  * DS 会在"读条完成瞬间"（{@code tickActions} 里 {@code currentTick == castTime} 那段）执行
@@ -146,23 +154,28 @@ public final class ChargedCastClientHandler {
             return;
         }
 
-        // 释放档位：可选性蓄力用滚轮选定的档位（0 = 取消），否则沿用"已达成档位"
-        int releaseLevel = ChargedReleasePayload.AUTO;
+        // 释放档位分两个变量，切勿合并：
+        // requestLevel —— 真正随包上报的"请求值"，普通 charged 下是哨兵 AUTO（-1）；
+        // resolvedLevel —— 客户端本地要据此预测的"业务档位"，两者语义完全不同（见类注释）。
+        int requestLevel = ChargedReleasePayload.AUTO;
+        int resolvedLevel = achievedLevel;
 
         if (chargeable.selectsReleaseLevel()) {
             OptionalChargedSelection.onCasting(casting.key());
-            releaseLevel = OptionalChargedSelection.resolveReleaseLevel(achievedLevel);
+            resolvedLevel = OptionalChargedSelection.resolveReleaseLevel(achievedLevel);
+            // optional_charged 的业务档位本身就是服务端的请求值（含 0 = 取消）
+            requestLevel = resolvedLevel;
         }
 
         // 先发请求：服务端据此按档位执行一次技能动作，或按请求取消
-        PacketDistributor.sendToServer(new ChargedReleasePayload(casting.key(), chargeTicks, releaseLevel));
+        PacketDistributor.sendToServer(new ChargedReleasePayload(casting.key(), chargeTicks, requestLevel));
 
-        if (releaseLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
+        if (resolvedLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
             cancelLocally(player, magic, casting);
             return;
         }
 
-        releaseLocally(player, magic, casting, chargeable, releaseLevel);
+        releaseLocally(player, magic, casting, chargeable, resolvedLevel);
     }
 
     /**

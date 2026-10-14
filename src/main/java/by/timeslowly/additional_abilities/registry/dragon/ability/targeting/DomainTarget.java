@@ -100,8 +100,12 @@ import java.util.Optional;
  *         把首次结算推迟到第 {@code trigger_rate} tick，不会永不触发。</li>
  *     <li>领域<b>不持久化</b>：只活在内存里，服务端重启即消失。理由见 {@link DomainData} 类注释。</li>
  *     <li>{@code should_remove_automatically}（各类 DurationInstance 效果的字段）判的是
- *         「目标与<b>施法者</b>的距离」，而本组件的锚点通常固定在施法位置，两者口径不同。
- *         需要"离开领域即失效"时请用 {@link #removeEffectsOnEnd}。</li>
+ *         「目标与<b>施法者</b>的距离」，而本组件的锚点通常固定在施法位置，两者口径不同。</li>
+ *     <li><b>{@link #removeEffectsOnEnd} 不提供"离开领域即失效"</b>：它只在领域结束时
+ *         （{@code duration} 到期、被 {@code max_domains} 顶掉、或被指令清掉）对<b>当时仍在范围内</b>
+ *         的目标调一次 {@code remove}；中途走出领域的目标不会被它撤销，也不会在离区那一刻被移除。
+ *         需要"离区即撤销"时请改用 {@code should_remove_automatically}（它按目标与施法者的距离判定，
+ *         对锚定在施法者身上的领域有效），或让 {@code applied_effects} 自己写成限时效果。</li>
  *     <li>方块分支传入的 {@code direction} 为 {@code null}（领域锚点没有命中面概念），
  *         与 DS {@code area} / {@code disc} 一致。</li>
  * </ul>
@@ -135,18 +139,18 @@ public record DomainTarget(Either<AbilityTargeting.BlockTargeting, AbilityTarget
     private static final int DEFAULT_APPLY_INTERVAL = 20;
 
     /**
-     * 本类型共 11 个字段，<b>超过了 {@code AbilityTargeting#codecStart} 的链式上限</b>，因此这里
+     * 本类型共 10 个字段，<b>超过了 {@code AbilityTargeting#codecStart} 的链式上限</b>，因此这里
      * 直接写 {@code instance.group(...)} 并内联 {@code applied_effects}。
      *
      * <h2>为什么不能照抄其它目标类型的 {@code codecStart(...).and(...)} 写法</h2>
      * DFU 的 {@code Products.P8} <b>没有</b> {@code and} 方法——{@code .and()} 链在 P8 截止
      * （已核对 {@code datafixerupper-8.0.16-sources.jar}：{@code P1..P7} 各有若干 {@code and}，
      * {@code P8} 只有 {@code apply}）。也就是说 {@code codecStart}（P1）+ 7 次 {@code .and()}
-     * = 最多 <b>8 个组件</b>；本类型要 11 个，链不下去了。
+     * = 最多 <b>8 个组件</b>；本类型要 10 个，链不下去了。
      * <p>
      * 而 {@code group} 是 {@code Kind1} 上的 <b>default 方法</b>（同一份源码里 {@code Kind1.java}），
-     * 提供 1~16 个参数的重载，因此单次 {@code group(...11 个...)} → {@code P11} →
-     * {@code P11.apply(Function11)} 完全可行。
+     * 提供 1~16 个参数的重载，因此单次 {@code group(...10 个...)} → {@code P10} →
+     * {@code P10.apply(Function10)} 完全可行。
      * <p>
      * 内联的那一行与 {@code AbilityTargeting#codecStart} 的<b>实现逐字一致</b>
      * （{@code codecStart} 本身也只是 {@code instance.group(Codec.either(...).fieldOf("applied_effects")...)}），
@@ -218,7 +222,13 @@ public record DomainTarget(Either<AbilityTargeting.BlockTargeting, AbilityTarget
         // 同一次施法（含 channeled 的续帧、以及同一帧里的后续 action）：续命 + 并入效果集。
         // 刻意不动锚点——否则 channeled 下领域会跟着施法者一跳一跳地迁移。
         if (latest != null && latest.castStartTick() == castStartTick) {
-            latest.join(now, target);
+            // 并入成功（即这是一组**新**效果）时立即执行首轮，不等到下一个 apply_interval：
+            // duration < apply_interval 时周期结算永远不会到来，后续组会彻底静默丢失。
+            // 续帧（join 返回 false）刻意不执行，否则引导类技能会变成高频重复结算。
+            if (latest.join(now, target)) {
+                latest.applyGroupNow(level, target);
+            }
+
             return;
         }
 

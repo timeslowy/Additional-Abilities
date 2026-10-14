@@ -22,7 +22,9 @@ import java.util.Optional;
  * <ul>
  *     <li>蓄力未达 {@link #getMinimumChargeTicks()}（即档位 1 所需时长）就松手 → 视为取消施法；
  *         与服务端 {@code stopCasting} 的原生"提前松手"路径一致，<b>不产生冷却</b>。</li>
- *     <li>蓄力达到档位 1 起松手 → 以该档位执行一次技能动作，随后按该档位结算冷却 / 结束音效 / 结束动画。</li>
+ *     <li>蓄力达到档位 1 起松手 → 以该档位执行一次技能动作，随后按该档位结算冷却 / 结束音效 / 结束动画。
+ *         档位以<b>服务端实际蓄力时间</b>为准，客户端上报的时长只是上限声明
+ *         （见 {@code common.ability.activation.ChargedCasts} 的类注释）。</li>
  *     <li>一直按到 {@code cast_time}（= 总蓄力上限）→ 由 {@code DragonSurvival} 自己的
  *         {@code DragonAbilityInstance#tickActions} 原生自动释放，档位即玩家自身升级等级（满档）。</li>
  * </ul>
@@ -120,23 +122,28 @@ public record ChargedActivation(
     /**
      * 基础 codec + 跨字段校验（{@code max_overcharged_duration} 以 {@code can_charge_exceed_cast_time} 为前提）。
      * <p>
+     * 字段片段来自 {@link ChargeableActivationCodecs}，与 {@link OptionalChargedActivation} 共用，
+     * 使两个类型的 JSON 结构不会各自漂移。
+     * <p>
+     * 唯一的不同是 {@code can_charge_exceed_cast_time} 的默认值（本类型 {@code false}），
+     * 因此它单独写在这里而不是共用 —— 差异留在明面上。
+     * <p>
      * 刻意先落一个局部变量再调 {@code validate}，而不是直接在链式调用末尾追加：
      * 接收者本身是个泛型方法调用（{@code RecordCodecBuilder.mapCodec(...)}）时，
      * javac 无法把外层的目标类型传进去，会把接收者推断成 {@code MapCodec<Object>} 而编译失败。
      */
     private static MapCodec<ChargedActivation> createCodec() {
         MapCodec<ChargedActivation> base = RecordCodecBuilder.mapCodec(instance -> instance.group(
-                LevelBasedValue.CODEC.fieldOf("charged_duration_per_level").forGetter(ChargedActivation::chargedDurationPerLevel),
-                ChargeableActivation.CAST_TIME_CODEC.fieldOf("cast_time").forGetter(ChargedActivation::castTime),
+                ChargeableActivationCodecs.CHARGED_DURATION_PER_LEVEL.forGetter(ChargedActivation::chargedDurationPerLevel),
+                ChargeableActivationCodecs.CAST_TIME.forGetter(ChargedActivation::castTime),
                 Codec.BOOL.optionalFieldOf("can_charge_exceed_cast_time", false).forGetter(ChargedActivation::canChargeExceedCastTime),
-                // 缺省 = 无限按住（保持该字段引入之前的行为）
-                ChargeableActivation.MAX_OVERCHARGED_DURATION_CODEC.optionalFieldOf("max_overcharged_duration").forGetter(ChargedActivation::maxOverchargedDuration),
-                LevelBasedValue.CODEC.optionalFieldOf("cooldown").forGetter(ChargedActivation::cooldown),
-                LevelBasedValue.CODEC.optionalFieldOf("initial_mana_cost").forGetter(ChargedActivation::initialManaCost),
-                Notification.CODEC.optionalFieldOf("notification", Notification.DEFAULT).forGetter(ChargedActivation::notification),
-                Codec.BOOL.optionalFieldOf("can_move_while_casting", true).forGetter(ChargedActivation::canMoveWhileCasting),
-                ChargeableActivation.SOUND_CODEC.optionalFieldOf("sound").forGetter(ChargedActivation::sound),
-                ChargeableActivation.ANIMATIONS_CODEC.optionalFieldOf("animations").forGetter(ChargedActivation::animations)
+                ChargeableActivationCodecs.MAX_OVERCHARGED_DURATION.forGetter(ChargedActivation::maxOverchargedDuration),
+                ChargeableActivationCodecs.COOLDOWN.forGetter(ChargedActivation::cooldown),
+                ChargeableActivationCodecs.INITIAL_MANA_COST.forGetter(ChargedActivation::initialManaCost),
+                ChargeableActivationCodecs.NOTIFICATION.forGetter(ChargedActivation::notification),
+                ChargeableActivationCodecs.CAN_MOVE_WHILE_CASTING.forGetter(ChargedActivation::canMoveWhileCasting),
+                ChargeableActivationCodecs.SOUND.forGetter(ChargedActivation::sound),
+                ChargeableActivationCodecs.ANIMATIONS.forGetter(ChargedActivation::animations)
         ).apply(instance, ChargedActivation::new));
 
         return base.validate(ChargeableActivation::validateOverchargeSupport);
