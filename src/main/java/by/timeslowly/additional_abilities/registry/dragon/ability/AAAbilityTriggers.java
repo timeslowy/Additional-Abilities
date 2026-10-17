@@ -5,7 +5,7 @@ import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnAbilityCast;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnBlockPlaced;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.trigger.OnItemConsumed;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.jetbrains.annotations.NotNull;
@@ -41,13 +41,13 @@ public class AAAbilityTriggers {
         // 放置方块时：additional_abilities:on_block_placed
         // 字段与 dragonsurvival:on_block_break 相同（可选的 condition），仅事件源相反（放置而非破坏）
         event.register(ActivationTrigger.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "on_block_placed"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "on_block_placed"),
                 () -> OnBlockPlaced.CODEC);
 
         // 消耗物品时：additional_abilities:on_item_consumed
         // 字段对齐原版 minecraft:consume_item（可选的 item，ItemPredicate），事件接 LivingEntityUseItemEvent.Finish
         event.register(ActivationTrigger.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "on_item_consumed"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "on_item_consumed"),
                 () -> OnItemConsumed.CODEC);
 
         // 使用技能后：additional_abilities:on_ability_cast
@@ -55,7 +55,7 @@ public class AAAbilityTriggers {
         // 注意：本类型的接线**不在事件总线**上 —— DS 没有施法事件，改由 mixins.MagicDataMixin
         // 在 MagicData#stopCasting 的 withCooldown == true 分支转接，故主类构造函数无需 addListener
         event.register(ActivationTrigger.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "on_ability_cast"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "on_ability_cast"),
                 () -> OnAbilityCast.CODEC);
     }
 }

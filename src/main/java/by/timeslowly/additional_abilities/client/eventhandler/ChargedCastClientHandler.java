@@ -18,7 +18,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -107,7 +107,12 @@ public final class ChargedCastClientHandler {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onKeyInput(final @NotNull InputEvent.Key event) {
-        handleRelease(InputConstants.getKey(event.getKey(), event.getScanCode()), event.getAction());
+        // 26.1.2：InputConstants.getKey(int, int) 已删除，只剩 getKey(KeyEvent) 与 getKey(String)。
+        // 这里本来只需要"这个 Key 是不是某个已绑定按键"，直接按同一个规则从事件构造：
+        // key == -1 表示无名键（用扫描码），否则用键码 —— 与 InputConstants.getKey(KeyEvent) 完全一致。
+        handleRelease(event.getKey() == -1
+                ? InputConstants.Type.SCANCODE.getOrCreate(event.getScanCode())
+                : InputConstants.Type.KEYSYM.getOrCreate(event.getKey()), event.getAction());
     }
 
     private static void handleRelease(final InputConstants.Key input, final int action) {
@@ -168,7 +173,7 @@ public final class ChargedCastClientHandler {
         }
 
         // 先发请求：服务端据此按档位执行一次技能动作，或按请求取消
-        PacketDistributor.sendToServer(new ChargedReleasePayload(casting.key(), chargeTicks, requestLevel));
+        ClientPacketDistributor.sendToServer(new ChargedReleasePayload(casting.key(), chargeTicks, requestLevel));
 
         if (resolvedLevel < DragonAbilityInstance.MIN_LEVEL_FOR_CALCULATIONS) {
             cancelLocally(player, magic, casting);

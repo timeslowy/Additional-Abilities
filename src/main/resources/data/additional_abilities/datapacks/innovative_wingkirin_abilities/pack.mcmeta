@@ -1,6 +1,7 @@
 {
     "pack": {
-        "pack_format": 48,
+        "min_format": [101, 1],
+        "max_format": [101, 1],
         "description": {
             "translate": "datapack.additional_abilities.innovative_wingkirin_abilities.desc"
         }

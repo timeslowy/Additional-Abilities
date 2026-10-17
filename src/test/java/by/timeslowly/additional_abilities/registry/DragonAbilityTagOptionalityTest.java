@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagFile;
 import org.junit.jupiter.api.DisplayName;
@@ -167,11 +167,11 @@ class DragonAbilityTagOptionalityTest {
         }
 
         // 前提自检：该替身确实让三项条件性引用解析失败，否则上面两条断言是空测试
-        assertFalse(wkAbsent.element(ResourceLocation.parse("wing_kirin:fire_ring")) != null,
+        assertFalse(wkAbsent.element(Identifier.parse("wing_kirin:fire_ring"), false) != null,
                 "替身必须让 wing_kirin:fire_ring 解析失败，否则本用例测不到东西");
-        assertFalse(wkAbsent.element(ResourceLocation.parse("additional_abilities:entity_marker")) != null,
+        assertFalse(wkAbsent.element(Identifier.parse("additional_abilities:entity_marker"), false) != null,
                 "替身必须让 additional_abilities:entity_marker 解析失败");
-        assertFalse(wkAbsent.element(ResourceLocation.parse("additional_abilities:explosion_arrow")) != null,
+        assertFalse(wkAbsent.element(Identifier.parse("additional_abilities:explosion_arrow"), false) != null,
                 "替身必须让 additional_abilities:explosion_arrow 解析失败");
     }
 
@@ -217,13 +217,16 @@ class DragonAbilityTagOptionalityTest {
      */
     private static TagEntry.Lookup<Object> lookupResolving(final Predicate<String> resolvable) {
         return new TagEntry.Lookup<>() {
+            // 26.1.2：Lookup#element 增加 required 形参 —— 由 TagEntry#build 把自己那条的
+            // required 一并传进来。本替身保持最朴素的语义：取不到就返回 null，
+            // 「缺失是否致命」仍完全由 TagEntry 自己按 required 判定。
             @Override
-            public Object element(final ResourceLocation id) {
+            public Object element(final Identifier id, final boolean required) {
                 return resolvable.test(id.toString()) ? new Object() : null;
             }
 
             @Override
-            public Collection<Object> tag(final ResourceLocation id) {
+            public Collection<Object> tag(final Identifier id) {
                 // 本模组这几个标签只用具名元素，不含 #tag 嵌套引用
                 return null;
             }

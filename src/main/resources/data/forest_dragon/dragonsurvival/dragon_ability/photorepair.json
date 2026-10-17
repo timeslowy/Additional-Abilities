@@ -89,6 +89,7 @@
             },
             {
                 "condition": "minecraft:time_check",
+                "clock": "minecraft:overworld",
                 "value": {
                     "min": 12000,
                     "max": 23999

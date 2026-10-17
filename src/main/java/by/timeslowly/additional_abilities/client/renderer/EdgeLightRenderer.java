@@ -2,7 +2,7 @@ package by.timeslowly.additional_abilities.client.renderer;
 
 import by.timeslowly.additional_abilities.client.state.ClientScreenVisionState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +59,7 @@ public final class EdgeLightRenderer {
      *
      * @param graphics 当前 GUI 绘制上下文（图层事件给的实例）
      */
-    public static void render(final @NotNull GuiGraphics graphics) {
+    public static void render(final @NotNull GuiGraphicsExtractor graphics) {
         Minecraft minecraft = Minecraft.getInstance();
 
         // 世界里才有"画面"可遮；F1 隐藏 HUD 时也不该画。

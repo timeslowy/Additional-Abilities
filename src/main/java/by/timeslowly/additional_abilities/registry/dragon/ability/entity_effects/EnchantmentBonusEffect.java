@@ -6,7 +6,7 @@ import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantm
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -118,8 +118,8 @@ public record EnchantmentBonusEffect(List<EnchantmentBonus> enchantmentBonuses) 
     }
 
     @Override
-    public @NotNull @Unmodifiable List<ResourceLocation> getEffectIDs() {
-        List<ResourceLocation> ids = new ArrayList<>(enchantmentBonuses.size());
+    public @NotNull @Unmodifiable List<Identifier> getEffectIDs() {
+        List<Identifier> ids = new ArrayList<>(enchantmentBonuses.size());
 
         for (EnchantmentBonus bonus : enchantmentBonuses) {
             ids.add(bonus.id());

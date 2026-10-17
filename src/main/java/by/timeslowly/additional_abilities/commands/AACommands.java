@@ -48,8 +48,10 @@ public final class AACommands {
     public static void onRegisterCommands(final @NotNull RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 
+        // 26.1.2：CommandSourceStack#hasPermission(int) 已删除，权限改成
+        // 声明式的 PermissionCheck（Commands.LEVEL_GAMEMASTERS 即原来的等级 2）。
         dispatcher.register(Commands.literal(ROOT)
-                .requires(source -> source.hasPermission(2))
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(SimpleScreenVisionCommand.subtree())
                 .then(DomainCommand.subtree())
                 .then(BlockGlowCommand.subtree()));

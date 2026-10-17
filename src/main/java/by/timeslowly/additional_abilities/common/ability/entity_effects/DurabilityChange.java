@@ -4,7 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.util.DSColors;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.advancements.criterion.ItemPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.network.chat.Component;
@@ -304,7 +304,10 @@ public record DurabilityChange(List<HeldItemSlots.SlotSelector> slots, Optional<
                 break;
             }
 
-            text = join(text, Component.empty().append(holder.value().getDescription()));
+            // 26.1.2：Item#getDescription() 已删除，名称改为挂在物品栈组件上
+            // （Item#getName(ItemStack) 读的是 DataComponents.ITEM_NAME）。
+            // 这里本来就没有物品栈可用，构造一个默认栈只为取名字。
+            text = join(text, Component.empty().append(holder.value().getName(new ItemStack(holder))));
             listed++;
         }
 

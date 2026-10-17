@@ -6,7 +6,7 @@ import by.timeslowly.additional_abilities.common.ability.block_effects.GlowDispl
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * <b>为什么每项各带剩余时长</b>：同一批里的条目建立时刻可能不同（尤其引导类技能持续刷新时），
  * 由一个整批共用的数值表达不了各自的到期时刻。剩余时长用 VarInt 与位置交错写出，开销可忽略。
  * 客户端据此本地倒计时，因此服务端<b>不需要额外的移除包</b>。
- *
+ * <p>
  * <b>本类型是内部协议</b>：它描述的是两端之间的<b>字节格式</b>，不是给第三方调用的入口。
  * 正式 API 只看 {@code api.Visuals}（见 {@code api} 包的说明）。
  * 因此这里<b>不做</b>防御性数组复制 —— 那会让每个包多一次等长分配，而调用方全是本模组自己的
@@ -57,7 +57,7 @@ public record BlockGlowPayload(long[] positions, int[] remainingTicks, int color
     }
 
     public static final CustomPacketPayload.Type<BlockGlowPayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "block_glow"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "block_glow"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, BlockGlowPayload> STREAM_CODEC =
             StreamCodec.of(BlockGlowPayload::encode, BlockGlowPayload::decode);

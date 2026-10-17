@@ -16,7 +16,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -126,7 +126,7 @@ public final class OptionalChargedScrollHandler {
         playSelectSound(selected);
 
         // 仅供查询指令展示；真正生效的档位走 ChargedReleasePayload
-        PacketDistributor.sendToServer(new OptionalChargedSelectionPayload(
+        ClientPacketDistributor.sendToServer(new OptionalChargedSelectionPayload(
                 casting.key(), OptionalChargedSelection.rawForSync()));
     }
 

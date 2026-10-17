@@ -206,7 +206,7 @@ public record DomainTarget(Either<AbilityTargeting.BlockTargeting, AbilityTarget
      */
     @Override
     public void apply(final @NotNull ServerPlayer dragon, final @NotNull DragonAbilityInstance ability) {
-        ServerLevel level = dragon.serverLevel();
+        ServerLevel level = dragon.level();
         DomainData data = level.getData(AAAttachments.DOMAIN);
         long now = level.getGameTime();
         int currentTick = ability.getCurrentTick();

@@ -71,8 +71,8 @@ public final class BreathSelection {
     public static void applyToBlocks(final @NotNull ServerPlayer dragon, final DragonAbilityInstance ability,
                                      final @NotNull BreathBeam beam, final AbilityTargeting.BlockTargeting blockTarget) {
         AABB area = beam.boundingBox();
-        Direction direction = Direction.getNearest(dragon.getEyePosition());
-        ServerLevel level = dragon.serverLevel();
+        Direction direction = Direction.getNearest((int) dragon.getEyePosition().x, (int) dragon.getEyePosition().y, (int) dragon.getEyePosition().z, null);
+        ServerLevel level = dragon.level();
 
         BlockPos min = new BlockPos(Mth.floor(area.minX), Mth.floor(area.minY), Mth.floor(area.minZ));
         BlockPos max = new BlockPos(Mth.floor(area.maxX), Mth.floor(area.maxY), Mth.floor(area.maxZ));
@@ -118,7 +118,7 @@ public final class BreathSelection {
      */
     public static void applyToEntities(final @NotNull ServerPlayer dragon, final DragonAbilityInstance ability,
                                        final @NotNull BreathBeam beam, final AbilityTargeting.EntityTargeting entityTarget) {
-        dragon.serverLevel().getEntities(EntityTypeTest.forClass(Entity.class), beam.boundingBox(),
+        dragon.level().getEntities(EntityTypeTest.forClass(Entity.class), beam.boundingBox(),
                 entity -> entityTarget.targetingMode().isEntityRelevant(dragon, entity, entityTarget.isHarmful())
                         && entityTarget.matches(dragon, entity, entity.position())
                         && beam.intersects(entity.getBoundingBox())

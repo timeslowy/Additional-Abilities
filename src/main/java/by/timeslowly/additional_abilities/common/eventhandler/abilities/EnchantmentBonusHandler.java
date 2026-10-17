@@ -81,7 +81,13 @@ public final class EnchantmentBonusHandler {
 
     @SubscribeEvent
     public static void onGetEnchantmentLevel(final @NotNull GetEnchantmentLevelEvent event) {
-        ItemStack stack = event.getStack();
+        // 26.1.2：事件的 stack 类型从 ItemStack 放宽成 ItemInstance
+        // （{@code ItemStack} 只是它的一个实现；附魔等级查询也可能针对只读实例）。
+        // 本模组的结算路径全都要读组件、比对身份，因此只在它确实是 ItemStack 时才继续 ——
+        // 其它实现拿不到本模组写在物品上的脉冲标记，也就无从判定归属。
+        if (!(event.getStack() instanceof ItemStack stack)) {
+            return;
+        }
 
         // 早退：查询的不是一只具体物品（最便宜的一条，放在线程判定之前）
         if (stack.isEmpty()) {

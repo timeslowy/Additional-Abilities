@@ -8,7 +8,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record OptionalChargedSelectionPayload(ResourceKey<DragonAbility> ability, int selectedLevel) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<OptionalChargedSelectionPayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "optional_charged_selection"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "optional_charged_selection"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, OptionalChargedSelectionPayload> STREAM_CODEC = StreamCodec.composite(
             ResourceKey.streamCodec(DragonAbility.REGISTRY), OptionalChargedSelectionPayload::ability,

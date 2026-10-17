@@ -66,7 +66,7 @@ public final class EnchantmentBonusThreads {
      * 纯判定：由三个布尔事实推出归属，<b>不读世界对象、无副作用</b>。
      *
      * @param onServerThread     当前线程是否是存档服务器的主线程（{@code MinecraftServer#isSameThread}）
-     * @param physicalClient     当前进程是否是物理客户端（{@code FMLEnvironment.dist.isClient()}）
+     * @param physicalClient     当前进程是否是物理客户端（{@code FMLEnvironment.getDist().isClient()}）
      * @param onClientGameThread 当前线程是否是客户端的游戏线程
      *                           （仅在 {@code physicalClient} 为真时有意义）
      * @return 归属；{@code physicalClient} 为假时<b>绝不</b>返回 {@link Support#CLIENT}
@@ -98,7 +98,7 @@ public final class EnchantmentBonusThreads {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         // 纯客户端没有服务端（getCurrentServer 为 null），那正是"不存在服务端主线程"这一事实
         boolean onServerThread = server != null && server.isSameThread();
-        boolean physicalClient = FMLEnvironment.dist.isClient();
+        boolean physicalClient = FMLEnvironment.getDist().isClient();
         boolean onClientGameThread = !onServerThread && physicalClient
                 && by.timeslowly.additional_abilities.client.ClientGameThreadProbe.isOnGameThread();
 

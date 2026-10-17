@@ -109,7 +109,7 @@ public final class Visuals {
             return 0;
         }
 
-        MinecraftServer server = casters.iterator().next().getServer();
+        MinecraftServer server = casters.iterator().next().level().getServer();
 
         if (server == null) {
             return 0;

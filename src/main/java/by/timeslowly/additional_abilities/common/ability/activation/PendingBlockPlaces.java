@@ -102,7 +102,7 @@ public final class PendingBlockPlaces {
 
             ServerPlayer player = level.getServer().getPlayerList().getPlayer(entry.caster());
 
-            if (player == null || player.serverLevel() != level) {
+            if (player == null || player.level() != level) {
                 continue;
             }
 

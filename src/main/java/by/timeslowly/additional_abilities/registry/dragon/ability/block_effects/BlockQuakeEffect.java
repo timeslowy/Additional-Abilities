@@ -93,7 +93,7 @@ public record BlockQuakeEffect(LevelBasedValue amplifier, LevelBasedValue probab
             return;
         }
 
-        ServerLevel level = dragon.serverLevel();
+        ServerLevel level = dragon.level();
         BlockState state = level.getBlockState(position);
 
         if (!validBlocks.test(level, position) || state.isAir()) {

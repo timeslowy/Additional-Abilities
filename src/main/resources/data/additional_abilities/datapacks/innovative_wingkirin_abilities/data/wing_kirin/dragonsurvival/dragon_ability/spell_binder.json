@@ -68,7 +68,7 @@
                                     },
                                     "modifiers": [
                                         {
-                                            "attribute": "generic.attack_damage",
+                                            "attribute": "minecraft:attack_damage",
                                             "amount": {
                                                 "type": "linear",
                                                 "base": 0.5,
@@ -77,7 +77,7 @@
                                             "operation": "add_multiplied_total"
                                         },
                                         {
-                                            "attribute": "minecraft:generic.attack_speed",
+                                            "attribute": "minecraft:attack_speed",
                                             "amount": {
                                                 "type": "linear",
                                                 "base": 0.2,
@@ -86,12 +86,12 @@
                                             "operation": "add_multiplied_total"
                                         },
                                         {
-                                            "attribute": "minecraft:generic.movement_speed",
+                                            "attribute": "minecraft:movement_speed",
                                             "amount": 1.0,
                                             "operation": "add_multiplied_total"
                                         },
                                         {
-                                            "attribute": "generic.armor",
+                                            "attribute": "minecraft:armor",
                                             "amount": {
                                                 "type": "linear",
                                                 "base": 0.025,
@@ -100,7 +100,7 @@
                                             "operation": "add_multiplied_total"
                                         },
                                         {
-                                            "attribute": "generic.armor_toughness",
+                                            "attribute": "minecraft:armor_toughness",
                                             "amount": {
                                                 "type": "linear",
                                                 "base": 0.0125,

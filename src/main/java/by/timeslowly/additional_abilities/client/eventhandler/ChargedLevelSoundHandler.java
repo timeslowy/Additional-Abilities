@@ -209,7 +209,7 @@ public final class ChargedLevelSoundHandler {
     private static @NotNull SimpleSoundInstance createInstance(final @NotNull SoundEvent sound,
                                                               final float pitch, final float volume) {
         return new SimpleSoundInstance(
-                sound.getLocation(),
+                sound.location(),
                 SoundSource.MASTER,
                 volume,
                 pitch,

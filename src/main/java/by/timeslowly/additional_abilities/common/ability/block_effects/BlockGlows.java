@@ -143,7 +143,9 @@ public final class BlockGlows {
         for (Direction direction : DIRECTIONS) {
             BlockPos neighbor = position.offset(direction.getStepX(), direction.getStepY(), direction.getStepZ());
 
-            if (!level.getBlockState(neighbor).isSolidRender(level, neighbor)) {
+            // 26.1.2：BlockState#isSolidRender(BlockGetter, BlockPos) 收窄为无参版本
+            // （遮挡判定不再需要世界与坐标 —— 它只查 occlusion shape）。语义不变。
+            if (!level.getBlockState(neighbor).isSolidRender()) {
                 return false;
             }
         }

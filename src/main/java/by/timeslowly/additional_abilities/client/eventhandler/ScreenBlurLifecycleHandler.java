@@ -2,14 +2,13 @@ package by.timeslowly.additional_abilities.client.eventhandler;
 
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.client.renderer.ScreenBlurRenderer;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Unit;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.event.GameShuttingDownEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +27,7 @@ import java.util.concurrent.Executor;
  * </ul>
  *
  * <h2>为什么重载监听器要在这里手动注册</h2>
- * {@link RegisterClientReloadListenersEvent} 属于 <b>mod 事件总线</b>，而 NeoForge 21.1 已废弃
+ * {@link AddClientReloadListenersEvent} 属于 <b>mod 事件总线</b>，而 NeoForge 21.1 已废弃
  * {@code @EventBusSubscriber#bus()}，只能由主类拿到 {@code IEventBus} 手动 {@code addListener}
  * （与 {@code AAClientSetup} 里注册 GUI 图层同一处理方式，注册点在
  * {@code AAClientSetup#register} 的物理端判定之后，专用服务端不会走到）。
@@ -36,31 +35,46 @@ import java.util.concurrent.Executor;
  * 关闭事件 {@link GameShuttingDownEvent} 走的是普通事件总线，用
  * {@code value = Dist.CLIENT} 即可获得物理端门控 —— 该事件在专用服务端同样会被触发
  * （{@code DedicatedServer} 自己就 post 它），所以这道门控是必需的，不是保险。
+ *
+ * <h2>26.1.2 的两处 API 变化</h2>
+ * <ol>
+ *     <li><b>事件改名</b>：{@code RegisterClientReloadListenersEvent} → {@link AddClientReloadListenersEvent}；</li>
+ *     <li><b>注册方式变了</b>：新事件继承 {@code SortedReloadListenerEvent}，注册方法是
+ *         {@code addListener(key, listener)} —— 必须自带一个 {@link Identifier} 作为排序图的节点键，
+ *         而不是旧版的 {@code registerReloadListener(listener)}。这个键还要能参与
+ *         {@code addDependency(first, second)} 的排序，所以用「模组 id + 用途」拼一个稳定的标识。</li>
+ * </ol>
+ * 另一处连带变化：{@link PreparableReloadListener#reload} 的签名收窄成
+ * {@code (SharedState, Executor, PreparationBarrier, Executor)} —— 资源管理器改成
+ * 从第一个参数 {@code SharedState#resourceManager()} 取。本监听器<b>本来就不读资源</b>
+ * （只借「重载发生」这个时机作废旧链），所以这里不需要它。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public final class ScreenBlurLifecycleHandler {
+    /** 重载监听器的排序键（{@code AddClientReloadListenersEvent} 要求的稳定标识） */
+    private static final Identifier LISTENER_ID =
+            Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "screen_blur_chain");
+
     /**
-     * 重载监听器：<b>没有要读的资源</b>，只借"重载发生"这个时机作废旧链。
+     * 重载监听器：<b>没有要读的资源</b>，只借「重载发生」这个时机作废旧链。
      * <p>
-     * 因此 {@code prepare} 阶段无事可做（{@link Unit} 就是它的全部返回值），
-     * 动作挂在 {@code barrier.wait(...)} 之后、并显式指定跑在 <b>game 执行器</b>上。
+     * 因此前三个阶段无事可做（{@link Unit} 就是它的全部返回值），
+     * 动作挂在 {@code barrier.wait(...)} 之后、并显式指定跑在 <b>reload 执行器</b>上。
      * <p>
      * <b>执行器不能省</b>：本类实现的是最原始的 {@link PreparableReloadListener}，
      * 没有任何默认调度 —— 而重载链的发起方在后台线程上完成 future，
-     * 直接 {@code thenRun} 就会在后台线程里执行 {@code PostChain#close()}。
+     * 直接 {@code thenRun} 就会在后台线程里释放渲染资源。
      * 那一步会销毁渲染目标并释放 GL 程序对象，两者内部都有
      * {@code RenderSystem.assertOnRenderThread()}，客户端的渲染线程正是游戏线程，
-     * 因此必须显式交回 game 执行器（重载由客户端刻发起，通常就是原地执行）。
+     * 因此必须显式交回给了 game 语义的那个执行器（重载由客户端刻发起，通常就是原地执行）。
      */
     private static final PreparableReloadListener RELOAD_LISTENER = new PreparableReloadListener() {
         @Override
-        public @NotNull CompletableFuture<Void> reload(final @NotNull PreparationBarrier barrier,
-                                                       final @NotNull ResourceManager resourceManager,
-                                                       final @NotNull ProfilerFiller preparationProfiler,
-                                                       final @NotNull ProfilerFiller reloadProfiler,
-                                                       final @NotNull Executor backgroundExecutor,
-                                                       final @NotNull Executor gameExecutor) {
-            return barrier.wait(Unit.INSTANCE).thenRunAsync(ScreenBlurRenderer::invalidate, gameExecutor);
+        public @NotNull CompletableFuture<Void> reload(final PreparableReloadListener.@NotNull SharedState currentReload,
+                                                       final @NotNull Executor taskExecutor,
+                                                       final PreparableReloadListener.@NotNull PreparationBarrier preparationBarrier,
+                                                       final @NotNull Executor reloadExecutor) {
+            return preparationBarrier.wait(Unit.INSTANCE).thenRunAsync(ScreenBlurRenderer::invalidate, reloadExecutor);
         }
 
         @Override
@@ -79,14 +93,14 @@ public final class ScreenBlurLifecycleHandler {
      * 由 {@code AAClientSetup#register} 在物理端判定之后调用（本类整体是客户端专属的，
      * 专用服务端连加载都不该加载到它）。
      */
-    public static void registerReloadListener(final @NotNull RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(RELOAD_LISTENER);
+    public static void registerReloadListener(final @NotNull AddClientReloadListenersEvent event) {
+        event.addListener(LISTENER_ID, RELOAD_LISTENER);
     }
 
     /**
      * 游戏关闭：此时 GL 上下文仍有效（该事件自身的契约），可以安全释放链。
      * <p>
-     * 不释放也不是"泄漏到进程退出就没事"——{@code PostChain} 持有的临时渲染目标是 GL 侧对象，
+     * 不释放也不是"泄漏到进程退出就没事"——后处理链持有的临时渲染目标是 GL 侧对象，
      * 由驱动而非 JVM 管理，让它们随着上下文销毁被动回收属于碰运气。
      */
     @SubscribeEvent

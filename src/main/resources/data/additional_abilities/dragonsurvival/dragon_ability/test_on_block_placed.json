@@ -31,7 +31,7 @@
               "potion": {
                 "amplifier": 0.0,
                 "duration": 60.0,
-                "effects": "minecraft:glowing",
+                "effects": "minecraft:slowness",
                 "probability": 1.0
               }
             }

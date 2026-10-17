@@ -13,18 +13,18 @@
 ![模组logo](./src/main/resources/pack.jpg)
 
 [![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-green.svg)](https://www.minecraft.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-green.svg)](https://www.minecraft.net)
 [![Mod Version](https://img.shields.io/badge/Mod-Dragon--Survival-orange.svg)](https://www.curseforge.com/minecraft/mc-mods/dragons-survival)
 
 <a id="lang-zh"></a>
 
 # Additional Abilities for DS · 文档索引
 
->  **Additional Abilities for DS `2.0.0`**  
-> 适用版本：Minecraft `1.21.1` · NeoForge   
+>  **Additional Abilities for DS `26.1.2-V2.0.0`**  
+> 适用版本：Minecraft `26.1.2` · NeoForge `≥ 26.1.2.88`   
 > 前置：
-> - Dragon Survival `≥ 2.0.71` 
-> - （可选）Wing Kirin `≥ 3.3.0`  
+> - Dragon Survival `≥ 2.1.5` 
+> - （可选）Wing Kirin `≥ 26.1.2-V3.3.0`  
 
 > 最后核对：2026-09-29  
 > 授权：**Apache-2.0** —— 可自由使用、修改与再发布（含闭源）。本模组是独立第三方附属，与 Dragon Survival 官方**无隶属关系**
@@ -224,11 +224,11 @@ data/dragonsurvival/tags/dragonsurvival/dragon_ability/<龙种>.json
 
 # Additional Abilities for DS · Documentation Index
 
->  **Additional Abilities for DS `2.0.0`**  
-> Applies to: Minecraft `1.21.1` · NeoForge   
+>  **Additional Abilities for DS `26.1.2-V2.0.0`**  
+> Applies to: Minecraft `26.1.2` · NeoForge `≥ 26.1.2.88`   
 > Requirements: 
-> - Dragon Survival `≥ 2.0.71` 
-> - (optional)Wing Kirin `≥ 3.3.0`
+> - Dragon Survival `≥ 2.1.5` 
+> - (optional) Wing Kirin `≥ 26.1.2-V3.3.0`  
 
 > Last verified: 2026-09-29  
 > License: **Apache-2.0** — free to use, modify and redistribute, including in closed-source form. An independent third-party add-on, **not affiliated with** the Dragon Survival project

@@ -1,6 +1,5 @@
 package by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus;
 
-import by.dragonsurvivalteam.dragonsurvival.DragonSurvival;
 import by.dragonsurvivalteam.dragonsurvival.common.codecs.duration_instance.CommonData;
 import by.dragonsurvivalteam.dragonsurvival.common.codecs.duration_instance.DurationInstance;
 import by.dragonsurvivalteam.dragonsurvival.common.codecs.duration_instance.DurationInstanceBase;
@@ -16,10 +15,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
@@ -31,6 +27,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.LevelBasedValue;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +128,7 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
         }
 
         private static @NotNull String name(final @NotNull Holder<Enchantment> holder) {
-            return holder.unwrapKey().map(key -> key.location().toString()).orElse("<unknown enchantment>");
+            return holder.unwrapKey().map(key -> key.identifier().toString()).orElse("<unknown enchantment>");
         }
     }
 
@@ -459,14 +457,22 @@ public class EnchantmentBonus extends DurationInstanceBase<EnchantmentBonuses, E
             return true;
         }
 
-        public Tag save(final @NotNull HolderLookup.Provider provider) {
-            return CODEC.encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), this).getOrThrow();
+        /**
+         * 写入一个具名子项。
+         * <p>
+         * <b>26.1.2 起 DS 的 {@code Storage} 改用 NeoForge ValueIO</b>（{@code ValueOutput} / {@code ValueInput}），
+         * 不再是 1.21.1 的 {@code Tag save(Provider)} / {@code load(Provider, CompoundTag)} 一对。
+         * 这里直接复用 DS 自己的写法 {@code valueOutput.store(key, CODEC, this)} ——
+         * 让 ValueIO 自己套上注册表上下文（{@code ValueOutput} 由持有者的
+         * {@code HolderLookup.Provider} 构造），因此本类不再需要手工拼
+         * {@code NbtOps} 与 {@code createSerializationContext}。
+         */
+        public void save(final @NotNull ValueOutput valueOutput, final String key) {
+            valueOutput.store(key, CODEC, this);
         }
 
-        public static @Nullable Instance load(final @NotNull HolderLookup.Provider provider, final @NotNull CompoundTag nbt) {
-            return CODEC.parse(provider.createSerializationContext(NbtOps.INSTANCE), nbt)
-                    .resultOrPartial(DragonSurvival.LOGGER::error)
-                    .orElse(null);
+        public static @Nullable Instance load(final @NotNull ValueInput valueInput, final String key) {
+            return valueInput.read(key, CODEC).orElse(null);
         }
     }
 }

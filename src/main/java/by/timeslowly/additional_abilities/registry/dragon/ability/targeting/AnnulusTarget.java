@@ -110,7 +110,7 @@ public record AnnulusTarget(Either<AbilityTargeting.BlockTargeting, AbilityTarge
         double inner = resolveInnerRadius(ability);
         double outer = resolveOuterRadius(ability);
         AABB area = calculateArea(origin, outer, resolveHeight(ability));
-        ServerLevel level = dragon.serverLevel();
+        ServerLevel level = dragon.level();
 
         target.ifLeft(blockTarget -> BlockPos.betweenClosedStream(area).forEach(position -> {
             // 环形粗筛后的精筛：取格中心，水平距离落在 [内半径, 外半径] 内才处理
@@ -129,7 +129,7 @@ public record AnnulusTarget(Either<AbilityTargeting.BlockTargeting, AbilityTarge
                 // direction 传 null，与 DS area / disc 一致
                 blockTarget.effects().forEach(effect -> effect.apply(dragon, ability, position, null));
             }
-        })).ifRight(entityTarget -> dragon.serverLevel().getEntities(EntityTypeTest.forClass(Entity.class), area,
+        })).ifRight(entityTarget -> dragon.level().getEntities(EntityTypeTest.forClass(Entity.class), area,
                 entity -> isWithinAnnulus(origin, entity.getX(), entity.getZ(), inner, outer)
                         && entityTarget.targetingMode().isEntityRelevant(dragon, entity, entityTarget.isHarmful())
                         && entityTarget.matches(dragon, entity, entity.position())

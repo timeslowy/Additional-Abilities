@@ -328,7 +328,7 @@ public final class ChargedCasts {
      */
     private static void broadcastCastEnd(final @NotNull ServerPlayer player, final @NotNull DragonAbilityInstance instance) {
         PacketDistributor.sendToPlayersTrackingEntity(player,
-                new StopTickingSound(instance.location().withSuffix(player.getStringUUID())));
+                new StopTickingSound(instance.identifier().withSuffix(player.getStringUUID())));
 
         if (!instance.hasEndAnimation()) {
             PacketDistributor.sendToPlayersTrackingEntity(player, new StopAbilityAnimation(player.getId()));
@@ -348,7 +348,7 @@ public final class ChargedCasts {
         // 停止动画包必须无条件发送（不能照搬 DS 里那条 isApplyingEffects 条件判断），
         // 否则其他玩家会一直停留在蓄力循环动画上
         PacketDistributor.sendToPlayersTrackingEntity(player,
-                new StopTickingSound(instance.location().withSuffix(player.getStringUUID())));
+                new StopTickingSound(instance.identifier().withSuffix(player.getStringUUID())));
         PacketDistributor.sendToPlayersTrackingEntity(player,
                 new StopAbilityAnimation(player.getId()));
 

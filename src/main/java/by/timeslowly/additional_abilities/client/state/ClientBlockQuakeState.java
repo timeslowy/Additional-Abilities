@@ -6,6 +6,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.EntityType;
@@ -171,18 +174,22 @@ public final class ClientBlockQuakeState {
 
             logLuminanceOnce(level, position, state);
 
-            Display.BlockDisplay display = EntityType.BLOCK_DISPLAY.create(level);
+            // 26.1.2：EntityType#create(Level) 已删除，改为必须显式给出生成原因
+            Display.BlockDisplay display = EntityType.BLOCK_DISPLAY.create(level, EntitySpawnReason.COMMAND);
 
             if (display == null) {
                 continue;
             }
 
-            // BlockDisplay#setBlockState 是 private，只能借 NBT 装载方块状态
+            // BlockDisplay#setBlockState 是 private，只能借「序列化装载」这条路。
+            // 26.1.2：Entity#load 的入参从 CompoundTag 改成了 ValueInput，
+            // 因此这里额外包一层 TagValueInput.create(ProblemReporter, HolderLookup.Provider, CompoundTag)。
+            // 用 ProblemReporter.DISCARDING：这是纯客户端的视觉假身，解码告警没有处置价值。
             CompoundTag tag = new CompoundTag();
             tag.put(Display.BlockDisplay.TAG_BLOCK_STATE, NbtUtils.writeBlockState(state));
             // 显式写入亮度覆盖，避免假身因探针取不到光照而发黑（详见类注释）
             tag.put(Display.TAG_BRIGHTNESS, sampleBrightness(level, position, state));
-            display.load(tag);
+            display.load(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), tag));
 
             display.setId(nextEntityId--);
             display.setPos(position.getX(), position.getY(), position.getZ());

@@ -11,8 +11,8 @@ import by.timeslowly.additional_abilities.common.config.IndicatorAnchor;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargeableActivation;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -112,8 +112,8 @@ import org.jetbrains.annotations.NotNull;
  * —— 属于"给自己听的档位提示"，不需要发给其他玩家。
  */
 public final class ChargedIndicatorLayer {
-    public static final ResourceLocation ID =
-            ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_indicator");
+    public static final Identifier ID =
+            Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_indicator");
 
     /**
      * 蓄力条在屏幕上的宽度：196 的贴图经过 0.5 缩放后为 98。
@@ -164,7 +164,7 @@ public final class ChargedIndicatorLayer {
         event.registerAbove(MagicHUD.ID, ID, ChargedIndicatorLayer::render);
     }
 
-    public static void render(final @NotNull GuiGraphics graphics, final @NotNull DeltaTracker tracker) {
+    public static void render(final @NotNull GuiGraphicsExtractor graphics, final @NotNull DeltaTracker tracker) {
         // 模组图层不受原版 !hideGui 门控（见类注释），这一早退是必需的；
         // 它只跳过绘制，不清理任何状态
         if (Minecraft.getInstance().options.hideGui) {
@@ -240,7 +240,7 @@ public final class ChargedIndicatorLayer {
 
         String percentage = Math.round(progress * 100.0F) + "%";
         int percentageLeft = Math.max(textRight, widgetLeft + WIDGET_WIDTH - instance.font.width(percentage));
-        graphics.drawString(instance.font, percentage, percentageLeft, blockTop, color, true);
+        graphics.text(instance.font, percentage, percentageLeft, blockTop, color, true);
 
         // 第三块：超限窗口剩余量（只有"配了窗口"的技能才预留了这块位置）
         if (hasOverchargeRow) {
@@ -263,7 +263,7 @@ public final class ChargedIndicatorLayer {
      *
      * @param blockTop 第三块<b>文字</b>的顶边（屏幕坐标，由 {@link #resolveOrigin} 定好整块基准后算出）
      */
-    private static void drawOverchargeRow(final @NotNull GuiGraphics graphics, final @NotNull Minecraft instance,
+    private static void drawOverchargeRow(final @NotNull GuiGraphicsExtractor graphics, final @NotNull Minecraft instance,
                                           final @NotNull ChargeableActivation chargeable,
                                           final @NotNull DragonAbilityInstance casting, final int playerLevel,
                                           final int left, final int blockTop, final float partialTick) {
@@ -285,7 +285,7 @@ public final class ChargedIndicatorLayer {
         float displayedRatio = (float) remainingTicks / windowTicks;
         int color = warning > 0.0 && displayedRatio <= warning ? COLOR_CANCEL : COLOR_CHARGING;
 
-        graphics.drawString(instance.font, remainingTicks + "/" + windowTicks, left, blockTop, color, true);
+        graphics.text(instance.font, remainingTicks + "/" + windowTicks, left, blockTop, color, true);
 
         int barTop = blockTop + instance.font.lineHeight + ROW_GAP;
         graphics.fill(left, barTop, left + WIDGET_WIDTH, barTop + BAR_HEIGHT, COLOR_BAR_TRACK);
@@ -314,7 +314,7 @@ public final class ChargedIndicatorLayer {
      *                    参与"垂直居中 / 贴上方"的计算
      * @return 复用的静态数组，长度为 2：{@code [left, top]}
      */
-    private static int[] resolveOrigin(final @NotNull GuiGraphics graphics, final int blockHeight) {
+    private static int[] resolveOrigin(final @NotNull GuiGraphicsExtractor graphics, final int blockHeight) {
         // DS 蓄力条在屏幕上的左边缘 / 上边缘：固定基准再叠加玩家的自定义偏移
         int castBarLeft = graphics.guiWidth() / 2 - 49 + castbarOffsetX();
         int castBarTop = graphics.guiHeight() - 96 + castbarOffsetY();
@@ -334,11 +334,11 @@ public final class ChargedIndicatorLayer {
      *
      * @return 文本结束处的横坐标，供百分比避让
      */
-    private static int drawLevelText(final @NotNull GuiGraphics graphics, final @NotNull Minecraft instance,
+    private static int drawLevelText(final @NotNull GuiGraphicsExtractor graphics, final @NotNull Minecraft instance,
                                      final int left, final int top, final int achieved, final int selected,
                                      final boolean manual, final int color) {
         String selectedText = String.valueOf(manual ? selected : achieved);
-        graphics.drawString(instance.font, selectedText, left, top, color, true);
+        graphics.text(instance.font, selectedText, left, top, color, true);
         int cursor = left + instance.font.width(selectedText);
 
         if (!manual) {
@@ -347,7 +347,7 @@ public final class ChargedIndicatorLayer {
 
         // 手动时把"已达档位"作为参照紧跟在选定值之后（灰），语义：选定值 / 已达值
         String achievedText = "/" + achieved;
-        graphics.drawString(instance.font, achievedText, cursor, top, COLOR_ACHIEVED_DIM, true);
+        graphics.text(instance.font, achievedText, cursor, top, COLOR_ACHIEVED_DIM, true);
 
         return cursor + instance.font.width(achievedText);
     }

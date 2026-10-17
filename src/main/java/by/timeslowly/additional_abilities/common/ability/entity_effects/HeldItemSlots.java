@@ -115,7 +115,10 @@ public final class HeldItemSlots {
                 case CHEST -> CHEST;
                 case LEGS -> LEGS;
                 case FEET -> FEET;
-                case BODY -> BODY;
+                // 26.1.2 新增的坐骑鞍具槽：DS 的龙没有鞍具槽位概念，
+                // 本模组也没有对应语义，因此按"背包类"处理（只会出现在 allOf 的装备段，
+                // 而 EQUIPMENT_SLOTS 不含 SADDLE，实际不会走到这里）
+                case BODY, SADDLE -> BODY;
             };
         }
     }
@@ -207,7 +210,7 @@ public final class HeldItemSlots {
 
         // ③ 背包：只用于"挪出持有槽即撤销标记"，所以放在最后（持有优先）
         if (entity instanceof Player player) {
-            for (ItemStack stack : player.getInventory().items) {
+            for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
                 add(slots, seen, stack, false, Source.INVENTORY, SlotKind.INVENTORY);
             }
         }
@@ -239,7 +242,7 @@ public final class HeldItemSlots {
         }
 
         if (entity instanceof Player player) {
-            List<ItemStack> items = player.getInventory().items;
+            List<ItemStack> items = player.getInventory().getNonEquipmentItems();
 
             for (int index = 0; index < items.size(); index++) {
                 addRaw(slots, items.get(index), false, Source.INVENTORY,

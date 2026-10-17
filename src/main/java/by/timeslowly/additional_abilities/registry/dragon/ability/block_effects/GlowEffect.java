@@ -104,7 +104,7 @@ public record GlowEffect(TextColor color, float alpha, GlowDisplayType displayTy
             return;
         }
 
-        ServerLevel level = dragon.serverLevel();
+        ServerLevel level = dragon.level();
 
         // direction 在本效果里无意义（发光与命中面无关），因此天然免疫「direction 多为 null」的坑
         if (!validBlocks.test(level, position)) {
@@ -156,18 +156,18 @@ public record GlowEffect(TextColor color, float alpha, GlowDisplayType displayTy
 
         // 方块谓词只在非「全匹配」时才说明，避免每一条描述都拖着「任意方块」（复用 DS 2.0.64 起的渲染工具）
         if (validBlocks != BlockPredicate.alwaysTrue()) {
-            suffix = suffix.append(Component.translatable("additional_abilities.ability.glow.restricted",
+            suffix.append(Component.translatable("additional_abilities.ability.glow.restricted",
                     Functions.translateBlockPredicate(validBlocks)));
         }
 
         if (clampedAlpha < 1.0F) {
-            suffix = suffix.append(Component.translatable("additional_abilities.ability.glow.alpha",
+            suffix.append(Component.translatable("additional_abilities.ability.glow.alpha",
                     Component.literal(Math.round(clampedAlpha * 100.0F) + "%").withColor(DSColors.BLUE)));
         }
 
         // 概率不足 100% 时才追加说明（与 block_quake / extinguish / DS 内置 potion 效果同写法）
         if (probability < 1.0F) {
-            suffix = suffix.append(Component.translatable("additional_abilities.ability.glow.chance",
+            suffix.append(Component.translatable("additional_abilities.ability.glow.chance",
                     Component.literal(Math.round(probability * 100.0F) + "%").withColor(DSColors.BLUE)));
         }
 

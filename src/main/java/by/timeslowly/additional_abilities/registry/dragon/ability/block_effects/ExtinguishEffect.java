@@ -67,7 +67,7 @@ public record ExtinguishEffect(LevelBasedValue extinguishProbability) implements
     @Override
     public void apply(final @NotNull ServerPlayer dragon, final @NotNull DragonAbilityInstance ability,
                       final @NotNull BlockPos position, final @Nullable Direction direction) {
-        ServerLevel level = dragon.serverLevel();
+        ServerLevel level = dragon.level();
         BlockState state = level.getBlockState(position);
 
         if (state.is(BlockTags.FIRE)) {

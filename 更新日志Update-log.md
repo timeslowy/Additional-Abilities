@@ -1,3 +1,30 @@
+### 26.1.2-V2.0.0
+
+> **本版为 Minecraft 26.1.2 适配版，与 1.21.1 分支的 `2.0.0` 不通用，请勿混装。**
+> **This is the Minecraft 26.1.2 port; it is not interchangeable with `2.0.0` on the 1.21.1 branch.**
+
+#### 中文
+
+1. **适配 Minecraft `26.1.2` / NeoForge `26.1.2.88` / Java 25**（Gradle 9.6.1）；Dragon Survival 最低版本提升至 `2.1.5`；
+2. `ResourceLocation` 全量迁移到 `Identifier`（含 `location()` → `identifier()`），共 71 处；
+3. 渲染层按 26.1.2 的帧图管线重写：`RenderLevelStageEvent.Stage` 枚举删除（改为独立子事件）、`GlStateBackup` 与整套立即模式 GL 接口删除、`GuiGraphics` 改为 `GuiGraphicsExtractor`、`PostChain` 改为自建 `RenderPipeline`（半径每帧可变，而原版链的 uniform 只在加载时写死）；
+4. 数据附件 `EnchantmentBonuses` 的序列化改到 NeoForge ValueIO（`ValueInput` / `ValueOutput`），与 DS 26.1.2 的 `Storage` 保持同构；
+5. `PackFinders` 改用 `JarContents` + `JarContentsResourcesSupplier`（`IModFile#findResource` 与 `BuiltInPackSource#fromName` 均已删除）；KnownPack-free 的覆盖型数据包写法保持不变；
+6. `pack.mcmeta` 改为 26.1 新格式（`min_format` / `max_format` = `[101, 1]`），mixin `compatibilityLevel` 提升到 `JAVA_25`；
+7. 一批 26.1.2 的 API 收窄一并处理：`ServerPlayer#serverLevel()` → `level()`、`EntityType#create(Level)` 需显式 `EntitySpawnReason`、`CommandSourceStack#hasPermission(int)` → `Commands.hasPermission(LevelCheck)`、`BlockState#isSolidRender(level,pos)` → 无参、`Inventory#items` → `getNonEquipmentItems()`、`Item#getDescription()` → `getName(ItemStack)`、`Holder` 新增 `components()` / `areComponentsBound()`、`TagEntry.Lookup#element` 新增 `required` 形参、`GetEnchantmentLevelEvent#getStack` 放宽为 `ItemInstance`；
+8. 单元测试 142 项全绿（`unitTest` 块在 MDG 2.0.143 + 26.1.2 下仍可用）。
+
+#### English
+
+1. **Ported to Minecraft `26.1.2` / NeoForge `26.1.2.88` / Java 25** (Gradle 9.6.1); minimum Dragon Survival raised to `2.1.5`;
+2. Migrated every `ResourceLocation` to `Identifier` (including `location()` → `identifier()`), 71 sites;
+3. Rendering rewritten against the 26.1.2 frame-graph pipeline: the `RenderLevelStageEvent.Stage` enum is gone (dedicated sub-events now), `GlStateBackup` and the whole immediate-mode GL surface are removed, `GuiGraphics` became `GuiGraphicsExtractor`, and `PostChain` was replaced by a self-registered `RenderPipeline` (the radius changes every frame, while vanilla chains bake their uniforms at load time);
+4. `EnchantmentBonuses` serialization moved to NeoForge ValueIO (`ValueInput` / `ValueOutput`), mirroring Dragon Survival 26.1.2's `Storage`;
+5. `PackFinders` now uses `JarContents` + `JarContentsResourcesSupplier` (`IModFile#findResource` and `BuiltInPackSource#fromName` were both removed); the KnownPack-free overriding datapack recipe is unchanged;
+6. `pack.mcmeta` switched to the 26.1 format (`min_format` / `max_format` = `[101, 1]`), mixin `compatibilityLevel` raised to `JAVA_25`;
+7. A batch of narrower 26.1.2 APIs handled: `ServerPlayer#serverLevel()` → `level()`, `EntityType#create(Level)` now needs an `EntitySpawnReason`, `CommandSourceStack#hasPermission(int)` → `Commands.hasPermission(LevelCheck)`, `BlockState#isSolidRender(level,pos)` → no-arg, `Inventory#items` → `getNonEquipmentItems()`, `Item#getDescription()` → `getName(ItemStack)`, `Holder` gained `components()` / `areComponentsBound()`, `TagEntry.Lookup#element` gained a `required` parameter, `GetEnchantmentLevelEvent#getStack` widened to `ItemInstance`;
+8. All 142 unit tests pass (the `unitTest` block still works under MDG 2.0.143 + 26.1.2).
+
 ### 2.0.0
 
 > **如你已在之前安装过此模组的`1.0.0`版本，务必认真阅读此条更新日志！！！此次更新为颠覆性的更新，请慎重考虑！！！**  

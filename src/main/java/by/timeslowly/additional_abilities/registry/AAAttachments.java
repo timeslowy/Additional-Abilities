@@ -118,7 +118,7 @@ public class AAAttachments {
      * 因此这里借道 DS 的 {@code public static final} 注册表。<b>代价与约束</b>：
      * <ul>
      *     <li>附件 id 会被 {@code DeferredRegister} 强制带上 DS 的命名空间
-     *         （{@code ResourceLocation.fromNamespaceAndPath(namespace, name)}），所以实际 id 是
+     *         （{@code Identifier.fromNamespaceAndPath(namespace, name)}），所以实际 id 是
      *         {@code dragonsurvival:additional_abilities_enchantment_bonuses} ——
      *         名字里带 {@code additional_abilities_} 前缀是为了**将来不撞 DS 自己的新增项**；</li>
      *     <li>依赖 DS 保留这个 public 字段（改了会在编译期直接报错，属可见失败）；</li>

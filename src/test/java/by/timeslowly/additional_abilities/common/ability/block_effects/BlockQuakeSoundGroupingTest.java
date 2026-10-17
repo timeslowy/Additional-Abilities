@@ -5,7 +5,7 @@ import by.timeslowly.additional_abilities.common.ability.actions.ActionScope.Act
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockQuakes.Batches;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,7 @@ class BlockQuakeSoundGroupingTest {
     private static final ResourceKey<DragonAbility> ABILITY_TWO = abilityKey("quake_two");
 
     private static final SoundEvent SOUND = SoundEvent.createVariableRangeEvent(
-            ResourceLocation.withDefaultNamespace("item.mace.smash_ground"));
+            Identifier.withDefaultNamespace("item.mace.smash_ground"));
 
     private static final float HEIGHT = 1.0F;
     private static final int DURATION = 10;
@@ -65,7 +65,7 @@ class BlockQuakeSoundGroupingTest {
 
     private static ResourceKey<DragonAbility> abilityKey(final String path) {
         return ResourceKey.create(DragonAbility.REGISTRY,
-                ResourceLocation.fromNamespaceAndPath("additional_abilities_test", path));
+                Identifier.fromNamespaceAndPath("additional_abilities_test", path));
     }
 
     private static BlockQuakeData data() {

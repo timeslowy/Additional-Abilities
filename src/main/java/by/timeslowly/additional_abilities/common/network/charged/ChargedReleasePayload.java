@@ -10,7 +10,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public record ChargedReleasePayload(ResourceKey<DragonAbility> ability, int char
     public static final int CANCEL = 0;
 
     public static final CustomPacketPayload.Type<ChargedReleasePayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_release"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged_release"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ChargedReleasePayload> STREAM_CODEC = StreamCodec.composite(
             ResourceKey.streamCodec(DragonAbility.REGISTRY), ChargedReleasePayload::ability,

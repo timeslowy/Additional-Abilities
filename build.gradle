@@ -16,11 +16,13 @@ base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 neoForge {
     // Specify the version of NeoForge to use.
     version = project.neo_version
+
+    // 26.1 起 Mojang 不再混淆游戏代码，官方映射自带参数名，无需 Parchment。
 
     // This line is optional. Access Transformers are automatically detected
     // accessTransformers.add('src/main/resources/META-INF/accesstransformer.cfg')
@@ -53,13 +55,18 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
-        data {
-            data()
-
-            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-            // gameDirectory = project.file('run-data')
+        // 26.1 起 MDG 将原 data 运行拆分为 clientData / serverData。
+        // 两者都保留：只生成客户端侧数据时用 clientData，只生成服务端侧（registry / tags）时用 serverData。
+        clientData {
+            clientData()
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        serverData {
+            serverData()
+
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
 
@@ -140,10 +147,10 @@ repositories {
 
 
 dependencies {
-    // 龙之生存
-    implementation "curse.maven:dragons-survival-420799:8973485"
-    // 壁虎库
-    implementation "curse.maven:geckolib-388172:8893490"
+    // 龙之生存（8860365 = 2.1.6-beta，26.1.2 分支；1.21.1 用的 8973485 = 2.0.71）
+    implementation "curse.maven:dragons-survival-420799:8860365"
+    // 壁虎库（8327201 = GeckoLib 5.5.2，26.1 专用；1.21.1 用的 8893490 = 4.9.3）
+    implementation "curse.maven:geckolib-388172:8327201"
 
     // 单元测试。版本对齐本地缓存中已有的 5.9.2 / 1.9.2 —— 本机当前无外网，
     // 写更高版本会在 --offline 下解析失败。

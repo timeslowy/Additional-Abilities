@@ -7,7 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ScreenVisionPayload(ScreenVisionType visionType, float amplifier, float size, int rgb, int durationTicks) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ScreenVisionPayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "screen_vision"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "screen_vision"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ScreenVisionPayload> STREAM_CODEC = StreamCodec.composite(
             ScreenVisionType.STREAM_CODEC, ScreenVisionPayload::visionType,

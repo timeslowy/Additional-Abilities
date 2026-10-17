@@ -4,10 +4,9 @@ import by.dragonsurvivalteam.dragonsurvival.registry.attachments.DSDataAttachmen
 import by.dragonsurvivalteam.dragonsurvival.registry.attachments.Storage;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.AAAttachments;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -92,14 +91,19 @@ public class EnchantmentBonuses extends Storage<EnchantmentBonus.Instance> {
         });
     }
 
+    // 26.1.2 起 DS 的 Storage 改用 NeoForge ValueIO：两个钩子从
+    // save(Provider, T) -> Tag / load(Provider, CompoundTag) -> T 变成
+    // save(ValueOutput, T, String) / load(ValueInput, String) -> T。
+    // 父类负责把 storage 里的条目逐个塞进 child("storage") 并按序号命名，
+    // 本类只把那一对动作转交给 Instance（与 DS 自己的 HarvestBonuses 完全同构）。
     @Override
-    protected Tag save(final @NotNull HolderLookup.Provider provider, final EnchantmentBonus.@NotNull Instance entry) {
-        return entry.save(provider);
+    protected void save(final @NotNull ValueOutput valueOutput, final EnchantmentBonus.@NotNull Instance entry, final @NotNull String key) {
+        entry.save(valueOutput, key);
     }
 
     @Override
-    protected EnchantmentBonus.Instance load(final @NotNull HolderLookup.Provider provider, final @NotNull CompoundTag tag) {
-        return EnchantmentBonus.Instance.load(provider, tag);
+    protected EnchantmentBonus.Instance load(final @NotNull ValueInput valueInput, final @NotNull String key) {
+        return EnchantmentBonus.Instance.load(valueInput, key);
     }
 
     @Override
@@ -139,7 +143,7 @@ public class EnchantmentBonuses extends Storage<EnchantmentBonus.Instance> {
             return;
         }
 
-        ResourceLocation key = NeoForgeRegistries.ATTACHMENT_TYPES.getKey(type);
+        Identifier key = NeoForgeRegistries.ATTACHMENT_TYPES.getKey(type);
         boolean enumerableByDragonSurvival = key != null && DSDataAttachments.REGISTRY.getEntries().stream()
                 .anyMatch(entry -> key.equals(entry.getId()));
 

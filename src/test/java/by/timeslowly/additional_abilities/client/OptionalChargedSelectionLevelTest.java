@@ -2,7 +2,7 @@ package by.timeslowly.additional_abilities.client;
 
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class OptionalChargedSelectionLevelTest {
     private static final ResourceKey<DragonAbility> ABILITY = ResourceKey.create(DragonAbility.REGISTRY,
-            ResourceLocation.fromNamespaceAndPath("additional_abilities_test", "selection"));
+            Identifier.fromNamespaceAndPath("additional_abilities_test", "selection"));
 
     /** 遍历到的档位上限：覆盖 0 / 1 / 边界 / 较大值 */
     private static final int MAX_LEVEL = 8;

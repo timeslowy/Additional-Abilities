@@ -3,24 +3,23 @@ package by.timeslowly.additional_abilities.registry;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import com.mojang.logging.LogUtils;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.PathPackResources;
-import net.minecraft.server.packs.repository.BuiltInPackSource;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.jarcontents.JarContents;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
-import net.neoforged.neoforgespi.language.IModInfo;
+import net.neoforged.neoforge.resource.JarContentsPackResources;
+import net.neoforged.neoforgespi.language.IModFileInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import java.nio.file.Path;
 import java.util.Optional;
 
 /**
@@ -89,6 +88,16 @@ import java.util.Optional;
  * <h3>为什么不直接调 addPackFinders</h3>
  * 那个便捷方法内部固定构造
  * {@code new KnownPack("neoforge", "mod/" + packLocation, version)}，无法去掉，故此处展开重写。
+ * <p>
+ * <b>26.1.2 对照</b>：参与该陷阱判定的 API 全部未变 ——
+ * {@code addPackFinders} 依旧硬编码同一个 {@code KnownPack}，
+ * {@link PackLocationInfo} / {@link PackSelectionConfig} / {@code Pack#readMetaAndCreate} /
+ * {@code Pack.Position} / {@code PackSource#FEATURE} / {@code getPackType()} /
+ * {@code addRepositorySource(...)} 的签名都与 1.21.1 一致，修复思路可直接照搬。
+ * 变的是「定位模组文件内资源」那一步：{@code IModFile#findResource(String...)} 与
+ * {@code BuiltInPackSource#fromName(...)} 已删除，改为
+ * {@code IModFile#getContents()} 返回的 {@code JarContents} +
+ * {@code JarContentsPackResources.JarContentsResourcesSupplier(contents, prefix)}。
  *
  * <h3>为什么客户端资源包不受影响</h3>
  * {@code knownPackInfo()} 在全代码里只有 3 个使用点，全部属于
@@ -189,17 +198,21 @@ public class PackFinders {
             return; // 覆盖型只可能是数据包；类型不匹配时静默跳过
         }
 
-        IModInfo modInfo = modInfo();
-        if (modInfo == null) {
+        IModFileInfo modFileInfo = modFileInfo();
+        if (modFileInfo == null) {
             return;
         }
 
-        Path resourcePath = modInfo.getOwningFile().getFile().findResource(path);
+        // 26.1.2：IModFile#findResource(String...) 与 BuiltInPackSource#fromName(...) 均已删除。
+        // 改用 IModFile#getContents() 返回的 JarContents（开发环境是目录包、正式环境是 jar 包，
+        // 由实现类自行区分），再交给 NeoForge 自己的 JarContentsResourcesSupplier ——
+        // 与 addPackFinders 内部所用的是同一个 supplier，区别仅在本方法不附带 KnownPack 声明。
+        JarContents contents = modFileInfo.getFile().getContents();
 
         // 关键：第 4 个参数（knownPackInfo）传 Optional.empty()，
         // 使本包无法参与「已知包」协商，从而让服务端始终下发本数据包覆盖后的注册表元素。
         PackLocationInfo locationInfo = new PackLocationInfo(
-                "mod/" + ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, path),
+                "mod/" + Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, path),
                 Component.translatable(nameKey),
                 PackSource.FEATURE,
                 Optional.empty()
@@ -207,17 +220,18 @@ public class PackFinders {
 
         Pack pack = Pack.readMetaAndCreate(
                 locationInfo,
-                BuiltInPackSource.fromName(p -> new PathPackResources(p, resourcePath)),
+                new JarContentsPackResources.JarContentsResourcesSupplier(contents, path),
                 PackType.SERVER_DATA,
                 new PackSelectionConfig(alwaysActive, Pack.Position.TOP, false)
         );
 
         if (pack == null) {
-            // pack.mcmeta 读取失败（路径错误 / 文件损坏）时 readMetaAndCreate 返回 null；
+            // pack.mcmeta 读取失败（路径错误 / 文件损坏 / 26.1 起格式不符）时 readMetaAndCreate 返回 null；
             // 若把 null 塞进 repository，会在 PackRepository#discoverAvailable 里 NPE，
             // 故这里显式拦下并给出可定位的报错。
             LOGGER.error("[PackFinders] 无法读取内置数据包 {} 的 pack.mcmeta，该数据包将不会被注册"
-                    + "（检查目录路径是否为 resources 下的真实路径，以及 pack.mcmeta 是否完整）", resourcePath);
+                    + "（检查目录路径是否为 resources 下的真实路径，以及 pack.mcmeta 的"
+                    + " min_format / max_format 是否为当前游戏格式）", path);
             return;
         }
 
@@ -241,7 +255,7 @@ public class PackFinders {
             @NotNull String nameKey, boolean alwaysActive) {
         // 该方法内部会自行比对 packType，类型不符时是空操作
         event.addPackFinders(
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, path),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, path),
                 type,
                 Component.translatable(nameKey),
                 PackSource.FEATURE,
@@ -250,15 +264,21 @@ public class PackFinders {
         );
     }
 
+    /**
+     * 取本模组的 {@link IModFileInfo}（用于拿 {@code JarContents}）。
+     * <p>
+     * 26.1.2 起改走 {@code ModList#getModFileById(String)}：它返回的正是
+     * 「一个模组文件」的元数据，而内置包按文件内的资源路径定位，语义比
+     * 「按模组 id 取 modInfo 再取 owningFile」更直接。
+     */
     @Nullable
-    private static IModInfo modInfo() {
-        var container = ModList.get().getModContainerById(AdditionalAbilities.MOD_ID).orElse(null);
+    private static IModFileInfo modFileInfo() {
+        IModFileInfo modFileInfo = ModList.get().getModFileById(AdditionalAbilities.MOD_ID);
 
-        if (container == null) {
-            LOGGER.error("[PackFinders] 找不到模组 {}，内置包不会被注册", AdditionalAbilities.MOD_ID);
-            return null;
+        if (modFileInfo == null) {
+            LOGGER.error("[PackFinders] 找不到模组 {} 的文件信息，内置包不会被注册", AdditionalAbilities.MOD_ID);
         }
 
-        return container.getModInfo();
+        return modFileInfo;
     }
 }

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * 本模组的网络 payload 注册。
  * <p>
  * NeoForge 1.21.1 没有"通道"这一层：每个 payload 自带
- * {@code ResourceLocation}（如 {@code additional_abilities:screen_vision}），
+ * {@code Identifier}（如 {@code additional_abilities:screen_vision}），
  * 注册时统一带上 {@link #PROTOCOL_VERSION}，两端版本不一致会在协商阶段被拒绝连接。
  * 本模组当前共注册 <b>6 个</b> payload，命名空间均为 {@code additional_abilities}，
  * 与 DS 的 payload 互不干扰：

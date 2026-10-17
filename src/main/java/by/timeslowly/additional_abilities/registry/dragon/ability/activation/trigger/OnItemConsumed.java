@@ -7,7 +7,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.t
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.advancements.criterion.ItemPredicate;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;

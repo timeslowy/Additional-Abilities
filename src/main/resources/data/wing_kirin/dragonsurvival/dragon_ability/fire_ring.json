@@ -151,7 +151,7 @@
                                     },
                                     "modifiers": [
                                         {
-                                            "attribute": "minecraft:generic.burning_time",
+                                            "attribute": "minecraft:burning_time",
                                             "amount": -1,
                                             "operation": "add_value"
                                         }

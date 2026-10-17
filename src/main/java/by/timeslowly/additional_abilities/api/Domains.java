@@ -96,7 +96,7 @@ public final class Domains {
      */
     public static @NotNull @Unmodifiable List<DomainInfo> of(final @NotNull ServerLevel level, final @NotNull UUID caster,
                                                              final @NotNull ResourceKey<DragonAbility> ability) {
-        String key = ability.location().toString();
+        String key = ability.identifier().toString();
         List<DomainInfo> result = new ArrayList<>();
 
         for (DomainInfo info : of(level, caster)) {
@@ -153,11 +153,7 @@ public final class Domains {
         }
 
         // 同一批玩家必然同属一个服务器；取第一个即可（空集合已在上方排除）
-        MinecraftServer server = casters.iterator().next().getServer();
-
-        if (server == null) {
-            return 0;
-        }
+        MinecraftServer server = casters.iterator().next().level().getServer();
 
         Set<UUID> uuids = new HashSet<>(casters.size());
 
@@ -172,7 +168,7 @@ public final class Domains {
     private static @NotNull DomainInfo info(final @NotNull DomainInstance domain) {
         return new DomainInfo(
                 domain.casterUUID(),
-                domain.abilityKey().location().toString(),
+                domain.abilityKey().identifier().toString(),
                 domain.followsCaster(),
                 domain.anchorPosition(),
                 domain.shape().getSerializedName(),

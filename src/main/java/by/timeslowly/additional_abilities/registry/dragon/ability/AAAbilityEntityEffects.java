@@ -3,7 +3,7 @@ package by.timeslowly.additional_abilities.registry.dragon.ability;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.entity_effects.AbilityEntityEffect;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.entity_effects.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.jetbrains.annotations.NotNull;
@@ -22,27 +22,27 @@ public class AAAbilityEntityEffects {
     private static void registerEntries(final @NotNull RegisterEvent event) {
         // 伤害反震：additional_abilities:damage_reflection
         event.register(AbilityEntityEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "damage_reflection"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "damage_reflection"),
                 () -> DamageReflectionEffect.CODEC);
 
         // 百分比伤害：additional_abilities:percentaged_damage
         event.register(AbilityEntityEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "percentaged_damage"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "percentaged_damage"),
                 () -> PercentagedDamageEffect.CODEC);
 
         // 简单屏幕视觉：additional_abilities:simple_screen_vision
         event.register(AbilityEntityEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "simple_screen_vision"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "simple_screen_vision"),
                 () -> SimpleScreenVisionEffect.CODEC);
 
         // 临时附魔加成：additional_abilities:enchantment_bonus
         event.register(AbilityEntityEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "enchantment_bonus"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "enchantment_bonus"),
                 () -> EnchantmentBonusEffect.CODEC);
 
         // 耐久设置：additional_abilities:durability
         event.register(AbilityEntityEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "durability"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "durability"),
                 () -> DurabilityEffect.CODEC);
     }
 }

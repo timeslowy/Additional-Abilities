@@ -3,7 +3,7 @@ package by.timeslowly.additional_abilities.registry.dragon.ability;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.block_effects.AbilityBlockEffect;
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.block_effects.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.jetbrains.annotations.NotNull;
@@ -23,17 +23,17 @@ public class AAAbilityBlockEffects {
     private static void registerEntries(final @NotNull RegisterEvent event) {
         // 方块震动：additional_abilities:block_quake
         event.register(AbilityBlockEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "block_quake"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "block_quake"),
                 () -> BlockQuakeEffect.CODEC);
 
         // 方块熄灭：additional_abilities:extinguish
         event.register(AbilityBlockEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "extinguish"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "extinguish"),
                 () -> ExtinguishEffect.CODEC);
 
         // 方块发光：additional_abilities:glow
         event.register(AbilityBlockEffect.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "glow"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "glow"),
                 () -> GlowEffect.CODEC);
     }
 }

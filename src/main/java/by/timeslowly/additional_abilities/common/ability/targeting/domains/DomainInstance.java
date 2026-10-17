@@ -330,7 +330,7 @@ public class DomainInstance {
      * <ul>
      *     <li><b>离线</b>——拿不到 {@code ServerPlayer}，效果回调无法执行；</li>
      *     <li><b>已跨维度</b>——战利品条件上下文（{@code Condition#abilityContext} /
-     *         {@code #blockContext}）会读 {@code dragon.serverLevel()} 的方块状态，
+     *         {@code #blockContext}）会读 {@code dragon.level()} 的方块状态，
      *         而领域遍历的是本维度的坐标，二者混用会取到错误的世界；</li>
      *     <li><b>没有可用世界</b>（{@code level == null}）——只可能来自单元测试夹具。
      *         生产路径永远传入真实的 {@code ServerLevel}。</li>
@@ -348,7 +348,7 @@ public class DomainInstance {
 
         ServerPlayer caster = level.getServer().getPlayerList().getPlayer(casterUUID);
 
-        if (caster == null || caster.serverLevel() != level) {
+        if (caster == null || caster.level() != level) {
             return null;
         }
 

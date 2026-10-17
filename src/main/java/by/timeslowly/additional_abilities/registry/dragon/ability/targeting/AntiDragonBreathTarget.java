@@ -61,7 +61,7 @@ import org.jetbrains.annotations.NotNull;
  * <h2>注意</h2>
  * <ul>
  *     <li>方块分支传入的 {@code direction} 与 DS 龙息完全一致
- *         （{@code Direction.getNearest(dragon.getEyePosition())}，按眼睛世界坐标取最近轴向，
+ *         （{@code Direction.getNearest(眼睛世界坐标, null)}，按眼睛世界坐标取最近轴向，
  *         与视线朝向无关），未做反向处理。</li>
  *     <li>方块分支会<b>跳过未加载区块</b>：{@code matches} 内部的条件上下文要读
  *         {@code getBlockState}，那会同步加载 / 生成区块。这是与本模组其它方块目标类型一致的取舍。</li>
@@ -88,8 +88,8 @@ public record AntiDragonBreathTarget(Either<AbilityTargeting.BlockTargeting, Abi
     public void apply(final @NotNull ServerPlayer dragon, final @NotNull DragonAbilityInstance ability) {
         target.ifLeft(blockTarget -> {
             // 与 DS DragonBreathTarget 一致：忽略视线朝向，仅按眼睛世界坐标取最近轴向
-            Direction direction = Direction.getNearest(dragon.getEyePosition());
-            ServerLevel level = dragon.serverLevel();
+            Direction direction = Direction.getNearest((int) dragon.getEyePosition().x, (int) dragon.getEyePosition().y, (int) dragon.getEyePosition().z, null);
+            ServerLevel level = dragon.level();
             AABB area = calculateReverseBreathArea(dragon, ability);
 
             BlockPos.betweenClosedStream(area).forEach(position -> {
@@ -103,7 +103,7 @@ public record AntiDragonBreathTarget(Either<AbilityTargeting.BlockTargeting, Abi
                     blockTarget.effects().forEach(effect -> effect.apply(dragon, ability, position, direction));
                 }
             });
-        }).ifRight(entityTarget -> dragon.serverLevel().getEntities(EntityTypeTest.forClass(Entity.class), calculateReverseBreathArea(dragon, ability),
+        }).ifRight(entityTarget -> dragon.level().getEntities(EntityTypeTest.forClass(Entity.class), calculateReverseBreathArea(dragon, ability),
                 entity -> entityTarget.targetingMode().isEntityRelevant(dragon, entity, entityTarget.isHarmful())
                         && entityTarget.matches(dragon, entity, entity.position())
         ).forEach(entity -> entityTarget.effects().forEach(effect -> effect.apply(dragon, ability, entity))));

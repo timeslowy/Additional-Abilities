@@ -4,7 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbilit
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.Activation;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -97,7 +97,7 @@ public abstract class DragonAbilityInfoMixin {
         }
 
         DragonAbility self = (DragonAbility) (Object) this;
-        ResourceLocation id = Activation.REGISTRY.getKey(self.activation().codec());
+        Identifier id = Activation.REGISTRY.getKey(self.activation().codec());
 
         if (id == null) {
             // 理论上不会发生：激活类型只能经 RegisterEvent 进入该注册表。

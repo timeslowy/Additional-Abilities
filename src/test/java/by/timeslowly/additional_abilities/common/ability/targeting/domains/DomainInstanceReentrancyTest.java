@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *     <li><b>效果落地</b> —— 真正遍历方块 / 实体并调用 {@code AbilityBlockEffect#apply}。</li>
  * </ol>
  * 第 2 层需要一个真实的 {@code ServerPlayer} + {@code ServerLevel}（效果形参就是
- * {@code ServerPlayer}，战利品条件上下文还要读 {@code dragon.serverLevel()}）。
+ * {@code ServerPlayer}，战利品条件上下文还要读 {@code dragon.level()}）。
  * 本机<b>无外网、缓存中也没有 Mockito</b>（只有 JUnit 5.9.2），造不出这两个对象。
  * <p>
  * 因此本类<b>只</b>断言第 1 层，统一以 {@code null} 关卡调用

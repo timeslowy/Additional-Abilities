@@ -5,7 +5,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.damagesource.DamageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ public final class AADamageTypes {
     /** 注册 id：{@code additional_abilities:counter_shock}。反伤默认使用的伤害类型。 */
     public static final ResourceKey<DamageType> COUNTER_SHOCK = ResourceKey.create(
             Registries.DAMAGE_TYPE,
-            ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "counter_shock"));
+            Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "counter_shock"));
 
     private AADamageTypes() {
         // 常量持有类

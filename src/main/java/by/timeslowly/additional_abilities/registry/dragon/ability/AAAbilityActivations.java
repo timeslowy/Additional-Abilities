@@ -4,7 +4,7 @@ import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.activation.A
 import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.ChargedActivation;
 import by.timeslowly.additional_abilities.registry.dragon.ability.activation.OptionalChargedActivation;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.jetbrains.annotations.NotNull;
@@ -42,14 +42,14 @@ public class AAAbilityActivations {
     private static void registerEntries(final @NotNull RegisterEvent event) {
         // 蓄力档位：additional_abilities:charged
         event.register(Activation.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "charged"),
                 () -> ChargedActivation.CODEC);
 
         // 可选性蓄力档位：additional_abilities:optional_charged
         // 字段与 charged 完全一致，can_charge_exceed_cast_time 默认 true，
         // 并额外支持蓄力期间用鼠标滚轮指定释放档位（含取消）
         event.register(Activation.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "optional_charged"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "optional_charged"),
                 () -> OptionalChargedActivation.CODEC);
     }
 }

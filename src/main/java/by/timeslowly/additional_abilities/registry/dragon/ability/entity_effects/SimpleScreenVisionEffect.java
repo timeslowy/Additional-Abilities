@@ -11,7 +11,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -249,7 +249,7 @@ public record SimpleScreenVisionEffect(DurationInstanceBase<?, ?> base, ScreenVi
      * 那个同名的效果实例一并判掉。命名空间已天然隔离，正常命名不会踩到。
      */
     @Override
-    public @NotNull @Unmodifiable List<ResourceLocation> getEffectIDs() {
+    public @NotNull @Unmodifiable List<Identifier> getEffectIDs() {
         return List.of(this.base.id());
     }
 

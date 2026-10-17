@@ -24,7 +24,7 @@
                   },
                   "modifiers": [
                     {
-                      "attribute": "minecraft:generic.scale",
+                      "attribute": "minecraft:scale",
                       "amount": 0.3,
                       "operation": "add_value"
                     }

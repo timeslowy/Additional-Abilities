@@ -13,9 +13,11 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.HolderOwner;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.phys.Vec3;
@@ -61,7 +63,7 @@ public final class DomainTestFixtures {
     /** 造一个仅供领域使用的技能注册键。 */
     public static ResourceKey<DragonAbility> abilityKey(final String path) {
         return ResourceKey.create(DragonAbility.REGISTRY,
-                ResourceLocation.fromNamespaceAndPath("additional_abilities_test", path));
+                Identifier.fromNamespaceAndPath("additional_abilities_test", path));
     }
 
     /**
@@ -163,9 +165,22 @@ public final class DomainTestFixtures {
             return true;
         }
 
+        // 26.1.2 给 Holder 新增了两个组件相关的方法（原版用它区分「已绑定组件」与「裸引用」）。
+        // 本替身不承载任何数据组件：「组件未绑定」是诚实答案（它本来就不是注册表里那条），
+        // 而空 DataComponentMap 让任何 components() 读取退化成「没有组件」而不是 NPE。
         @Override
-        public boolean is(final ResourceLocation location) {
-            return key.location().equals(location);
+        public boolean areComponentsBound() {
+            return false;
+        }
+
+        @Override
+        public DataComponentMap components() {
+            return DataComponentMap.EMPTY;
+        }
+
+        @Override
+        public boolean is(final Identifier location) {
+            return key.identifier().equals(location);
         }
 
         @Override

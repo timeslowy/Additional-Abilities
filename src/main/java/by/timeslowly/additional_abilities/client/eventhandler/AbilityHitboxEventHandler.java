@@ -14,9 +14,11 @@ import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.Doma
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.debug.DebugScreenEntries;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -46,60 +48,48 @@ import org.jetbrains.annotations.NotNull;
  * 因此这里把真正的判定体（{@link BreathBeam} 的旋转长方体）单独画出来：
  * 洋红色 12 条棱，与 DS 的红/蓝/绿、本模组的黄/青全部错开。
  *
- * <h2>复刻的 DS 做法（四点缺一不可）</h2>
+ * <h2>26.1.2 的重写要点</h2>
  * <ol>
- *     <li>阶段：{@link RenderLevelStageEvent.Stage#AFTER_SOLID_BLOCKS}
- *         —— 与 DS 同阶段，因此线框会和 DS 内置目标类型的调试箱同层、同样被后续方块正确遮挡；</li>
- *     <li>开关：{@code EntityRenderDispatcher#shouldRenderHitBoxes()} —— 即 F3+B，监听器本身不做按键判断；</li>
- *     <li>只在 <b>Iris 未在渲染阴影 pass</b> 时画（{@link Compat#isRenderingShadows()}）——
- *         阴影 pass 的 pose stack 与世界不一致，此时画的线框会错位（DS 同样在此处提前返回）；</li>
- *     <li>坐标：{@code RenderLevelStageEvent} 的 pose stack 需要自行平移到相机相对坐标系
- *         （{@code translate(-camera)}），之后 {@link LevelRenderer#renderLineBox} 直接吃世界坐标的 AABB。</li>
+ *     <li><b>阶段枚举没了</b>：{@code RenderLevelStageEvent.Stage} 整体删除，改为独立子事件。
+ *         旧代码的 {@code AFTER_SOLID_BLOCKS} 对应新的
+ *         {@link RenderLevelStageEvent.AfterOpaqueBlocks}（DS 自己也是这么改的）。</li>
+ *     <li><b>相机位置换了来源</b>：{@code event.getCamera()} 不存在了，改从
+ *         {@code event.getLevelRenderState().cameraRenderState.pos} 取
+ *         （{@code CameraRenderState#pos}，与老的 {@code Camera#getPosition()} 同值）。</li>
+ *     <li><b>F3+B 的判定换了来源</b>：{@code EntityRenderDispatcher#shouldRenderHitBoxes()} 已删除，
+ *         改成查调试项表 {@code Minecraft#debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)}
+ *         —— DS 的 {@code ClientDragonRenderer} 同样改成了这个。</li>
+ *     <li><b>{@code LevelRenderer#renderLineBox} 没了</b>：26.1.2 的线框走顶点提交，
+ *         这里自己往 {@link RenderTypes#lines()} 的缓冲里写棱。</li>
  * </ol>
- *
- * <h2>只画"当前选中槽位"的技能</h2>
- * 与 DS 保持一致：只取 {@code MagicData#getSelectedAbility()}（即当前选中技能槽），
- * 遍历它的所有 {@code actions}，命中本模组类型才画。这样同一玩家身上一次只出现一个箱体，
- * 不会把背包/热键栏里所有技能的范围一起糊在屏幕上。
  * <p>
- * <b>刻意使用与 DS 不同的颜色</b>：DS 内置目标类型的调试箱是红（dragon_breath）、蓝（area）、
- * 绿（looking_at / disc）。本模组取黄（反向龙息锥形）、青 / 暗青（环形）与洋红（收束光束）。
+ * 仍然保留「只在 Iris 未渲染阴影 pass 时画」与「只画当前选中槽位的技能」两条老规矩。
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public class AbilityHitboxEventHandler {
     /** 调试箱颜色（黄）：与 DS 的红/蓝/绿全部错开，便于区分归属 —— 反向龙息锥形 */
-    private static final float DEBUG_COLOR_R = 1.0F;
-    private static final float DEBUG_COLOR_G = 1.0F;
-    private static final float DEBUG_COLOR_B = 0.0F;
+    private static final int DEBUG_COLOR = ARGB.color(255, 255, 255, 0);
 
     /** 调试箱颜色（青，外框）：环形目标；与上面的黄再错开一档 */
-    private static final float ANNULUS_OUTER_R = 0.0F;
-    private static final float ANNULUS_OUTER_G = 1.0F;
-    private static final float ANNULUS_OUTER_B = 1.0F;
+    private static final int ANNULUS_OUTER_COLOR = ARGB.color(255, 0, 255, 255);
 
     /** 调试箱颜色（暗青，内框）：环形目标的挖空内圈 */
-    private static final float ANNULUS_INNER_R = 0.0F;
-    private static final float ANNULUS_INNER_G = 0.45F;
-    private static final float ANNULUS_INNER_B = 0.45F;
+    private static final int ANNULUS_INNER_COLOR = ARGB.color(255, 0, 115, 115);
 
     /** 调试箱颜色（洋红）：龙息收束后的真实判定光束，与上面全部错开 */
-    private static final float BEAM_R = 1.0F;
-    private static final float BEAM_G = 0.2F;
-    private static final float BEAM_B = 1.0F;
+    private static final int BEAM_COLOR = ARGB.color(255, 255, 51, 255);
 
     /** 调试箱颜色（橙）：领域目标的粗筛盒，与上面全部错开 */
-    private static final float DOMAIN_R = 1.0F;
-    private static final float DOMAIN_G = 0.55F;
-    private static final float DOMAIN_B = 0.0F;
+    private static final int DOMAIN_COLOR = ARGB.color(255, 255, 140, 0);
+
+    /** 线宽（像素）：比原版调试线的默认 1.0 略粗，便于在远处辨认 */
+    private static final float LINE_WIDTH = 1.0F;
 
     @SubscribeEvent
-    public static void onRenderLevelStage(final @NotNull RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SOLID_BLOCKS) {
-            return;
-        }
-
-        // 即 F3+B；关闭时整个监听器直接空转
-        if (!Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
+    public static void onRenderLevelStage(final @NotNull RenderLevelStageEvent.AfterOpaqueBlocks event) {
+        // 即 F3+B；关闭时整个监听器直接空转。
+        // 26.1.2：EntityRenderDispatcher#shouldRenderHitBoxes 已删除，改查调试项表。
+        if (!Minecraft.getInstance().debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)) {
             return;
         }
 
@@ -123,18 +113,17 @@ public class AbilityHitboxEventHandler {
             return;
         }
 
-        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.LINES);
-        Vec3 camera = event.getCamera().getPosition();
+        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderTypes.lines());
+        Vec3 camera = event.getLevelRenderState().cameraRenderState.pos;
         PoseStack pose = event.getPoseStack();
 
         pose.pushPose();
         // 世界坐标 → 相机相对（RenderLevelStageEvent 的标准写法，DS 同款）
-        pose.translate(-camera.x(), -camera.y(), -camera.z());
+        pose.translate(-camera.x, -camera.y, -camera.z);
 
         for (ActionContainer action : ability.value().actions()) {
             if (action.effect() instanceof AntiDragonBreathTarget reverseCone) {
-                LevelRenderer.renderLineBox(pose, buffer, reverseCone.calculateReverseBreathArea(player, ability),
-                        DEBUG_COLOR_R, DEBUG_COLOR_G, DEBUG_COLOR_B, 1.0F);
+                box(pose, buffer, reverseCone.calculateReverseBreathArea(player, ability), DEBUG_COLOR);
             } else if (action.effect() instanceof AnnulusTarget annulus) {
                 // 环形无法用单个包围盒表达：外框给出环带外沿，内框给出被挖空的中心
                 Vec3 origin = player.position();
@@ -142,21 +131,18 @@ public class AbilityHitboxEventHandler {
                 double inner = annulus.resolveInnerRadius(ability);
                 double outer = annulus.resolveOuterRadius(ability);
 
-                LevelRenderer.renderLineBox(pose, buffer, annulus.calculateArea(origin, outer, height),
-                        ANNULUS_OUTER_R, ANNULUS_OUTER_G, ANNULUS_OUTER_B, 1.0F);
+                box(pose, buffer, annulus.calculateArea(origin, outer, height), ANNULUS_OUTER_COLOR);
 
                 // 内半径 ≤ 0 时内框退化为一个点，没必要画
                 if (inner > 0) {
-                    LevelRenderer.renderLineBox(pose, buffer, annulus.calculateArea(origin, inner, height),
-                            ANNULUS_INNER_R, ANNULUS_INNER_G, ANNULUS_INNER_B, 1.0F);
+                    box(pose, buffer, annulus.calculateArea(origin, inner, height), ANNULUS_INNER_COLOR);
                 }
             } else if (action.effect() instanceof DomainTarget domain) {
                 // 领域真正的锚点是"首次结算瞬间的位置"，客户端拿不到那次施法的坐标，
                 // 因此这里与 DS 对 area / disc 的调试画法同一思路：以玩家当前脚下为锚点画粗筛盒，
                 // 表达的是"现在施法会留下多大的领域"。球形/柱形的盒内还有一次形状精筛
                 // （球会切掉 8 个角、柱形会切掉水平四角），所以线框比真实判定区略大，属预期。
-                LevelRenderer.renderLineBox(pose, buffer, domain.calculateArea(player.position(), ability),
-                        DOMAIN_R, DOMAIN_G, DOMAIN_B, 1.0F);
+                box(pose, buffer, domain.calculateArea(player.position(), ability), DOMAIN_COLOR);
             } else if (action.effect() instanceof DragonBreathTarget breath) {
                 // 收束生效时 DS 的红框只剩「粗筛区」的含义（斜视时会明显偏大），
                 // 真正的判定体是这个旋转长方体，必须单独画出来，否则「看到的框 ≠ 判定范围」。
@@ -171,14 +157,37 @@ public class AbilityHitboxEventHandler {
         pose.popPose();
     }
 
+    /** 画一个轴对齐包围盒的 12 条棱 */
+    private static void box(final @NotNull PoseStack pose, final @NotNull VertexConsumer buffer,
+                            final @NotNull AABB area, final int color) {
+        Vec3[] corners = {
+                new Vec3(area.minX, area.minY, area.minZ),
+                new Vec3(area.maxX, area.minY, area.minZ),
+                new Vec3(area.maxX, area.minY, area.maxZ),
+                new Vec3(area.minX, area.minY, area.maxZ),
+                new Vec3(area.minX, area.maxY, area.minZ),
+                new Vec3(area.maxX, area.maxY, area.minZ),
+                new Vec3(area.maxX, area.maxY, area.maxZ),
+                new Vec3(area.minX, area.maxY, area.maxZ)};
+
+        int[][] edges = {
+                {0, 1}, {1, 2}, {2, 3}, {3, 0},     // 底面
+                {4, 5}, {5, 6}, {6, 7}, {7, 4},     // 顶面
+                {0, 4}, {1, 5}, {2, 6}, {3, 7}};    // 四条竖棱
+
+        for (int[] edge : edges) {
+            line(pose, buffer, corners[edge[0]], corners[edge[1]], color);
+        }
+    }
+
     /**
      * 画旋转长方体的 12 条棱。
      * <p>
-     * {@link LevelRenderer#renderLineBox} 只吃轴对齐盒，所以这里自行写顶点：
-     * {@link RenderType#LINES} 的顶点格式是 {@code POSITION_COLOR_NORMAL}，
-     * 三个属性必须齐全（法线用该棱的方向，对线段渲染没有实际影响，仅占位）。
+     * 26.1.2 的 {@link RenderTypes#lines()} 顶点格式是
+     * {@code POSITION_COLOR_NORMAL_LINE_WIDTH} —— 位置 / 颜色 / 法线 / 线宽四样必须齐全
+     * （法线用该棱的方向，对线段渲染没有实际影响，仅占位）。
      */
-    private static void renderBeam(final PoseStack pose, final VertexConsumer buffer, final @NotNull BreathBeam beam) {
+    private static void renderBeam(final @NotNull PoseStack pose, final @NotNull VertexConsumer buffer, final @NotNull BreathBeam beam) {
         Vec3 forward = beam.direction().scale(beam.length());
         Vec3 side = beam.right().scale(beam.halfWidth());
         Vec3 vertical = beam.up().scale(beam.halfHeight());
@@ -199,18 +208,20 @@ public class AbilityHitboxEventHandler {
                 {0, 4}, {1, 5}, {2, 6}, {3, 7}};    // 四条侧棱
 
         for (int[] edge : edges) {
-            line(pose, buffer, corners[edge[0]], corners[edge[1]]);
+            line(pose, buffer, corners[edge[0]], corners[edge[1]], BEAM_COLOR);
         }
     }
 
-    private static void line(final @NotNull PoseStack pose, final VertexConsumer buffer, final Vec3 from, final @NotNull Vec3 to) {
+    private static void line(final @NotNull PoseStack pose, final @NotNull VertexConsumer buffer,
+                             final @NotNull Vec3 from, final @NotNull Vec3 to, final int color) {
         PoseStack.Pose last = pose.last();
         Vec3 normal = to.subtract(from).normalize();
 
         for (Vec3 point : new Vec3[]{from, to}) {
             buffer.addVertex(last, (float) point.x, (float) point.y, (float) point.z)
-                    .setColor(BEAM_R, BEAM_G, BEAM_B, 1.0F)
-                    .setNormal(last, (float) normal.x, (float) normal.y, (float) normal.z);
+                    .setColor(color)
+                    .setNormal(last, (float) normal.x, (float) normal.y, (float) normal.z)
+                    .setLineWidth(LINE_WIDTH);
         }
     }
 }

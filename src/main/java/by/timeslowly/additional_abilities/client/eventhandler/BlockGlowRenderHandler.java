@@ -8,9 +8,11 @@ import by.timeslowly.additional_abilities.common.config.AAClientConfig;
 import by.timeslowly.additional_abilities.client.state.ClientBlockGlowState.GlowEntry;
 import by.timeslowly.additional_abilities.client.renderer.GlowOutlineRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -41,17 +43,30 @@ import java.util.List;
  *     </tr>
  *     <tr>
  *         <td>{@code simple_shader}</td>
- *         <td>逐帧 {@code getBlockModel} + 7 次 {@code getQuads} + 顶点重写</td>
+ *         <td>逐帧 {@code getBlockStateModel} + {@code collectParts} + 顶点重写</td>
  *         <td>服务端源头剔除（遮挡 / 非完整形状）+ 距离 + 视锥 + 数量上限</td>
  *     </tr>
  * </table>
  * 线框之所以不做遮挡剔除：它的 CPU 代价与是否可见无关且极小，而开启深度测试后 GPU 会免费把它挡住；
  * 着色器通道则相反 —— CPU 代价固定产生，因此必须在服务端就把不值得画的方块拦下来。
- * <p>
- * <b>stage 分派是显式的</b>：{@code simple_shader} 走核心着色器，装了 Iris 时只能在 {@code AFTER_LEVEL}
- * 绘制（Iris 几乎不支持核心着色器），没装时在 {@code AFTER_CUTOUT_BLOCKS}（该阶段能透过水面看到）。
- * 两个阶段可能落在<b>同一次事件</b>上，因此本类只用一个订阅方法、方法内按 stage 显式分流，
- * 不依赖「同 stage 内多个订阅方法的调用顺序」。
+ *
+ * <h2>26.1.2 的重写要点</h2>
+ * <ol>
+ *     <li><b>阶段枚举没了</b>：{@code RenderLevelStageEvent.Stage} 删除，改为独立子事件。
+ *         旧代码在 {@code AFTER_CUTOUT_BLOCKS}（无 Iris）/ {@code AFTER_LEVEL}（有 Iris）二选一，
+ *         新代码对应 {@link RenderLevelStageEvent.AfterTranslucentParticles}
+ *         （与 DS 的 {@code BlockVisionHandler} 同一个落点：透明层与粒子都画完之后，
+ *         此时画装饰性着色最不容易被后续几何覆盖）与 {@link RenderLevelStageEvent.AfterLevel}。</li>
+ *     <li><b>自管 GL 的写法行不通了</b>：{@code GlStateBackup} 从 NeoForge 删除，
+ *         {@code RenderSystem#setShader} / {@code enableDepthTest} / {@code depthMask} 等
+ *         一整套立即模式接口也随管线化一并消失。26.1.2 的画法是
+ *         {@code bufferSource.getBuffer(renderType)} + {@code endBatch(renderType)}
+ *         —— DS 自己的 {@code BlockVisionHandler} 正是这么写的，
+ *         因此这里也照搬，不再自己备份/恢复 GL 状态（状态由 {@code RenderPipeline} 描述）。</li>
+ *     <li>{@code DS} 的 {@code BlockVisionShaderSimple} 也从
+ *         {@code beginBatch/render/endBatch} 改成了 {@code renderType()} +
+ *         {@code render(Data, PoseStack, VertexConsumer, int)}。</li>
+ * </ol>
  */
 @EventBusSubscriber(modid = AdditionalAbilities.MOD_ID, value = Dist.CLIENT)
 public class BlockGlowRenderHandler {
@@ -63,39 +78,52 @@ public class BlockGlowRenderHandler {
     /** 单帧参与核心着色器渲染的方块数上限，超限按距离由近到远截断（确定性兜底） */
     private static final int MAX_SHADER_BLOCKS = 256;
 
-    /** 本帧待走着色器的方块。跨 stage 传递（Iris 场景下收集与绘制不在同一个 stage） */
+    /** 本帧待走着色器的方块。跨阶段传递（Iris 场景下收集与绘制不在同一个阶段） */
     private static final List<GlowEntry> SHADER_QUEUE = new ArrayList<>();
 
+    /** 本帧已收集（前一阶段完成）：Iris 场景下着色通道要等 AfterLevel 才能画 */
+    private static boolean collecting = false;
+
     @SubscribeEvent
-    public static void onRenderLevelStage(final @NotNull RenderLevelStageEvent event) {
+    public static void onRenderLevelStage(final @NotNull RenderLevelStageEvent.AfterTranslucentParticles event) {
         // 阴影 pass 里不该出现发光（与 DS 的 BlockVisionHandler 同处理）
         if (Compat.isRenderingShadows()) {
             return;
         }
 
-        RenderLevelStageEvent.Stage stage = event.getStage();
-        boolean corePass = stage == RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS;
-        boolean shaderPass = Compat.isShaderActive()
-                ? stage == RenderLevelStageEvent.Stage.AFTER_LEVEL
-                : corePass;
+        renderCorePass(event);
+        collecting = true;
 
-        if (!corePass && !shaderPass) {
-            return;
-        }
-
-        if (corePass) {
-            renderCorePass(event);
-        }
-
-        if (shaderPass) {
+        // 没装 Iris 时就在同一阶段把着色通道画完，避免多留一个跨事件的隐式依赖
+        if (!Compat.isShaderActive()) {
             renderShaderPass(event);
             SHADER_QUEUE.clear();
+            collecting = false;
         }
     }
 
-    /** 收集可见条目 → 就地画线框 → 把走着色器的条目排进队列 */
+    /**
+     * 装了 Iris 时，着色通道推迟到 {@code AfterLevel} —— 那里所有几何都提交完了，
+     * 重新染色不会被打断，也不会污染主 pass 的排序。
+     */
+    @SubscribeEvent
+    public static void onRenderLevelStageLate(final @NotNull RenderLevelStageEvent.AfterLevel event) {
+        if (!collecting || !Compat.isShaderActive()) {
+            return;
+        }
+
+        if (Compat.isRenderingShadows()) {
+            return;
+        }
+
+        renderShaderPass(event);
+        SHADER_QUEUE.clear();
+        collecting = false;
+    }
+
+    /** 收集可见条目 → 画线框 → 把走着色器的条目排进队列 */
     private static void renderCorePass(final @NotNull RenderLevelStageEvent event) {
-        // 每帧重建：装了 Iris 时本次只收集、不发队列，避免异常情况下队列跨帧累积
+        // 每帧重建：避免异常情况下队列跨帧累积
         SHADER_QUEUE.clear();
 
         Minecraft minecraft = Minecraft.getInstance();
@@ -111,47 +139,42 @@ public class BlockGlowRenderHandler {
             return;
         }
 
-        Frustum frustum = event.getFrustum();
-        Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
+        Vec3 camera = event.getLevelRenderState().cameraRenderState.pos;
+        // 26.1.2：RenderLevelStageEvent 不再直接给 Frustum，改从相机渲染状态取
+        Frustum frustum = event.getLevelRenderState().cameraRenderState.cullFrustum;
 
         PoseStack pose = event.getPoseStack();
         pose.pushPose();
-        pose.mulPose(event.getModelViewMatrix());
-        pose.translate(-camera.x(), -camera.y(), -camera.z());
+        // 只做世界坐标 → 相机相对（与 DS 的 BlockVisionHandler / ClientDragonRenderer 完全一致）。
+        // 这里刻意<b>不</b>再 mulPose(getModelViewMatrix())：26.1.2 的事件给的就是已含视图变换的栈，
+        // 再乘一次会把几何整体推离相机。
+        pose.translate(-camera.x, -camera.y, -camera.z);
 
-        GlowOutlineRenderer.beginBatch();
+        MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
+        VertexConsumer buffer = bufferSource.getBuffer(GlowOutlineRenderer.renderType());
 
-        // 收批必须走 finally：一旦某一条目在渲染中抛异常，不恢复 GL 状态与 pose 栈会让后续所有
-        // GUI / 世界绘制带着"线框管线状态 + 错位矩阵"继续跑（画面崩坏且极难定位）。
-        // 代价只是常规路径上多一层 try 块，无分配。
-        try {
-            for (GlowEntry entry : entries) {
-                if (!isVisible(entry, frustum, camera)) {
-                    continue;
-                }
-
-                if (entry.displayType().isShader()) {
-                    SHADER_QUEUE.add(entry);
-                    continue;
-                }
-
-                pose.pushPose();
-
-                try {
-                    pose.translate(entry.position().getX(), entry.position().getY(), entry.position().getZ());
-                    GlowOutlineRenderer.render(pose, entry.colorARGB());
-                } finally {
-                    pose.popPose();
-                }
+        for (GlowEntry entry : entries) {
+            if (!isVisible(entry, frustum, camera)) {
+                continue;
             }
-        } finally {
-            // 两层 finally：endBatch 自身也可能抛（GL 调用），此时 pose 栈仍必须弹回
+
+            if (entry.displayType().isShader()) {
+                SHADER_QUEUE.add(entry);
+                continue;
+            }
+
+            pose.pushPose();
+
             try {
-                GlowOutlineRenderer.endBatch();
+                pose.translate(entry.position().getX(), entry.position().getY(), entry.position().getZ());
+                GlowOutlineRenderer.render(pose, buffer, entry.colorARGB());
             } finally {
                 pose.popPose();
             }
         }
+
+        bufferSource.endBatch(GlowOutlineRenderer.renderType());
+        pose.popPose();
 
         trimShaderQueue(camera);
     }
@@ -187,13 +210,14 @@ public class BlockGlowRenderHandler {
         SHADER_QUEUE.subList(MAX_SHADER_BLOCKS, SHADER_QUEUE.size()).clear();
     }
 
-    /** 走 DS 的核心着色器通道：整块方块的模型按颜色重新染色 */
+    /** 走 DS 的着色器通道：整块方块的模型按颜色重新染色 */
     private static void renderShaderPass(final @NotNull RenderLevelStageEvent event) {
         if (SHADER_QUEUE.isEmpty()) {
             return;
         }
 
-        ClientLevel level = Minecraft.getInstance().level;
+        Minecraft minecraft = Minecraft.getInstance();
+        ClientLevel level = minecraft.level;
 
         if (level == null) {
             return;
@@ -202,11 +226,11 @@ public class BlockGlowRenderHandler {
         PoseStack pose = event.getPoseStack();
         pose.pushPose();
 
-        Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        pose.mulPose(event.getModelViewMatrix());
-        pose.translate(-camera.x(), -camera.y(), -camera.z());
+        Vec3 camera = event.getLevelRenderState().cameraRenderState.pos;
+        pose.translate(-camera.x, -camera.y, -camera.z);
 
-        BlockVisionShaderSimple.beginBatch();
+        MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
+        VertexConsumer buffer = bufferSource.getBuffer(BlockVisionShaderSimple.renderType());
 
         for (GlowEntry entry : SHADER_QUEUE) {
             BlockPos position = entry.position();
@@ -218,13 +242,11 @@ public class BlockGlowRenderHandler {
                 continue;
             }
 
-            pose.pushPose();
-            pose.translate(position.getX(), position.getY(), position.getZ());
-            BlockVisionShaderSimple.render(entry.shaderData(state), pose, entry.colorARGB());
-            pose.popPose();
+            // DS 26.1.2 的 render(...) 自己会 push/translate/pop，调用方不需要再套一层 pose
+            BlockVisionShaderSimple.render(entry.shaderData(state), pose, buffer, entry.colorARGB());
         }
 
-        BlockVisionShaderSimple.endBatch();
+        bufferSource.endBatch(BlockVisionShaderSimple.renderType());
         pose.popPose();
     }
 
@@ -238,5 +260,7 @@ public class BlockGlowRenderHandler {
     @SubscribeEvent
     public static void onLoggingOut(final @NotNull ClientPlayerNetworkEvent.LoggingOut event) {
         ClientBlockGlowState.clear();
+        SHADER_QUEUE.clear();
+        collecting = false;
     }
 }

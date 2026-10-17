@@ -3,7 +3,7 @@ package by.timeslowly.additional_abilities.common.ability.actions;
 import by.dragonsurvivalteam.dragonsurvival.registry.dragon.ability.DragonAbility;
 import by.timeslowly.additional_abilities.common.ability.actions.ActionScope.ActionKey;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +46,7 @@ class ActionScopeTest {
 
     private static ResourceKey<DragonAbility> abilityKey(final String path) {
         return ResourceKey.create(DragonAbility.REGISTRY,
-                ResourceLocation.fromNamespaceAndPath("additional_abilities_test", path));
+                Identifier.fromNamespaceAndPath("additional_abilities_test", path));
     }
 
     // ================================================================ 作用域的基本语义

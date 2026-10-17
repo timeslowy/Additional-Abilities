@@ -5,7 +5,7 @@ import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AnnulusTarget;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.AntiDragonBreathTarget;
 import by.timeslowly.additional_abilities.registry.dragon.ability.targeting.DomainTarget;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.jetbrains.annotations.NotNull;
@@ -37,13 +37,13 @@ public class AAAbilityTargets {
         // 反向龙息锥形：additional_abilities:anti_dragon_breath
         // 字段与 dragonsurvival:dragon_breath 相同（applied_effects + range_multiplier），仅箱体方向相反
         event.register(AbilityTargeting.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "anti_dragon_breath"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "anti_dragon_breath"),
                 () -> AntiDragonBreathTarget.CODEC);
 
         // 环形（内圈挖空的圆盘）：additional_abilities:annulus
         // 字段为 applied_effects + inner_radius / width / height / height_starts_below
         event.register(AbilityTargeting.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "annulus"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "annulus"),
                 () -> AnnulusTarget.CODEC);
 
         // 领域（施法处留下持续一段时间的区域，按 apply_interval 反复结算）：
@@ -51,7 +51,7 @@ public class AAAbilityTargets {
         // 字段为 applied_effects + radius / duration / shape / height / height_starts_below /
         // apply_interval / anchor / max_domains / remove_effects_on_end
         event.register(AbilityTargeting.REGISTRY_KEY,
-                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "domain"),
+                Identifier.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "domain"),
                 () -> DomainTarget.CODEC);
     }
 }
