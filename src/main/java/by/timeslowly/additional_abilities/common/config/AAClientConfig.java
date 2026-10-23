@@ -103,7 +103,7 @@ public final class AAClientConfig {
     private static final double LEVEL_UP_PITCH_PER_LEVEL_DEFAULT = 0.12;
 
     /**
-     * 超限窗口临界警示的默认阈值：<b>剩余比例</b> ≤ 0.3（即只剩下一半）时转红。
+     * 超限窗口临界警示的默认阈值：<b>剩余比例</b> ≤ 0.3（即只剩三成）时剩余亮条与滑标一起转红。
      * <p>
      * 用比例而不是绝对刻数，是为了自动适配各技能各自不同的窗口长度
      * （窗口 20 刻与 200 刻的技能可以用同一个配置）。
@@ -178,14 +178,15 @@ public final class AAClientConfig {
 
         OVERCHARGE_WARNING_RATIO = builder
                 .comment(
-                        "超限窗口的临界限（剩余比例）：剩余量占窗口总长的比例不超过它时，读数区的超限行转红。",
-                        "范围 0.0 ~ 1.0；0.5 = 只剩下一半时转红，0.0 = 不转红（超限行始终用常态色）。",
+                        "超限窗口的临界限（剩余比例）：剩余量占比不超过它时，档位条上剩余的亮条与滑标一起转红。",
+                        "范围 0.0 ~ 1.0；0.3 = 只剩下三成时转红，0.0 = 不转红（亮条保持金色、滑标保持白色）。",
                         "用比例而非绝对刻数，可自动适配各技能不同的窗口时长。该项只改颜色，不发声。",
-                        "Warning threshold for the overcharge window (as a fraction of the window): the overcharge row",
-                        "of the readout turns red once the remaining fraction is at or below it.",
-                        "Range 0.0 - 1.0; 0.5 turns red at the halfway point, 0.0 disables the warning colour.",
+                        "Warning threshold for the overcharge window (as a fraction of the window): the remaining",
+                        "segment of the tier bar and the overcharge slider turn red together once the remaining",
+                        "fraction is at or below it.",
+                        "Range 0.0 - 1.0; 0.3 turns red with 30% of the window left, 0.0 keeps them gold / white.",
                         "A fraction rather than a tick count, so one setting fits every window length.",
-                        "Colour only — this option plays no sound.")
+                        "Colour only - this option plays no sound.")
                 .translation(LANG_PREFIX + "overcharge_warning_ratio")
                 .defineInRange("overcharge_warning_ratio", OVERCHARGE_WARNING_DEFAULT,
                         OVERCHARGE_WARNING_MIN, OVERCHARGE_WARNING_MAX);
@@ -322,11 +323,12 @@ public final class AAClientConfig {
     }
 
     /**
-     * 超限窗口的临界警示阈值（<b>剩余比例</b>）：读数区的超限行在剩余量占比 ≤ 该值时转红。
+     * 超限窗口的临界警示阈值（<b>剩余比例</b>）：剩余量占比 ≤ 该值时，
+     * 档位条上剩余的亮条与超限滑标<b>一起</b>转红。
      * <p>
      * 取值 {@code [0.0, 1.0]}，{@link #OVERCHARGE_WARNING_MIN}（= {@code 0}）表示不转红
-     * （超限行始终用常态色）。配置尚未加载时返回 {@link #OVERCHARGE_WARNING_DEFAULT}
-     * （剩下一半时转红）—— 与"配置没读出来也不该静默改变观感"的既有约定一致。
+     * （亮条保持金色、滑标保持白色）。配置尚未加载时返回 {@link #OVERCHARGE_WARNING_DEFAULT}
+     * （只剩三成时转红）—— 与"配置没读出来也不该静默改变观感"的既有约定一致。
      * <p>
      * 为什么用比例而不是绝对刻数：超限窗口的长度由各技能自己的 {@code max_overcharged_duration} 决定，
      * 彼此可能相差一个数量级；比例让同一个配置对所有技能都成立，也不必再为"刻数上限该给多少"做取舍。

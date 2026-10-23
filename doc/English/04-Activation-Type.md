@@ -272,8 +272,8 @@ A **tier number** is drawn to the right of the cast bar (**its position is confi
 A cue plays each time a tier is crossed, rising in pitch with the tier (**both the sound and the pitch curve are configurable — see "Tier sounds" below**).
 **The number shown is exactly the tier that will be used on release.**
 
-Under `optional_charged` the readout changes shape with the selection (the progress bar and its percentage
-below keep their meaning):
+Under `optional_charged` the readout changes shape with the selection (only the tier text on the first row
+differs; the bar below is unaffected by the pick):
 
 | State | Shown | Colour |
 |---|---|---|
@@ -284,29 +284,44 @@ below keep their meaning):
 Each wheel step that actually changes the tier plays a click (pitch rises with the tier; picking `0` uses a
 lower pitch so it stands out). Both cues share one toggle and one volume — see "Tier sounds" below.
 
-#### Remaining overcharge window
-
-When an ability sets `max_overcharged_duration`, the readout gains an **overcharge row** below the usual two:
-a `remaining/total window` string (e.g. `18/20`) with a thin bar underneath that **drains** as the window runs out.
+#### The overcharge window: a slider on the tier bar
 
 ![超限蓄力overcharged](../图片Pictures/超限蓄力overcharged.png)
 
+When an ability sets `max_overcharged_duration`, reaching `cast_time` enters the **overcharge window**.
+The readout does **not** grow another block — the second row (the tier bar) **switches meaning**:
+
+- **bar length = the fraction of the window left** (the lit part on the left is the time you still have);
+- a **vertical slider** sits on the boundary between the lit part and the faded part, travelling **right to left**
+  as the window drains;
+- the stretch to the **right** of the slider (already spent) keeps a 35%-opacity ghost in the same colour, so you can
+  still tell how far it has come;
+- the percentage on the first row switches to the same remaining fraction, so the number and the bar always agree.
+
+Entering the window always means the tier is already at the player's maximum (every tier threshold is satisfied by
+then), so the bar starts full and the slider starts at the right edge — no initial jump.
+
 | Colour | Meaning |
 |---|---|
-| White | Inside the overcharge window, plenty of time left |
-| Red | Remaining **fraction** ≤ `overcharge_warning_ratio` (default `0.3`, i.e. 30 percentage ) — the automatic release is close |
+| Gold | The remaining segment; plenty of the window left |
+| White | The slider; plenty of the window left |
+| Red | Remaining **fraction** ≤ `overcharge_warning_ratio` (default `0.3`, i.e. 30% left): the segment **and** the slider turn red together — the automatic release is close |
+| Faded gold | The stretch already spent (same colour at ~35% opacity); it **keeps its original colour** instead of turning red — a fully red bar would hide how far the slider has travelled |
 
 | Option | Default | Notes |
 |---|---|---|
-| `charged_indicator.overcharge_warning_ratio` | `0.3` | The overcharge row turns red once the remaining fraction of the window is at or below this value (`0.0` - `1.0`; `0` disables it). A fraction rather than a tick count, so it adapts to each ability's window length |
+| `charged_indicator.overcharge_warning_ratio` | `0.3` | The segment and the slider turn red once the remaining fraction of the window is at or below this value (`0.0` - `1.0`; `0` disables it — the bar stays gold and the slider stays white). A fraction rather than a tick count, so it adapts to each ability's window length |
 
-- **Before the window starts this block is blank**: the readout's height is decided by "does this ability have an
-  overcharge window", so it stays constant for the whole cast instead of jumping — the price is the reserved
-  blank space before the window begins.
-- Content is drawn **only once inside the window** (charge has reached `cast_time`); before that the "remaining"
-  value would exceed the window's total length (e.g. `30/20`), which would be meaningless.
-- **Abilities without `max_overcharged_duration` (including every default-mode ability) keep the two-row readout**,
-  exactly as before.
+- **The readout is always two rows**, for every ability: the overcharge state lives inside the tier bar, so nothing
+  has to be reserved before the window opens. The price is that abilities with a window sit about 8 pixels lower than
+  in the old three-block layout (with the default right-side anchor) — use `offset_y` from "Indicator position" below
+  to move it back.
+- The bar switches to the "remaining" meaning **only once inside the window** (charge has reached `cast_time`);
+  before that it still shows progress within the current tier.
+- **Abilities without `max_overcharged_duration` (including every default-mode ability) look exactly as before**:
+  the bar shows tier progress and no slider appears.
+- The `remaining/total window` tick readout is gone — the separate overcharge bar of the previous version has been
+  removed altogether and its numeric readout dropped by design.
 - This option **only changes colour — it plays no sound**: the window ends in an automatic release and the visual
   countdown already covers it; adding audio would fight Dragon Survival's own charging sound and this mod's tier cue.
 

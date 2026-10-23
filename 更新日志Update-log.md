@@ -22,3 +22,13 @@
 5. New ability for Forest Dragon: 'Photorepair'(`forest_dragon:photorepair`) - a passive repair working outdoors by day;
 6. New original ability for Wing Kirin: 'Fire Ring'(`wing_kirin:fire_ring`) - a static, life-saving art that plants a ring of fire; it is always on and needs no datapack to be enabled;
 7. **Minimum required Dragon Survival version raised to `2.0.71`** (was `2.0.68`) - this mod attaches to several Dragon Survival internals and older builds are rejected at load time;
+
+### 2.1.0
+
+#### 中文
+
+1. 更新了超限蓄力的表现形式。
+
+#### English
+
+1. Updated overcharged's visual effect.
