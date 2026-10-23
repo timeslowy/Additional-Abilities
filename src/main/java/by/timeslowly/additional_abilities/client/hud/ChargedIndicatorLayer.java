@@ -20,7 +20,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * 蓄力档位数字提示（仅客户端加载），同时服务 {@code additional_abilities:charged} 与
+ * 蓄力档位的读数区（仅客户端加载），同时服务 {@code additional_abilities:charged} 与
  * {@code additional_abilities:optional_charged}。
  *
  * <h2>挂载方式</h2>
@@ -65,26 +65,36 @@ import org.jetbrains.annotations.NotNull;
  * 默认的"右侧"复现旧版硬编码的坐标，因此完全不配置时观感与升级前一致；
  * 想再微调就用偏移量（GUI 缩放后的像素，向右 / 向下为正）。改完立即生效，无需重启。
  *
- * <h2>读数区：两行 + 超限窗口第三块</h2>
+ * <h2>读数区：恒定两行</h2>
  * <ul>
  *     <li><b>第一行</b>：档位文本左对齐 + 百分比右对齐，两端顶在固定宽度的读数区上，
  *         因此档位位数变化时数字与进度条都<b>不会横向跳动</b>；</li>
- *     <li><b>第二行</b>：当前档位区间内的细进度条（{@link #WIDGET_WIDTH} × {@link #BAR_HEIGHT}）；</li>
- *     <li><b>第三块</b>（仅配了 {@code max_overcharged_duration} 的技能才有）：超限窗口的剩余量，
- *         形态与前两行一致 —— 一行 {@code 剩余/总窗口} 文字 + 一根按剩余比例填充的细条。</li>
+ *     <li><b>第二行</b>：当前档位区间内的细进度条（{@link #WIDGET_WIDTH} × {@link #BAR_HEIGHT}）。</li>
  * </ul>
- * 整个读数区（含第三块）在蓄力条高度内垂直居中。
+ * 整个读数区在蓄力条高度内垂直居中。高度<b>恒定</b>：配了 {@code max_overcharged_duration} 的技能
+ * 也不再额外占一块 —— 超限信息已经并入第二行（见下）。
  *
- * <h2>第三块的三个关键决定</h2>
- * <ol>
- *     <li><b>是否预留这一块，按"该技能有没有超限窗口"决定，而不是按"当前是否在窗口里"</b>：
- *         后者会让读数区在每次施法刚进入窗口的那一刻上下跳一行。前者在一次施法内高度恒定
- *         —— 配了窗口的技能恒为 {@code 2 × (fontHeight + ROW_GAP) + 2 × BAR_HEIGHT}，未配的技能维持两行。</li>
- *     <li><b>只在已进入窗口时绘制内容</b>（{@code currentTick ≥ cast_time}）：未进入时
- *         {@code 按住上限 − 已蓄刻数} 会大于窗口总长（例如 {@code 30/20}），那不是"剩余窗口"，画出来会误导。</li>
- *     <li><b>纯数字、不带文字标签</b>：沿用本 HUD"不做本地化文案、宽度不随语言变"的既有原则
- *         —— 与"档位 0 只用数字表达取消（语义由红色承载）"同一思路。</li>
- * </ol>
+ * <h2>超限：滑标取代独立的超限提示条</h2>
+ * 允许超限蓄力的技能（{@code can_charge_exceed_cast_time: true}）且配了窗口
+ * （{@code max_overcharged_duration}）时，按满 {@code cast_time} 就进入<b>超限窗口</b>；
+ * 此刻第二行整体切换语义 ——
+ * <b>亮条长度 = 窗口剩余比例</b>，交界处画一道竖直滑标，滑标随窗口消耗自右向左移动，
+ * 它<b>右侧</b>（已经走过的那段）保留同色 {@link #FADED_ALPHA} 不透明度的残影。
+ * 于是"还剩多少"由左侧亮条长度与滑标位置同时表达，不再额外占一块读数区。
+ * <ul>
+ *     <li><b>起点即满格</b>：进入窗口那一刻档位必然已达自身最高档
+ *         （{@link ChargeableActivation#chargeCapTicks(int)} 在允许超限时等于 {@code cast_time}，
+ *         所有档位阈值因此都已满足），亮条正好是满的、滑标从最右端起步，
+ *         不会出现"先跳一下再开始走"；</li>
+ *     <li><b>颜色</b>：常态下剩余亮条为满档金、滑标为纯白；剩余比例 ≤
+ *         {@link AAClientConfig#overchargeWarningRatio()}（且该项 &gt; {@code 0}）时<b>两者一起转红</b>，
+ *         而已经走过的那段残影<b>保持原色</b> —— 整条同红会让"已经走了多远"失去参照；</li>
+ *     <li><b>读数</b>：第一行右侧的百分比同步改为剩余比例，与条长一一对应。
+ *         刻意<b>不再</b>显示 {@code 剩余/总窗口} 的刻数 —— 那是上一版独立超限条的内容，已按需求舍弃；</li>
+ *     <li><b>无限按住</b>：只开了 {@code can_charge_exceed_cast_time} 却没配窗口时没有"倒计时"可言，
+ *         滑标不出现，条保持满格金色。</li>
+ * </ul>
+ * 条长与滑标位置都用 {@code partialTick} 连续插值，因此逐帧平滑推进，而不是按整刻跳格。
  *
  * <h2>第一行的两种形态</h2>
  * <ul>
@@ -102,7 +112,8 @@ import org.jetbrains.annotations.NotNull;
  * <b>从"本档刚达成"到"下一档达成"之间的填充比例</b>，也就是"还差多久能升下一档 / 还能在低档停留多久"。
  * 区间长度逐档不同（取决于 {@code charged_duration_per_level}），所以按当次区间的实际长度归一化；
  * 未达标位 1 时区间取 {@code [0, 最低蓄力时长]}，正好回答"还差多久才可用"。
- * 已达自身最高档时没有"下一档"，条显示满格并整体转为金色，语义为"已无可蓄"。
+ * 已达自身最高档时没有"下一档"，条显示满格并整体转为金色，语义为"已无可蓄"；
+ * 进入超限窗口后这根条改由"剩余窗口"驱动（见上），金色保持不变。
  *
  * <h2>提示音（不在本类）</h2>
  * 档位提升音由 {@code client.eventhandler.ChargedLevelSoundHandler} 播（每跨升一级一声、音高随档位递增），
@@ -136,17 +147,37 @@ public final class ChargedIndicatorLayer {
     /** 第一行文字与第二行进度条之间的间距。 */
     private static final int ROW_GAP = 2;
 
+    /**
+     * 超限滑标的宽度。比条体略粗一档才看得出是"一道标"而不是抗锯齿的边缘；
+     * 同时保证它在 2 倍 GUI 缩放下仍占满一个整数像素。
+     */
+    private static final int SLIDER_WIDTH = 2;
+    /** 滑标相对条体上下各溢出的高度：条只有 3px，不溢出就几乎看不见。 */
+    private static final int SLIDER_OVERHANG = 2;
+    /** 滑标总高度（含上下溢出）。 */
+    private static final int SLIDER_HEIGHT = BAR_HEIGHT + SLIDER_OVERHANG * 2;
+
+    /**
+     * 超限期间"已消耗段"的不透明度：约 35%。
+     * <p>
+     * 保留同色是要留下"走过的轨迹"，让滑标位置与初始满格之间可比；
+     * 若直接回到空槽色，超限刚开始时整条会像是突然掉了一半。
+     */
+    private static final int FADED_ALPHA = 0x59;
+
     /** 进度条底槽：半透明黑，保证在任意亮度的游戏画面上都能看见。 */
     private static final int COLOR_BAR_TRACK = 0x80000000;
 
     private static final int COLOR_BELOW_MINIMUM = 0xFF9E9E9E;
     private static final int COLOR_CHARGING = 0xFFFFFFFF;
     private static final int COLOR_MAXIMUM = 0xFFFFD700;
+    /** 超限滑标的常态色：纯白，叠在金色亮条上对比明确。 */
+    private static final int COLOR_SLIDER = 0xFFFFFFFF;
     /** 手动选定档位的颜色：青蓝，与"已达档位"的灰、自动跟随的白都不同。 */
     private static final int COLOR_SELECTED = 0xFF4FC3F7;
     /** 手动选档时"已达档位"的颜色：灰，作为参照而不是主体。 */
     private static final int COLOR_ACHIEVED_DIM = 0xFF9E9E9E;
-    /** 选定为"取消"（档位 0）时的颜色。 */
+    /** 选定为"取消"（档位 0）时的颜色；超限滑标越过临界限后也用它。 */
     private static final int COLOR_CANCEL = 0xFFFF5252;
 
     /**
@@ -207,12 +238,9 @@ public final class ChargedIndicatorLayer {
         Minecraft instance = Minecraft.getInstance();
         int fontHeight = instance.font.lineHeight;
 
-        // 第三块只在"该技能配了超限窗口"时预留（判据是技能配置，而不是"当前是否在窗口里"）——
-        // 这样同一次施法内读数区高度恒定，不会在刚进入窗口那一刻上下跳，见类注释
-        boolean hasOverchargeRow = chargeable.canChargeExceedCastTime()
-                && chargeable.getOverchargeTicks(playerLevel) > 0;
-        int blockHeight = fontHeight + ROW_GAP + BAR_HEIGHT
-                + (hasOverchargeRow ? ROW_GAP + fontHeight + ROW_GAP + BAR_HEIGHT : 0);
+        // 读数区恒为两行（第一行文字 + 一行进度条）：超限信息已并入进度条，
+        // 因此不再按"该技能有没有超限窗口"预留额外一块，所有技能的高度都取同一个值
+        int blockHeight = fontHeight + ROW_GAP + BAR_HEIGHT;
 
         // 位置完全交给客户端配置：方位基准位 + 偏移（默认方位即旧版硬编码坐标）
         int[] origin = resolveOrigin(graphics, blockHeight);
@@ -226,75 +254,110 @@ public final class ChargedIndicatorLayer {
         float partialTick = tracker.getGameTimeDeltaPartialTick(false);
         float progress = progressOf(casting, chargeable, level, partialTick);
 
-        // 第二行：底槽 + 填充
+        // 超限窗口：只有"允许超限蓄力 + 配了窗口长度"的技能才有倒计时可言，
+        // 且只有越过 cast_time 之后才成立（之前 progress 才是这根条的正确含义）
+        int overchargeTicks = chargeable.canChargeExceedCastTime() ? chargeable.getOverchargeTicks(playerLevel) : 0;
+        boolean overcharged = overchargeTicks > 0 && casting.getCurrentTick() >= chargeable.getCastTime(playerLevel);
+
+        // 超限期间这根条改由"窗口剩余比例"驱动，百分比读数也同步取同一个值
+        float shown = overcharged
+                ? remainingOverchargeRatio(chargeable, casting, playerLevel, overchargeTicks, partialTick)
+                : progress;
+
+        // 第二行：底槽 + 填充（超限期间另加"已消耗残影"与滑标）
         graphics.fill(widgetLeft, barTop, widgetLeft + WIDGET_WIDTH, barTop + BAR_HEIGHT, COLOR_BAR_TRACK);
 
-        int filled = Math.round(WIDGET_WIDTH * progress);
+        int filled = Math.round(WIDGET_WIDTH * shown);
 
-        if (filled > 0) {
+        if (overcharged) {
+            // 越过临界限后剩余亮条与滑标一起转红；已经走过的那段残影保持原色 ——
+            // 否则整条一起变红，"已经走了多远"也就没有参照物了。
+            // 两个颜色分开取：常态下亮条是满档金、滑标是纯白，不能共用一个变量
+            boolean warning = isOverchargeWarning(shown);
+            int overchargeColor = warning ? COLOR_CANCEL : color;
+            int sliderColor = warning ? COLOR_CANCEL : COLOR_SLIDER;
+
+            // 先画右侧"已经走过"的残影，再画左侧剩余亮条：滑标就落在两者的交界上
+            if (filled < WIDGET_WIDTH) {
+                graphics.fill(widgetLeft + filled, barTop, widgetLeft + WIDGET_WIDTH, barTop + BAR_HEIGHT,
+                        faded(color));
+            }
+
+            if (filled > 0) {
+                graphics.fill(widgetLeft, barTop, widgetLeft + filled, barTop + BAR_HEIGHT, overchargeColor);
+            }
+
+            drawSlider(graphics, widgetLeft, filled, barTop, sliderColor);
+        } else if (filled > 0) {
             graphics.fill(widgetLeft, barTop, widgetLeft + filled, barTop + BAR_HEIGHT, color);
         }
 
         // 第一行：档位左对齐、百分比右对齐，都顶在固定宽度的读数区两端
         int textRight = drawLevelText(graphics, instance, widgetLeft, blockTop, level, selected, manual, color);
 
-        String percentage = Math.round(progress * 100.0F) + "%";
+        String percentage = Math.round(shown * 100.0F) + "%";
         int percentageLeft = Math.max(textRight, widgetLeft + WIDGET_WIDTH - instance.font.width(percentage));
         graphics.drawString(instance.font, percentage, percentageLeft, blockTop, color, true);
-
-        // 第三块：超限窗口剩余量（只有"配了窗口"的技能才预留了这块位置）
-        if (hasOverchargeRow) {
-            drawOverchargeRow(graphics, instance, chargeable, casting, playerLevel,
-                    widgetLeft, blockTop + fontHeight + ROW_GAP + BAR_HEIGHT + ROW_GAP, partialTick);
-        }
     }
 
     /**
-     * 画超限窗口那一块：{@code 剩余/总窗口} 文字 + 下方一根按剩余比例填充的细条。
+     * 超限窗口的<b>剩余比例</b>：{@code 1.0} = 窗口刚打开，{@code 0.0} = 到点。
      * <p>
-     * 条是<b>递减</b>的（剩余越少越短），与"还剩多久"的语义一致；
-     * 剩余<b>比例</b> ≤ {@link AAClientConfig#overchargeWarningRatio()} 时文字与条一起转红。
+     * 与上一版独立超限条用的是同一套换算 —— 剩余刻数取 {@link ChargeableActivation#getHoldLimitTicks(int)}
+     * 减去"已蓄刻数 + partialTick"，再按窗口长度归一化。因此进入窗口第一帧就是满格，
+     * 滑标不会先跳一下再开始移动。
      * <p>
-     * 只在<b>已进入窗口</b>时绘制：进入之前 {@code 按住上限 − 已蓄刻数} 大于窗口总长
-     * （例如 {@code 30/20}），那不是"剩余窗口"，画出来会误导。窗口到点自动释放后本方法自然不再被调用
-     * （{@code MagicData#isCasting()} 已为 false，{@link #render} 在入口就返回了）。
-     * <p>
-     * 剩余量用 {@code partialTick} 插值驱动条、数字向上取整 —— 于是进入窗口那一刻显示的正是完整窗口长度。
+     * 调用前提：已进入超限窗口（调用方已判过 {@code currentTick ≥ cast_time} 且窗口刻数 &gt; 0）。
      *
-     * @param blockTop 第三块<b>文字</b>的顶边（屏幕坐标，由 {@link #resolveOrigin} 定好整块基准后算出）
+     * @param windowTicks 窗口总长，必须为正（调用方保证）
      */
-    private static void drawOverchargeRow(final @NotNull GuiGraphics graphics, final @NotNull Minecraft instance,
-                                          final @NotNull ChargeableActivation chargeable,
-                                          final @NotNull DragonAbilityInstance casting, final int playerLevel,
-                                          final int left, final int blockTop, final float partialTick) {
-        int windowTicks = chargeable.getOverchargeTicks(playerLevel);
-
-        // 未配窗口（理论不可达：调用方已判过）、或还没蓄满 cast_time → 该行留空
-        if (windowTicks <= 0 || casting.getCurrentTick() < chargeable.getCastTime(playerLevel)) {
-            return;
-        }
-
+    private static float remainingOverchargeRatio(final @NotNull ChargeableActivation chargeable,
+                                                  final @NotNull DragonAbilityInstance casting,
+                                                  final int playerLevel, final int windowTicks,
+                                                  final float partialTick) {
         float remaining = Math.max(0.0F, chargeable.getHoldLimitTicks(playerLevel)
                 - (casting.getCurrentTick() + partialTick));
-        int remainingTicks = (int) Math.ceil(remaining);
-        float ratio = Mth.clamp(remaining / windowTicks, 0.0F, 1.0F);
 
-        // 临界判定用"显示出来的那个数字"（向上取整后的剩余）折算比例，而不是未取整值 ——
-        // 这样红色与数字本身永远一致：窗口 15 刻、阈值 0.5 时，显示 8/15 不该是红的（8 > 7.5）
+        return Mth.clamp(remaining / windowTicks, 0.0F, 1.0F);
+    }
+
+    /**
+     * 画超限滑标：一道跨在"剩余亮条 / 已消耗残影"交界上的竖直细线。
+     * <p>
+     * 以交界为中轴左右各占一半，再钳进条内 —— 于是满格时贴右端、到点时贴左端，两端都不会悬在条外。
+     * 颜色由调用方给：常态纯白；越过临界限后与剩余亮条同为警示红，
+     * 此时滑标靠上下各溢出的 {@link #SLIDER_OVERHANG} 像素与右侧的残影保持可见。
+     *
+     * @param barLeft 进度条左边缘（屏幕坐标）
+     * @param filled  剩余亮条的像素宽度，即滑标的基准位置
+     * @param barTop  进度条上边缘
+     * @param color   滑标颜色（常态白 / 临界红）
+     */
+    private static void drawSlider(final @NotNull GuiGraphics graphics, final int barLeft, final int filled,
+                                   final int barTop, final int color) {
+        int sliderLeft = Mth.clamp(barLeft + filled - SLIDER_WIDTH / 2,
+                barLeft, barLeft + WIDGET_WIDTH - SLIDER_WIDTH);
+        int sliderTop = barTop - SLIDER_OVERHANG;
+
+        graphics.fill(sliderLeft, sliderTop, sliderLeft + SLIDER_WIDTH, sliderTop + SLIDER_HEIGHT, color);
+    }
+
+    /**
+     * 剩余比例是否已越过临界限。
+     * <p>
+     * 阈值取 {@link AAClientConfig#overchargeWarningRatio()}，语义是<b>剩余</b>比例，
+     * 与滑标位置一一对应（滑标越靠左、剩余越少）。该项为 {@code 0} 时视为关闭警示 ——
+     * 与配置里"0 = 永不转红"的既有语义一致。
+     */
+    private static boolean isOverchargeWarning(final float remainingRatio) {
         double warning = AAClientConfig.overchargeWarningRatio();
-        float displayedRatio = (float) remainingTicks / windowTicks;
-        int color = warning > 0.0 && displayedRatio <= warning ? COLOR_CANCEL : COLOR_CHARGING;
 
-        graphics.drawString(instance.font, remainingTicks + "/" + windowTicks, left, blockTop, color, true);
+        return warning > 0.0 && remainingRatio <= warning;
+    }
 
-        int barTop = blockTop + instance.font.lineHeight + ROW_GAP;
-        graphics.fill(left, barTop, left + WIDGET_WIDTH, barTop + BAR_HEIGHT, COLOR_BAR_TRACK);
-
-        int filled = Math.round(WIDGET_WIDTH * ratio);
-
-        if (filled > 0) {
-            graphics.fill(left, barTop, left + filled, barTop + BAR_HEIGHT, color);
-        }
+    /** 把填充色转成"已消耗残影"：色相不变，只把不透明度压到 {@link #FADED_ALPHA}。 */
+    private static int faded(final int color) {
+        return (color & 0x00FFFFFF) | (FADED_ALPHA << 24);
     }
 
     /**
@@ -309,8 +372,7 @@ public final class ChargedIndicatorLayer {
      * 偏移量在最后统一叠加，两个方向都是向右 / 向下为正 —— 因此可以先把读数区摆到合适的一侧，
      * 再用偏移精调，不必自己算"蓄力条到底在哪"。
      *
-     * @param blockHeight 读数区整块的高度（第一行文字 + 行间距 + 第二行进度条；配了超限窗口的技能
-     *                    再加上第三块的"行间距 + 文字 + 行间距 + 进度条"），
+     * @param blockHeight 读数区整块的高度（第一行文字 + 行间距 + 第二行进度条，恒定两行），
      *                    参与"垂直居中 / 贴上方"的计算
      * @return 复用的静态数组，长度为 2：{@code [left, top]}
      */
@@ -392,6 +454,7 @@ public final class ChargedIndicatorLayer {
      *     <li>手动选档 → 选定为 0 时红（取消），否则青蓝；</li>
      *     <li>自动跟随 → 已达自身最高档时金，其余为白。</li>
      * </ul>
+     * 超限窗口里档位恒为最高档，因此亮条与文字自然是金色；滑标的颜色另算（见 {@link #drawSlider}）。
      *
      * @param displayed   当前显示的档位（手动时为选定值，自动时等于已达值）
      * @param achieved    当前已达档位

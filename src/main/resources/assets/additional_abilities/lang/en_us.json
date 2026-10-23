@@ -180,7 +180,7 @@
 "additional_abilities.configuration.charged_indicator.offset_y": "Vertical offset",
 "additional_abilities.configuration.charged_indicator.offset_y.tooltip": "Pixels to shift the indicator vertically on top of the chosen placement (GUI-scaled pixels; positive is down).",
 "additional_abilities.configuration.charged_indicator.overcharge_warning_ratio": "Overcharge warning threshold (fraction)",
-"additional_abilities.configuration.charged_indicator.overcharge_warning_ratio.tooltip": "The overcharge row of the readout turns red once the remaining fraction of the window is at or below this value; 0.3 turns red at the 30%% point and 0 disables it. A fraction adapts to each ability's window length. Colour only, no sound.",
+"additional_abilities.configuration.charged_indicator.overcharge_warning_ratio.tooltip": "The remaining segment of the tier bar and the overcharge slider turn red together once the remaining fraction of the window is at or below this value; 0.3 turns red with 30%% of the window left and 0 keeps them gold / white. A fraction adapts to each ability's window length. Colour only, no sound.",
 "additional_abilities.configuration.charged_indicator.play_sound": "Play tier sounds",
 "additional_abilities.configuration.charged_indicator.play_sound.tooltip": "Plays a sound each time the charge tier goes up, plus a shorter click when picking a tier with the wheel. Turning it off silences both (Dragon Survival's own charging / release sounds are unaffected).",
 "additional_abilities.configuration.charged_indicator.sound_volume": "Tier sound volume (multiplier)",
