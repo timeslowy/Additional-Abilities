@@ -5,6 +5,7 @@ import by.timeslowly.additional_abilities.AdditionalAbilities;
 import by.timeslowly.additional_abilities.common.ability.activation.PendingBlockPlaceData;
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockGlowData;
 import by.timeslowly.additional_abilities.common.ability.block_effects.BlockQuakeData;
+import by.timeslowly.additional_abilities.common.ability.block_effects.RedstonePowerData;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.DamageReflections;
 import by.timeslowly.additional_abilities.common.ability.entity_effects.enchantment_bonus.EnchantmentBonuses;
 import by.timeslowly.additional_abilities.common.ability.targeting.domains.DomainData;
@@ -19,7 +20,7 @@ import java.util.function.Supplier;
 // 注册 NeoForge Data Attachment（附加数据）
 // 实体附件：damage_reflection（伤害反震参数载体）
 // 维度附件：domain（领域数据）、block_glow（方块发光条目）、block_quake（震动冷却与待发缓冲）、
-//   pending_block_place（待确认的方块放置）
+//   pending_block_place（待确认的方块放置）、redstone_power（虚拟红石供能贡献）
 //   —— 维度状态一律挂 Level，绝不用静态 Map 按维度 ResourceKey 分区（那会跨存档串味）
 // ⚠️ 另有一个例外：enchantment_bonuses 注册在 DS 自己的注册表里（见该字段的注释，那里说明了原因）
 public class AAAttachments {
@@ -75,6 +76,27 @@ public class AAAttachments {
     public static final Supplier<AttachmentType<BlockQuakeData>> BLOCK_QUAKE = ATTACHMENTS.register(
             "block_quake",
             () -> AttachmentType.builder(BlockQuakeData::new).build());
+
+    /**
+     * 虚拟红石供能的服务端状态：由 {@code block_effects.RedstonePoweringEffect} 登记、
+     * {@code VirtualRedstonePower} 读写、{@code RedstonePowerTickHandler} 逐维度刻清理。
+     * <p>
+     * 键是“虚拟源坐标 + 输入方向”，值是一组按“施法者 + 技能”身份独立到期的贡献
+     * （同一键上取仍存活的最高强度，逐笔退场）。
+     * <p>
+     * 与 {@link #BLOCK_GLOW} / {@link #BLOCK_QUAKE} / {@link #DOMAIN} 同因挂在 {@code Level} 上：
+     * 这是按维度的瞬时运行时状态，静态 {@code Map<ResourceKey<Level>, …>} 会在换存档后拿着旧世界的
+     * {@code getGameTime()} 判定到期，使新存档里的供能卡住或立刻消失。
+     * <p>
+     * <b>刻意不做序列化</b>：红石供能是技能的一瞬，服务端重启后不应继续为某处供能；
+     * 若序列化反而会在存档里留下“触发它的技能早已结束、信号却还在”的幽灵状态。
+     * <p>
+     * {@code SignalGetter} 的 Mixin 热路径用 {@code getExistingDataOrNull} 探测它：
+     * 从未使用过红石效果的维度不会因此被建出一个空表。
+     */
+    public static final Supplier<AttachmentType<RedstonePowerData>> REDSTONE_POWER = ATTACHMENTS.register(
+            "redstone_power",
+            () -> AttachmentType.builder(RedstonePowerData::new).build());
 
     /**
      * 待确认的方块放置队列：由 {@code OnBlockPlaced#enqueue} 登记、{@code PendingBlockPlaces#confirm}

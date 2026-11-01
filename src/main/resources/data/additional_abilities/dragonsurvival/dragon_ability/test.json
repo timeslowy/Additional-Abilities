@@ -5,17 +5,11 @@
                 "applied_effects": {
                     "entity_effect": [
                         {
-                            "effect_type": "dragonsurvival:damage_modification",
-                            "modifications": [
-                                {
-                                    "base": {
-                                        "id": "additional_abilities:test",
-                                        "duration": 6
-                                    },
-                                    "damage_types": "#is_freezing",
-                                    "multiplier": 0
-                                }
-                            ]
+                            "effect_type": "dragonsurvival:push",
+                            "push_force": 1,
+                            "target_direction": {
+                                "direction": "up"
+                            }
                         }
                     ],
                     "targeting_mode": "allies_and_self"

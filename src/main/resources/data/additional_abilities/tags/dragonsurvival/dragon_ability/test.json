@@ -12,6 +12,7 @@
         "additional_abilities:test_on_block_placed",
         "additional_abilities:test_on_item_consumed",
         "additional_abilities:test_optional_charged",
+        "additional_abilities:test_redstone_powering",
         "additional_abilities:test_screen_vision"
     ]
 }
