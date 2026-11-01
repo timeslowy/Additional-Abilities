@@ -284,3 +284,162 @@ Two things to keep in mind:
   "the client wants to draw but the server never sent the packet".
 - Lowering it affects **only what you see** — not other players, not the glow's duration, and not any
   server-side behaviour.
+
+---
+
+## `additional_abilities:redstone_powering` — Redstone Powering
+
+**In one sentence**: gives the selected blocks a **virtual redstone input** — vanilla redstone wire, repeaters, lamps and pistons react as usual, yet no redstone-source block ever appears in the world.
+
+### Fields
+
+| Field | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `power` | level value | ✅ | — | Redstone signal strength, rounded and clamped to **0 - 15** |
+| `target_direction` | direction | ❌ | omitted = direct activation | Reuses Dragon Survival's `TargetDirection`, see below |
+| `probability` | level value | ❌ | `1.0` | Chance to take effect, **rolled independently for every target block** |
+| `valid_blocks` | block predicate | ❌ | match everything | The effect's own block filter; Dragon Survival's `target_conditions` still runs first |
+| `pulse_duration` | level value | ❌ | `1` tick | How long the supply lasts, clamped to **1 - 20** ticks |
+
+### Writing `target_direction`
+
+```json
+"target_direction": { "direction": "north" }          // fixed direction
+"target_direction": { "direction": "looking_at" }     // nearest axis of the caster's look
+"target_direction": { "direction": "towards_entity" } // target block pointing at the caster
+```
+
+Omitting `target_direction` means "direct activation, no direction".
+
+Let the target block be `P` and the direction be `D`; the virtual source sits at `S = P.relative(D)` — that is, "the signal comes in from the `D` side".
+
+| JSON | Runtime `D` | Meaning |
+|---|---|---|
+| `"north"` / `"south"` / `"east"` / `"west"` / `"up"` / `"down"` | that direction | Always input from that face |
+| `"looking_at"` | `Direction.getNearest(caster look)` | Input from the direction the caster looks |
+| `"towards_entity"` | target centre → caster eyes, nearest axis | Input from the face pointing at the caster |
+| omitted | — | No virtual source; only one neighbour update |
+
+> The `direction` parameter of `apply` is the **hit face** reported by Dragon Survival's looking-at target and is a different concept from `target_direction`. This effect **does not** treat it as the input direction.
+
+### The two modes
+
+**1. With a direction: virtual redstone input**
+
+- Register a contribution of strength `power` at `S`; `SignalGetter.getSignal(S, D)` / `getDirectSignal(S, D)` /
+  `getControlInputSignal(S, D, false)` then return `max(real value, virtual value)`, so real redstone is never overridden
+  (the last one covers a comparator's **side input**; repeater locking only accepts real diodes — see the table below);
+- Then notify the blocks around `S`: when `S` and all six neighbours are loaded, call vanilla
+  `updateNeighborsAt(S, Blocks.REDSTONE_BLOCK)`; at a chunk border, or when the source chunk has unloaded, only poke
+  the target `P` with one `neighborChanged`, so the notification never force-loads a neighbour chunk;
+- Wire priority, repeater / comparator delays, copper bulbs, pistons, dispensers, rails and everything else stay in vanilla hands;
+- A single `(S, D)` may hold several contributions (different players / different abilities). **Reads take the highest still-live strength, and each contribution expires on its own.**
+
+**2. Without a direction: direct activation**
+
+Only one vanilla `neighborChanged(P, Blocks.REDSTONE_BLOCK, P)` is sent to `P`, and no source is created at `S`.
+If `P` is a conductive block it also goes through "block charging" below; for non-conductive targets this is **not**
+"feeding `power` into all six sides", and **not** a simulated player right-click. Buttons, levers, pressure plates and
+tripwire hooks will not be pressed by it.
+
+> The third argument (`neighborPos`) is `P` itself, not `null`: in 1.21.1 `CollectingNeighborUpdater` calls
+> `immutable()` on it, so `null` throws an NPE. Passing the target itself is the most neutral choice when there is no
+> concrete source face.
+
+**3. Block charging (when the target itself is a conductive block; stacks with the two modes above)**
+
+If `P` satisfies vanilla's `state.isRedstoneConductor(level, P)` (logs, iron blocks, stone and other full-collision
+conductors), then **whether or not `target_direction` is present**, `P` itself becomes charged for `pulse_duration`:
+
+- `getSignal(P, any side)` / `getDirectSignal(P, any side)` / `getControlInputSignal(P, any side, false)`
+  return `max(real value, power)` — that is, `P` emits to all six sides;
+- on creation and removal, the six neighbours of `P` receive neighbour updates, so repeaters, redstone torches and
+  lamps touching `P` re-evaluate;
+- with a direction, the source supply at `S` is still created, so "`P` emits all around" and "`P` is read as a
+  consumer itself" can coexist;
+- block charging does not change `P`'s real blockstate, so it never triggers an observer. In no-direction mode a
+  redstone lamp is charged but will not light up (a lamp reads its neighbours, not itself) — give it a direction to
+  also receive the source at `S`.
+
+Non-conductive targets (air, repeaters, comparators, ...) never get block charging.
+
+### Blocks that work
+
+"Virtual signal + vanilla neighbour updates" covers vanilla blocks that honour the 1.21.1 `SignalGetter` / neighbour-update contract, for example:
+
+redstone wire, redstone torches, redstone lamps, copper bulbs, note blocks, TNT, doors / trapdoors / fence gates, pistons / sticky pistons,
+dispensers / droppers / crafters / command blocks, repeaters / comparators (including comparator side inputs), rails, and any other block that checks its input through `hasNeighborSignal` / `getSignal` / `getDirectSignal` / `getControlInputSignal`.
+
+In addition, **conductive blocks such as logs, iron blocks and stone** become charged and emit to all six sides when
+targeted (even without a direction), so repeaters / redstone torches / lamps touching them can read the signal.
+
+Their state, sounds, game events, block entities and delays remain entirely vanilla — this effect only supplies a **queryable input value**.
+
+### Blocks that need a note
+
+| Block | Behaviour |
+|---|---|
+| Observer | Observers listen to **shape updates**, not ordinary `neighborChanged`. When `P` really is an observer watching `S`, this effect sends one `neighborShapeChanged` on creation and one on removal (as if a block appeared and disappeared at `S`); a 1-tick pulse produces only one pulse because vanilla de-duplicates via the scheduled tick |
+| Buttons / levers / pressure plates / tripwire | They are redstone sources or need player / entity interaction, so they are **not** pressed |
+| Redstone torch | As a source, it only emits in the direction matching its actual input face; the virtual signal exists only on the specified `(S, D)`. When the target block is charged, a torch touching it reacts by its own vanilla rules |
+| Chargeable blocks (log / iron block / stone / ...) | When the target satisfies `isRedstoneConductor`, it becomes a virtual charged block with or without a direction: it emits to all six sides and notifies its six neighbours; the blockstate itself is unchanged (so observers do not trigger) |
+| Comparator | The main input covers `getSignal` / `getDirectSignal`; the **side input** covers `getControlInputSignal(..., false)` — point `target_direction` at one of the comparator's sides; the comparator's own block-entity behaviour is untouched |
+| Repeater | The main input covers `getSignal`. **Locking** in 1.21.1 only accepts the direct signal of a real diode (repeater / comparator) — the virtual source is a "redstone-block-like" ordinary source, so on its own it does not lock a repeater (matching a real redstone block) |
+| Dispensers / crafters / command blocks / TNT | They have real side effects (items, commands, explosions); constrain them with `valid_blocks` / `target_conditions` |
+| Modded redstone blocks | Only implementations that follow the `SignalGetter` / neighbour-update contract are covered; blocks that read their own capability, block entity or events are not guaranteed to see the signal |
+| Redstone experiments | Redstone wire `POWER` is never set by hand; the current world's evaluator keeps running as-is |
+
+### Values and limits
+
+- `power`: rounded with `Math.round` and clamped to `0 - 15`; `0` creates no source / block charge (and no edge notification).
+  It is still required without a direction: for conductive targets it sets the block-charge strength, for non-conductive
+  targets it is only a schema-completeness field.
+- `pulse_duration`: `1 - 20` ticks, including the registration tick. `1` covers only the tick it was registered on; `20` is the hard ceiling that keeps passive abilities from leaving long-lived virtual power around.
+- **Block charging**: only created for `isRedstoneConductor` targets; it does not change the blockstate (observers do not trigger);
+  in no-direction mode a redstone lamp is charged but does not light up by itself.
+- **No fake block is placed**: `Blocks.REDSTONE_BLOCK` is only the `changedBlock` identity of the neighbour-update callback and is never written into the world.
+- **No chunk loading**: if the target or the virtual source is in an unloaded chunk, this trigger is skipped.
+- **Chunk borders**: before notifying, the six neighbours of `S` are checked for being loaded; if any is unloaded (or `S` itself is),
+  the update degrades to "poke the target `P` only", so `updateNeighborsAt` can never force-load a neighbour chunk through
+  `getBlockState`. If `P`'s chunk is unloaded too, the falling edge is skipped and vanilla's own load updates handle the state
+  once the chunk comes back.
+- **No hand-rolled wire logic**: the `RedStoneWireBlock` / `DiodeBlock` algorithms are not copied; vanilla and the `CollectingNeighborUpdater` 512-update limit stay in charge.
+- **State is not persisted**: the virtual supply lives in the current `ServerLevel`'s runtime data and vanishes on a server restart; it never bleeds across saves or dimensions.
+
+### Example
+
+Minimal (no direction):
+
+```json
+"block_effect": [
+  {
+    "effect_type": "additional_abilities:redstone_powering",
+    "power": 15
+  }
+]
+```
+
+Full (2 ticks from above, redstone lamps only):
+
+```json
+"block_effect": [
+  {
+    "effect_type": "additional_abilities:redstone_powering",
+    "power": { "type": "minecraft:linear", "base": 5.0, "per_level_above_first": 5.0 },
+    "target_direction": { "direction": "up" },
+    "pulse_duration": 2,
+    "probability": 0.5,
+    "valid_blocks": { "type": "minecraft:matching_blocks", "blocks": ["minecraft:redstone_lamp"] }
+  }
+]
+```
+
+### Notes
+
+- Every `apply` is one pulse. When a passive ability or an `area` target triggers every tick, the signal stays up while it keeps triggering and dissipates after `pulse_duration` once it stops.
+- Re-registering the same caster + ability only refreshes it (later expiry, higher strength); it never queues the same update repeatedly within one tick.
+- Edges whose aggregate value did not change are not broadcast; a long pulse does not notify downstream components every tick.
+- Everything runs on the server; clients only see ordinary vanilla block-state changes (a lamp lighting, a door opening, ...) and need no extra synchronisation.
+- **Delayed components**: redstone wire, repeaters and comparators re-read their input on their own delayed tick, which a `1`-tick pulse usually does not survive — use **2 ticks or more** for these scenes (repeaters / comparators often need still more). Redstone lamps, note blocks and copper bulbs react **inside the neighbour update itself**, so a `1`-tick pulse is visible.
+- This is **redstone powering**, not general block interaction: do not expect it to press buttons or levers or to emulate a player right-click.
+

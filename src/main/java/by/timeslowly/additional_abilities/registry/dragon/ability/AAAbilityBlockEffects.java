@@ -35,5 +35,10 @@ public class AAAbilityBlockEffects {
         event.register(AbilityBlockEffect.REGISTRY_KEY,
                 ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "glow"),
                 () -> GlowEffect.CODEC);
+
+        // 红石供能：additional_abilities:redstone_powering
+        event.register(AbilityBlockEffect.REGISTRY_KEY,
+                ResourceLocation.fromNamespaceAndPath(AdditionalAbilities.MOD_ID, "redstone_powering"),
+                () -> RedstonePoweringEffect.CODEC);
     }
 }

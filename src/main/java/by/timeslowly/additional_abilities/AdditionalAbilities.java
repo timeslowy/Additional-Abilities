@@ -4,6 +4,7 @@ import by.timeslowly.additional_abilities.common.AAClientSetup;
 import by.timeslowly.additional_abilities.common.ability.activation.PendingBlockPlaces;
 import by.timeslowly.additional_abilities.common.config.AAClientConfig;
 import by.timeslowly.additional_abilities.common.eventhandler.abilities.DomainTickHandler;
+import by.timeslowly.additional_abilities.common.eventhandler.abilities.RedstonePowerTickHandler;
 import by.timeslowly.additional_abilities.common.network.AANetwork;
 import by.timeslowly.additional_abilities.registry.*;
 import by.timeslowly.additional_abilities.registry.dragon.ability.*;
@@ -53,6 +54,8 @@ public class AdditionalAbilities {
         NeoForge.EVENT_BUS.addListener(OnItemConsumed::trigger);
         // 接线：维度 tick 末尾 → 推进本模组 additional_abilities:domain 建立的领域（按维度分区）
         NeoForge.EVENT_BUS.addListener(DomainTickHandler::onLevelTick);
+        // 接线：维度 tick 末尾 → 清理到期的虚拟红石供能并补发边沿邻居更新（按维度分区）
+        NeoForge.EVENT_BUS.addListener(RedstonePowerTickHandler::onLevelTick);
         // 注册本模组网络 payload（注册清单与协议版本见 AANetwork）
         modEventBus.addListener(AANetwork::register);
         // 注册客户端专属内容（蓄力档位 HUD 图层 + 配置界面扩展点；

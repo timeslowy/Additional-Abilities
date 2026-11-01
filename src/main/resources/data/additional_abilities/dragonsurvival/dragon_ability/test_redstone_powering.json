@@ -1,0 +1,170 @@
+{
+  "actions": [
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "effect_type": "additional_abilities:redstone_powering",
+              "power": 15,
+              "valid_blocks": {
+                "type": "minecraft:matching_blocks",
+                "blocks": [
+                  "minecraft:observer"
+                ]
+              }
+            }
+          ]
+        },
+        "target_type": "dragonsurvival:looking_at",
+        "range": 16
+      }
+    },
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "effect_type": "additional_abilities:redstone_powering",
+              "power": 15,
+              "target_direction": {
+                "direction": "up"
+              },
+              "pulse_duration": 2,
+              "valid_blocks": {
+                "type": "minecraft:matching_blocks",
+                "blocks": [
+                  "minecraft:redstone_lamp"
+                ]
+              }
+            }
+          ]
+        },
+        "target_type": "dragonsurvival:looking_at",
+        "range": 16
+      }
+    },
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "effect_type": "additional_abilities:redstone_powering",
+              "power": 15,
+              "target_direction": {
+                "direction": "looking_at"
+              },
+              "valid_blocks": {
+                "type": "minecraft:matching_blocks",
+                "blocks": [
+                  "minecraft:note_block"
+                ]
+              }
+            }
+          ]
+        },
+        "target_type": "dragonsurvival:looking_at",
+        "range": 16
+      }
+    },
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "effect_type": "additional_abilities:redstone_powering",
+              "power": 15,
+              "target_direction": {
+                "direction": "towards_entity"
+              },
+              "valid_blocks": {
+                "type": "minecraft:matching_block_tag",
+                "tag": "additional_abilities:copper_bulbs"
+              }
+            }
+          ]
+        },
+        "target_type": "dragonsurvival:looking_at",
+        "range": 16
+      }
+    },
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "effect_type": "additional_abilities:redstone_powering",
+              "power": 15,
+              "target_direction": {
+                "direction": "east"
+              },
+              "pulse_duration": 20,
+              "valid_blocks": {
+                "type": "minecraft:matching_blocks",
+                "blocks": [
+                  "minecraft:comparator"
+                ]
+              }
+            }
+          ]
+        },
+        "target_type": "dragonsurvival:looking_at",
+        "range": 16
+      }
+    },
+    {
+      "target_selection": {
+        "applied_effects": {
+          "block_effect": [
+            {
+              "effect_type": "additional_abilities:redstone_powering",
+              "power": 15,
+              "pulse_duration": 20,
+              "valid_blocks": {
+                "type": "minecraft:matching_blocks",
+                "blocks": [
+                  "minecraft:oak_log"
+                ]
+              }
+            }
+          ]
+        },
+        "target_type": "dragonsurvival:looking_at",
+        "range": 16
+      }
+    }
+  ],
+  "activation": {
+    "activation_type": "dragonsurvival:simple",
+    "cast_time": 10.0,
+    "initial_mana_cost": 0,
+    "animations": {
+      "start_and_charging": {
+        "animation_key": "cast_mass_buff",
+        "layer": "BASE",
+        "locks_neck": false,
+        "locks_tail": false,
+        "transition_length": 5
+      },
+      "end": {
+        "animation_key": "mass_buff",
+        "layer": "BASE",
+        "locks_tail": false,
+        "locks_neck": false,
+        "transition_length": 5
+      }
+    },
+    "sound": {
+      "charging": "block.conduit.activate",
+      "end": "block.enchantment_table.use"
+    }
+  },
+  "icon": {
+    "texture_entries": [
+      {
+        "from_level": 0,
+        "texture_resource": "additional_abilities:abilities/test/redstone_powering"
+      }
+    ]
+  }
+}
