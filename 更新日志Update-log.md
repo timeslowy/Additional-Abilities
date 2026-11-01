@@ -27,8 +27,10 @@
 
 #### 中文
 
-1. 更新了超限蓄力的表现形式。
+1. 更新了超限蓄力的表现形式；
+2. 新增方块效果技能组件：「红石供能」（Redstone Powering）。
 
 #### English
 
-1. Updated overcharged's visual effect.
+1. Updated overcharged's visual effect;
+2. Added new Block Effect: 「Redstone Powering」.
